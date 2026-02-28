@@ -1,0 +1,39 @@
+
+---
+
+**Passo 2: Construir o Backend de Autenticação (em `server/`)**
+
+1.  **Dependências:** No `server/package.json`, inclua as seguintes dependências: `express`, `cors`, `dotenv`, `pg` (para Postgres), `bcryptjs`, `jsonwebtoken`.
+2.  **Conexão com o Banco:** No arquivo `server/src/config/db.js`, escreva o código para conectar ao **Replit PostgreSQL** usando as credenciais do ambiente.
+3.  **Controlador de Autenticação (`authController.js`):**
+    *   Crie a função `registerUser`. Ela deve:
+        *   Receber `name`, `email`, `password` do corpo da requisição.
+        *   Verificar se o email já existe no banco.
+        *   Gerar um "salt" e fazer o "hash" da senha usando `bcryptjs`.
+        *   Salvar o novo usuário no banco de dados.
+        *   Gerar um **JSON Web Token (JWT)**.
+        *   Retornar o token para o cliente.
+    *   Crie a função `loginUser`. Ela deve:
+        *   Receber `email` e `password`.
+        *   Encontrar o usuário pelo email.
+        *   Comparar a senha enviada com o hash salvo no banco usando `bcryptjs.compare()`.
+        *   Se a senha for válida, gerar e retornar um novo JWT.
+4.  **Rotas (`auth.js`):** Crie as rotas `POST /api/auth/register` e `POST /api/auth/login` e associe-as às funções do controlador.
+
+---
+
+**Passo 3: Construir o Frontend de Autenticação (em `client/`)**
+
+1.  **Dependências:** No `client/package.json`, inclua `axios` para fazer as chamadas de API.
+2.  **Tela de Registro (`Register.jsx`):**
+    *   Crie um formulário com campos para "Nome", "Email" e "Senha".
+    *   O formulário deve seguir o estilo premium que definimos (cards, cantos arredondados, botão de ação roxo).
+    *   Ao submeter, a função `onSubmit` deve usar `axios` para fazer uma chamada `POST` para a rota `/api/auth/register` do nosso backend.
+    *   Após o sucesso, salve o token JWT recebido no `localStorage` e redirecione o usuário para o Dashboard.
+3.  **Tela de Login (`Login.jsx`):**
+    *   Crie um formulário similar para "Email" e "Senha".
+    *   Ao submeter, deve chamar a rota `POST /api/auth/login`.
+    *   A lógica de sucesso é a mesma da tela de registro.
+
+**Entregável:**
+Gere o código completo para todos os arquivos mencionados acima. O resultado deve ser uma aplicação funcional onde um usuário pode se registrar, fazer login e ser redirecionado para uma página de Dashboard (ainda vazia), com a sessão sendo gerenciada por um token JWT.
