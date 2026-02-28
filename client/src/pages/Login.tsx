@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope } from "lucide-react";
-import axios from "axios";
+import { Stethoscope, Loader2 } from "lucide-react";
+import { saveAuth } from "@/lib/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,28 +18,40 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // MOCK LOGIN LOGIC
-    // Em um cenário real, faríamos algo como:
-    // await axios.post("/api/auth/login", { email, password });
-    
-    setTimeout(() => {
-      if (email && password) {
-        localStorage.setItem("medfin_token", "mock_jwt_token");
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta ao Medfin.",
-        });
-        setLocation("/dashboard");
-      } else {
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
         toast({
           title: "Erro ao fazer login",
-          description: "Por favor, preencha todos os campos.",
-          variant: "destructive"
+          description: data.message || "Verifique suas credenciais.",
+          variant: "destructive",
         });
+        return;
       }
+
+      saveAuth(data.token, data.user);
+      toast({
+        title: "Login realizado com sucesso",
+        description: `Bem-vindo de volta, ${data.user.name}!`,
+      });
+      setLocation("/dashboard");
+    } catch {
+      toast({
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -50,7 +62,7 @@ export default function Login() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Medfin</h1>
       </div>
-      
+
       <Card className="w-full max-w-md border-none shadow-2xl shadow-black/5 bg-card/50 backdrop-blur-sm">
         <CardHeader className="space-y-2 pb-6">
           <CardTitle className="text-2xl font-bold text-center">Entrar na sua conta</CardTitle>
@@ -62,10 +74,10 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2.5">
               <Label htmlFor="email" className="font-medium">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="nome@exemplo.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -80,8 +92,8 @@ export default function Login() {
                   Esqueceu a senha?
                 </a>
               </div>
-              <Input 
-                id="password" 
+              <Input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -90,13 +102,13 @@ export default function Login() {
                 data-testid="input-password"
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-md font-semibold mt-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all" 
+            <Button
+              type="submit"
+              className="w-full h-12 text-md font-semibold mt-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
               disabled={isLoading}
               data-testid="button-login"
             >
-              {isLoading ? "Entrando..." : "Entrar"}
+              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entrando...</> : "Entrar"}
             </Button>
           </form>
         </CardContent>

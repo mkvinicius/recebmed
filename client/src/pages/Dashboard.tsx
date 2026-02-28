@@ -1,29 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stethoscope, LogOut, LayoutDashboard, Users, CreditCard, Settings, Bell, Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { getToken, getUser, clearAuth } from "@/lib/auth";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    // Verifica token (Mockup logic)
-    const token = localStorage.getItem("medfin_token");
+    const token = getToken();
     if (!token) {
       setLocation("/login");
+      return;
+    }
+
+    const user = getUser();
+    if (user) {
+      setUserName(user.name);
     }
   }, [setLocation]);
 
   const handleLogout = () => {
-    localStorage.removeItem("medfin_token");
+    clearAuth();
     setLocation("/login");
   };
 
+  const initials = userName
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || "DR";
+
   return (
     <div className="min-h-screen bg-background flex text-foreground">
-      {/* Sidebar */}
       <aside className="w-64 border-r border-border/40 bg-card/30 backdrop-blur-md hidden md:flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-border/40">
           <div className="flex items-center gap-3">
@@ -33,7 +46,7 @@ export default function Dashboard() {
             <span className="font-bold text-lg tracking-tight text-foreground">Medfin</span>
           </div>
         </div>
-        
+
         <div className="flex-1 py-6 flex flex-col gap-1.5 px-4">
           <div className="text-xs font-semibold text-muted-foreground mb-2 px-3 tracking-wider uppercase">Menu</div>
           <Button variant="secondary" className="justify-start gap-3 px-3 shadow-sm bg-primary/10 text-primary hover:bg-primary/20" data-testid="nav-dashboard">
@@ -48,14 +61,14 @@ export default function Dashboard() {
             <CreditCard className="w-4 h-4" />
             Financeiro
           </Button>
-          
+
           <div className="text-xs font-semibold text-muted-foreground mt-6 mb-2 px-3 tracking-wider uppercase">Sistema</div>
           <Button variant="ghost" className="justify-start gap-3 px-3 text-muted-foreground hover:text-foreground">
             <Settings className="w-4 h-4" />
             Configurações
           </Button>
         </div>
-        
+
         <div className="p-4 border-t border-border/40">
           <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogout} data-testid="button-logout">
             <LogOut className="w-4 h-4" />
@@ -64,12 +77,10 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border/40 bg-card/30 backdrop-blur-md flex items-center justify-between px-6 lg:px-8">
           <h1 className="text-xl font-semibold hidden md:block">Visão Geral</h1>
-          
-          {/* Mobile Header Logo */}
+
           <div className="flex md:hidden items-center gap-2">
             <div className="bg-primary p-1.5 rounded-lg shadow-sm shadow-primary/20">
               <Stethoscope className="text-primary-foreground w-4 h-4" />
@@ -86,8 +97,8 @@ export default function Dashboard() {
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-card"></span>
             </Button>
-            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-sm ring-1 ring-primary/20 cursor-pointer">
-              DR
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-sm ring-1 ring-primary/20 cursor-pointer" data-testid="avatar-user">
+              {initials}
             </div>
           </div>
         </header>
@@ -95,7 +106,9 @@ export default function Dashboard() {
         <div className="flex-1 p-6 lg:p-8 overflow-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight">Olá, Doutor!</h2>
+              <h2 className="text-3xl font-bold tracking-tight" data-testid="text-greeting">
+                Olá, {userName.split(" ")[0] || "Doutor"}!
+              </h2>
               <p className="text-muted-foreground mt-1">Aqui está o resumo da sua clínica hoje.</p>
             </div>
             <Button className="gap-2 shadow-lg shadow-primary/20 font-medium" data-testid="button-new-appointment">
@@ -120,7 +133,7 @@ export default function Dashboard() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="shadow-sm border-none bg-card/50 backdrop-blur-sm relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <CardHeader className="pb-2">
@@ -153,7 +166,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="shadow-sm border-none bg-card/50 backdrop-blur-sm lg:col-span-2">
               <CardHeader className="border-b border-border/40 pb-4">

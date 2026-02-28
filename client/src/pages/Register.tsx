@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope } from "lucide-react";
-import axios from "axios";
+import { Stethoscope, Loader2 } from "lucide-react";
+import { saveAuth } from "@/lib/auth";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -20,27 +20,39 @@ export default function Register() {
     e.preventDefault();
     setIsLoading(true);
 
-    // MOCK REGISTER LOGIC
-    // Em um cenário real:
-    // await axios.post("/api/auth/register", { name, email, password });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    setTimeout(() => {
-      if (name && email && password) {
-        localStorage.setItem("medfin_token", "mock_jwt_token");
-        toast({
-          title: "Conta criada com sucesso",
-          description: "Bem-vindo ao Medfin!",
-        });
-        setLocation("/dashboard");
-      } else {
+      const data = await res.json();
+
+      if (!res.ok) {
         toast({
           title: "Erro no cadastro",
-          description: "Por favor, preencha todos os campos.",
-          variant: "destructive"
+          description: data.message || "Verifique os dados informados.",
+          variant: "destructive",
         });
+        return;
       }
+
+      saveAuth(data.token, data.user);
+      toast({
+        title: "Conta criada com sucesso",
+        description: `Bem-vindo ao Medfin, ${data.user.name}!`,
+      });
+      setLocation("/dashboard");
+    } catch {
+      toast({
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -51,7 +63,7 @@ export default function Register() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Medfin</h1>
       </div>
-      
+
       <Card className="w-full max-w-md border-none shadow-2xl shadow-black/5 bg-card/50 backdrop-blur-sm">
         <CardHeader className="space-y-2 pb-6">
           <CardTitle className="text-2xl font-bold text-center">Criar uma conta</CardTitle>
@@ -63,9 +75,9 @@ export default function Register() {
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2.5">
               <Label htmlFor="name" className="font-medium">Nome completo</Label>
-              <Input 
-                id="name" 
-                placeholder="Dr. João Silva" 
+              <Input
+                id="name"
+                placeholder="Dr. João Silva"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -75,10 +87,10 @@ export default function Register() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="email" className="font-medium">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="nome@exemplo.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -88,24 +100,25 @@ export default function Register() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="password" className="font-medium">Senha</Label>
-              <Input 
-                id="password" 
+              <Input
+                id="password"
                 type="password"
                 placeholder="Crie uma senha forte"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 className="h-12 bg-background border-border/50 focus-visible:ring-primary/30 transition-all"
                 data-testid="input-register-password"
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-12 text-md font-semibold mt-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
               disabled={isLoading}
               data-testid="button-register"
             >
-              {isLoading ? "Criando..." : "Criar conta"}
+              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Criando...</> : "Criar conta"}
             </Button>
           </form>
         </CardContent>
