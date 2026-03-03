@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope, Loader2 } from "lucide-react";
+import { Loader2, Stethoscope } from "lucide-react";
 import { saveAuth } from "@/lib/auth";
 
 export default function Login() {
@@ -25,55 +24,42 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        toast({
-          title: "Erro ao fazer login",
-          description: data.message || "Verifique suas credenciais.",
-          variant: "destructive",
-        });
+        toast({ title: "Erro ao fazer login", description: data.message || "Verifique suas credenciais.", variant: "destructive" });
         return;
       }
-
       saveAuth(data.token, data.user);
-      toast({
-        title: "Login realizado com sucesso",
-        description: `Bem-vindo de volta, ${data.user.name}!`,
-      });
+      toast({ title: "Login realizado!", description: `Bem-vindo de volta, ${data.user.name}!` });
       setLocation("/dashboard");
     } catch {
-      toast({
-        title: "Erro de conexão",
-        description: "Não foi possível conectar ao servidor.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao servidor.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-primary/20">
-          <Stethoscope className="text-primary-foreground w-7 h-7" />
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Medfin</h1>
-      </div>
+    <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
+      <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0" />
 
-      <Card className="w-full max-w-md border-none shadow-2xl shadow-black/5 bg-card/50 backdrop-blur-sm">
-        <CardHeader className="space-y-2 pb-6">
-          <CardTitle className="text-2xl font-bold text-center">Entrar na sua conta</CardTitle>
-          <CardDescription className="text-center text-muted-foreground text-sm">
-            Digite seu email e senha para acessar o painel
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="size-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
+            <Stethoscope className="text-white w-6 h-6" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Medfin</h1>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 shadow-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-extrabold text-slate-800">Entrar na sua conta</h2>
+            <p className="text-slate-500 mt-2 text-sm">Digite seu email e senha para acessar o painel</p>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2.5">
-              <Label htmlFor="email" className="font-medium">Email</Label>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-semibold text-slate-700">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -81,16 +67,14 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-12 bg-background border-border/50 focus-visible:ring-primary/30 transition-all"
+                className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 placeholder:text-slate-400"
                 data-testid="input-email"
               />
             </div>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="font-medium">Senha</Label>
-                <a href="#" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
-                  Esqueceu a senha?
-                </a>
+                <Label htmlFor="password" className="font-semibold text-slate-700">Senha</Label>
+                <a href="#" className="text-xs font-bold text-[#8855f6] hover:underline">Esqueceu a senha?</a>
               </div>
               <Input
                 id="password"
@@ -98,29 +82,26 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-12 bg-background border-border/50 focus-visible:ring-primary/30 transition-all"
+                className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800"
                 data-testid="input-password"
               />
             </div>
             <Button
               type="submit"
-              className="w-full h-12 text-md font-semibold mt-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
               disabled={isLoading}
+              className="w-full h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold text-md shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
               data-testid="button-login"
             >
               {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entrando...</> : "Entrar"}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className="flex justify-center pt-2 pb-6">
-          <p className="text-sm text-muted-foreground">
+
+          <p className="text-center text-sm text-slate-500 mt-6">
             Não tem uma conta?{" "}
-            <Link href="/register" className="font-semibold text-primary hover:text-primary/80 transition-colors">
-              Registre-se
-            </Link>
+            <Link href="/register" className="font-bold text-[#8855f6] hover:underline">Registre-se</Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

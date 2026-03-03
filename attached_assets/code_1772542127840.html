@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8855f6",
+                        "background-light": "#f6f5f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative w-full overflow-x-hidden">
+<header class="bg-primary pt-8 pb-32 px-6 md:px-12 lg:px-24">
+<nav class="flex items-center justify-between mb-12">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white">medical_services</span>
+</div>
+<span class="text-white text-xl font-extrabold tracking-tight">Medfin</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="flex items-center gap-3 ml-2">
+<div class="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Doctor portrait with a professional smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnE4FOQZyVn17zHWRH7VN4_eIknFTESLix9Xb9nJfIt5_e1hNg1KqOyvJRslYj2E5_O4SLMGNu6NnBwuhe58xqY56UOfu4Kc6GMYkJV1WzyR5KYGqH6Bp-OLYe8m734J744QNAV_sG1kdbDvbUmKGKZ59AKmQBj7i5DCnIipD4Eu7LqVEpo_K4SHt-k-KNzPmpDkP2KZUvgpVmYOzA2tCNaWHPDJJdSL7iAKUXbhkuc_6AOTO1qO7byG7DoLUu_quKECyMsaZ4tt-p"/>
+</div>
+</div>
+</div>
+</nav>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full mb-4">
+<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+<span class="text-white text-xs font-bold tracking-widest uppercase">Online • Resumo Financeiro</span>
+</div>
+<h1 class="text-white text-4xl md:text-5xl font-extrabold leading-tight">Olá, Dra. Amanda</h1>
+<p class="text-primary/10 text-lg mt-2 font-medium opacity-90 text-white">Bem-vinda de volta ao seu painel de controle.</p>
+</div>
+</div>
+</header>
+<main class="px-6 md:px-12 lg:px-24 -mt-16 pb-20">
+<div class="rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 mb-10 border border-white/10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl">
+<div class="flex-1 space-y-2">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+                        Novo Lançamento
+                    </h2>
+<p class="text-slate-500 dark:text-slate-400 text-lg">Capture recibos e documentos instantaneamente para facilitar sua gestão.</p>
+</div>
+<div class="flex flex-wrap gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">photo_camera</span>
+                        Lançar por Foto
+                    </button>
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-primary/20 text-primary px-8 py-4 rounded-xl font-bold hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined">mic</span>
+                        Lançar por Áudio
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full text-blue-600">
+<span class="material-symbols-outlined">pending_actions</span>
+</div>
+<span class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                            +5.2%
+                        </span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 font-medium">A Receber</p>
+<h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">R$ 12.500,00</h3>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-full text-green-600">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold px-2 py-1 rounded-full">
+                            Meta: 80%
+                        </span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Recebido</p>
+<h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">R$ 8.200,00</h3>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-full text-red-600">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_down</span>
+                            -10%
+                        </span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Atrasado</p>
+<h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">R$ 1.150,00</h3>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-800">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Lançamentos Recentes</h2>
+<a class="text-primary font-bold text-sm hover:underline" href="#">Ver todos</a>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">add</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Consulta Particular - João Silva</h4>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span>Hoje, 14:20</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span>Cartão de Crédito</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-green-600 font-extrabold text-lg">+ R$ 450,00</span>
+</div>
+</div>
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">remove</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Fornecedor - Material Cirúrgico</h4>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span>Ontem, 09:15</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span>Boleto Bancário</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-red-600 font-extrabold text-lg">- R$ 1.200,00</span>
+</div>
+</div>
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">add</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Exame de Rotina - Maria Oliveira</h4>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span>12 Mai, 16:45</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span>PIX</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-green-600 font-extrabold text-lg">+ R$ 320,00</span>
+</div>
+</div>
+<div class="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">add</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Reembolso Convênio Bradesco</h4>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span>10 Mai, 11:00</span>
+<span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+<span>Transferência</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-green-600 font-extrabold text-lg">+ R$ 2.150,00</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<footer class="mt-auto py-8 text-center text-slate-400 text-sm">
+<p>© 2024 Medfin Dashboard • Saúde financeira para sua clínica</p>
+</footer>
+</body></html>

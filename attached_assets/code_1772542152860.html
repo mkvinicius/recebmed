@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8855f6",
+                        "background-light": "#f6f5f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #8855f6 0%, #64499c 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative w-full">
+<!-- Hero Header -->
+<div class="hero-gradient h-72 w-full absolute top-0 left-0 z-0"></div>
+<div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Navigation -->
+<header class="flex items-center justify-between py-6">
+<div class="flex items-center gap-3 text-white">
+<div class="size-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
+<span class="material-symbols-outlined">medical_services</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">MedDash</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="size-10 rounded-full border-2 border-white/50 bg-cover bg-center" data-alt="Portrait of Dr. Amanda smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAd_rVddFRim_hxS5hF1z-MolQ9viBeyHCprW5MrDYqCOT_mxgCCbWnj7_rhXlWsGoQc-10kdZ15Ol-KErLqB-mJ2h-ne2yQ1nOAocXoTSVnTMyc_wHsVEVBWOwfOqPAbAKaKxsOwaVNzaPM8Jm05gjQWTBmfEu8x_PS0KWfIbgvZ65Ci9fHPw9UPdGg6hJmbj2QlWQJM3cHCgAdfS68mF0QLWwNCYR8lIOyo1L8SXM39nPmchOYBpIDMYLj0EHgILB8xCD3NGSbVXz')"></div>
+</div>
+</header>
+<!-- Profile Section -->
+<div class="pt-4 pb-8 text-white">
+<div class="flex items-center gap-5">
+<div class="size-20 rounded-2xl border-4 border-white/20 bg-cover bg-center shadow-xl" data-alt="Portrait of Dr. Amanda in clinic" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCQyvj6FJDoatGDJhUzXJoKtfidpiZpJhe652xY2JVO0IBtDeWPuDLFiTb8KLSaaxn_ON7huKH8bAmG4__LeCwlvI_0wzLPk6nsTvMw0KEhTZwvtBBzngOX9HeVZGYmGI6ilbj5I7NQz8bOCXrmi6a5Yci-zLlJMTf75OZq59_uKytzfjpPqpoxxq7Ed_Qa45UgCtHZ8oY4dxpZEXZA77EDmIcXoeyBnw25SNuNGZ3us4_aZtqfkIf_cM_nF_N-kbzuQt1llO7nDXVk')"></div>
+<div>
+<h2 class="text-3xl font-extrabold">Olá, Dra. Amanda</h2>
+<div class="flex items-center gap-2 mt-1 opacity-90">
+<span class="size-2 bg-green-400 rounded-full animate-pulse"></span>
+<p class="text-sm font-medium uppercase tracking-wider">Status: Online • Resumo Financeiro</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Overlap Main Card -->
+<div class="glass-card rounded-xl p-8 shadow-2xl mb-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex-1">
+<h3 class="text-xl font-bold text-slate-800">Novo Lançamento</h3>
+<p class="text-slate-500 mt-1">Capture recibos e documentos instantaneamente</p>
+</div>
+<div class="flex flex-wrap gap-4">
+<button class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/30 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined">photo_camera</span>
+                            Lançar por Foto
+                        </button>
+<button class="flex items-center gap-2 px-6 py-3 bg-white border-2 border-primary/20 text-primary rounded-full font-bold hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">mic</span>
+                            Lançar por Áudio
+                        </button>
+</div>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- A Receber -->
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex flex-col gap-1">
+<div class="flex items-center justify-between mb-2">
+<span class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+<span class="material-symbols-outlined">pending_actions</span>
+</span>
+<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">+5.2%</span>
+</div>
+<p class="text-slate-500 text-sm font-semibold">A Receber</p>
+<p class="text-2xl font-extrabold text-slate-900">R$ 12.500,00</p>
+</div>
+<!-- Recebido -->
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex flex-col gap-1">
+<div class="flex items-center justify-between mb-2">
+<span class="p-2 bg-green-50 text-green-600 rounded-lg">
+<span class="material-symbols-outlined">payments</span>
+</span>
+<span class="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-full">Meta: 80%</span>
+</div>
+<p class="text-slate-500 text-sm font-semibold">Recebido</p>
+<p class="text-2xl font-extrabold text-slate-900">R$ 8.200,00</p>
+</div>
+<!-- Atrasado -->
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex flex-col gap-1">
+<div class="flex items-center justify-between mb-2">
+<span class="p-2 bg-red-50 text-red-600 rounded-lg">
+<span class="material-symbols-outlined">warning</span>
+</span>
+<span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">-10%</span>
+</div>
+<p class="text-slate-500 text-sm font-semibold">Atrasado</p>
+<p class="text-2xl font-extrabold text-slate-900">R$ 1.150,00</p>
+</div>
+</div>
+<!-- Recent Activity -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-12">
+<div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+<h3 class="font-bold text-lg text-slate-800">Lançamentos Recentes</h3>
+<button class="text-primary text-sm font-bold hover:underline">Ver todos</button>
+</div>
+<div class="divide-y divide-slate-50">
+<!-- Item 1 -->
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<p class="font-bold text-slate-800">Consulta Particular - João Silva</p>
+<p class="text-xs text-slate-400">Hoje, 14:30 • Pix</p>
+</div>
+</div>
+<p class="font-bold text-green-600">+ R$ 450,00</p>
+</div>
+<!-- Item 2 -->
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">medical_information</span>
+</div>
+<div>
+<p class="font-bold text-slate-800">Convênio Unimed - Repasse Mensal</p>
+<p class="text-xs text-slate-400">Ontem, 09:15 • Transferência</p>
+</div>
+</div>
+<p class="font-bold text-slate-800">R$ 2.300,00</p>
+</div>
+<!-- Item 3 -->
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined">error</span>
+</div>
+<div>
+<p class="font-bold text-slate-800">Exame de Imagem - Clínica Rad</p>
+<p class="text-xs text-slate-400">02 Out, 16:45 • Pendente</p>
+</div>
+</div>
+<p class="font-bold text-red-500">R$ 890,00</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>
