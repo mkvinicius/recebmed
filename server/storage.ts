@@ -14,6 +14,8 @@ export interface IStorage {
   createDoctorEntry(entry: InsertDoctorEntry): Promise<DoctorEntry>;
   getDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   getDoctorEntry(id: string): Promise<DoctorEntry | undefined>;
+  updateDoctorEntry(id: string, updates: Partial<InsertDoctorEntry>): Promise<DoctorEntry | undefined>;
+  deleteDoctorEntry(id: string): Promise<boolean>;
 
   createClinicReport(report: InsertClinicReport): Promise<ClinicReport>;
   getClinicReports(doctorId: string): Promise<ClinicReport[]>;
@@ -47,6 +49,16 @@ export class DatabaseStorage implements IStorage {
   async getDoctorEntry(id: string): Promise<DoctorEntry | undefined> {
     const [entry] = await db.select().from(doctorEntries).where(eq(doctorEntries.id, id));
     return entry;
+  }
+
+  async updateDoctorEntry(id: string, updates: Partial<InsertDoctorEntry>): Promise<DoctorEntry | undefined> {
+    const [result] = await db.update(doctorEntries).set(updates).where(eq(doctorEntries.id, id)).returning();
+    return result;
+  }
+
+  async deleteDoctorEntry(id: string): Promise<boolean> {
+    const result = await db.delete(doctorEntries).where(eq(doctorEntries.id, id)).returning();
+    return result.length > 0;
   }
 
   async createClinicReport(report: InsertClinicReport): Promise<ClinicReport> {

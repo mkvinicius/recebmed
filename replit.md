@@ -53,7 +53,10 @@ shared/
 - `POST /api/entries/photo` - Process photo with OpenAI Vision API -> extracted data
 - `POST /api/entries/audio` - Process audio with OpenAI STT + text extraction -> extracted data
 - `POST /api/entries` - Save a doctor entry to database
+- `POST /api/entries/batch` - Save multiple entries at once
 - `GET /api/entries` - List all entries for authenticated doctor
+- `PUT /api/entries/:id` - Update an entry (with ownership check)
+- `DELETE /api/entries/:id` - Delete an entry (with ownership check)
 
 ## Design System
 

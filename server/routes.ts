@@ -193,5 +193,46 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/entries/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const existing = await storage.getDoctorEntry(id);
+      if (!existing || existing.doctorId !== userId) {
+        return res.status(404).json({ message: "Lançamento não encontrado" });
+      }
+
+      const { patientName, procedureDate, insuranceProvider, description, status } = req.body;
+      const updates: any = {};
+      if (patientName !== undefined) updates.patientName = patientName;
+      if (procedureDate !== undefined) updates.procedureDate = new Date(procedureDate);
+      if (insuranceProvider !== undefined) updates.insuranceProvider = insuranceProvider;
+      if (description !== undefined) updates.description = description;
+      if (status !== undefined) updates.status = status;
+
+      const updated = await storage.updateDoctorEntry(id, updates);
+      return res.json({ entry: updated });
+    } catch (error) {
+      console.error("Update entry error:", error);
+      return res.status(500).json({ message: "Erro ao atualizar lançamento" });
+    }
+  });
+
+  app.delete("/api/entries/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const existing = await storage.getDoctorEntry(id);
+      if (!existing || existing.doctorId !== userId) {
+        return res.status(404).json({ message: "Lançamento não encontrado" });
+      }
+      await storage.deleteDoctorEntry(id);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Delete entry error:", error);
+      return res.status(500).json({ message: "Erro ao excluir lançamento" });
+    }
+  });
+
   return httpServer;
 }
