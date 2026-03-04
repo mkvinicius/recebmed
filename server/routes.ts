@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, loginSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { extractDataFromImage, extractDataFromAudio } from "./openai";
 
 const JWT_SECRET = process.env.JWT_SECRET || "medfin_jwt_secret_dev_key";
 
@@ -31,7 +32,6 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // ─── Auth Routes ───
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const parsed = insertUserSchema.safeParse(req.body);
@@ -91,22 +91,33 @@ export async function registerRoutes(
     }
   });
 
-  // ─── Entry Routes ───
-
   app.post("/api/entries/photo", authMiddleware, async (req: Request, res: Response) => {
     try {
-      return res.json({
-        success: true,
-        extractedData: {
-          patientName: "Amanda Cristina T. G. Leite (Simulado)",
-          procedureDate: "2026-01-06",
-          insuranceProvider: "SUS (Simulado)",
-          description: "Sleeve (Simulado)",
-        },
-      });
+      const { image } = req.body;
+      if (!image) {
+        return res.status(400).json({ message: "Imagem não enviada" });
+      }
+      const base64 = image.replace(/^data:image\/\w+;base64,/, "");
+      const extractedData = await extractDataFromImage(base64);
+      return res.json({ success: true, extractedData });
     } catch (error) {
       console.error("Photo entry error:", error);
       return res.status(500).json({ message: "Erro ao processar imagem" });
+    }
+  });
+
+  app.post("/api/entries/audio", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { audio } = req.body;
+      if (!audio) {
+        return res.status(400).json({ message: "Áudio não enviado" });
+      }
+      const base64 = audio.replace(/^data:audio\/\w+;base64,/, "");
+      const extractedData = await extractDataFromAudio(base64);
+      return res.json({ success: true, extractedData });
+    } catch (error) {
+      console.error("Audio entry error:", error);
+      return res.status(500).json({ message: "Erro ao processar áudio" });
     }
   });
 
