@@ -4,7 +4,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 
 ## Architecture
 
-- **Frontend**: React (Vite) + TailwindCSS v4 + shadcn/ui components
+- **Frontend**: React (Vite 3.2.11 + Rollup 2.80.0) + TailwindCSS v4 (via @tailwindcss/postcss) + shadcn/ui components
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken) + bcryptjs for password hashing

@@ -28,6 +28,11 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  const cssPath = path.resolve(import.meta.dirname, "..", "client", "src", "index.css");
+  vite.transformRequest("/src/index.css").then(() => {
+    console.log("CSS pre-warmed successfully");
+  }).catch(() => {});
+
   app.use("/{*path}", async (req, res, next) => {
     const url = req.originalUrl;
 

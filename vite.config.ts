@@ -31,9 +31,7 @@ export default defineConfig(async () => {
       },
     },
     css: {
-      postcss: {
-        plugins: [],
-      },
+      postcss: path.resolve(import.meta.dirname),
     },
     root: path.resolve(import.meta.dirname, "client"),
     build: {
@@ -42,6 +40,9 @@ export default defineConfig(async () => {
     },
     server: {
       host: "0.0.0.0",
+      watch: {
+        ignored: ["**/.local/**"],
+      },
       fs: {
         strict: true,
         deny: ["**/.*"],
