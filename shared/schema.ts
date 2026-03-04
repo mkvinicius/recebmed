@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, numeric, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,6 +8,32 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+});
+
+export const entryMethodEnum = pgEnum("entry_method", ["photo", "audio", "manual"]);
+export const entryStatusEnum = pgEnum("entry_status", ["pending", "reconciled", "divergent"]);
+
+export const doctorEntries = pgTable("doctor_entries", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  patientName: text("patient_name").notNull(),
+  procedureDate: timestamp("procedure_date").notNull(),
+  insuranceProvider: text("insurance_provider").notNull(),
+  description: text("description").notNull(),
+  entryMethod: entryMethodEnum("entry_method").notNull().default("manual"),
+  sourceUrl: text("source_url"),
+  status: entryStatusEnum("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const clinicReports = pgTable("clinic_reports", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  patientName: text("patient_name").notNull(),
+  procedureDate: timestamp("procedure_date").notNull(),
+  reportedValue: numeric("reported_value", { precision: 12, scale: 2 }).notNull(),
+  sourcePdfUrl: text("source_pdf_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -21,5 +47,19 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const insertDoctorEntrySchema = createInsertSchema(doctorEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertClinicReportSchema = createInsertSchema(clinicReports).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type DoctorEntry = typeof doctorEntries.$inferSelect;
+export type InsertDoctorEntry = z.infer<typeof insertDoctorEntrySchema>;
+export type ClinicReport = typeof clinicReports.$inferSelect;
+export type InsertClinicReport = z.infer<typeof insertClinicReportSchema>;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import { getToken, getUser, clearAuth } from "@/lib/auth";
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [userName, setUserName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -80,7 +81,17 @@ export default function Dashboard() {
               <p className="text-slate-500 mt-1">Capture recibos e documentos instantaneamente</p>
             </div>
             <div className="flex flex-wrap gap-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={() => setLocation("/confirm-entry")}
+                data-testid="input-photo-capture"
+              />
               <Button
+                onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-2 px-6 py-3 h-auto bg-[#8855f6] text-white rounded-full font-bold shadow-lg shadow-[#8855f6]/30 hover:scale-105 transition-transform hover:bg-[#7744e0]"
                 data-testid="button-launch-photo"
               >

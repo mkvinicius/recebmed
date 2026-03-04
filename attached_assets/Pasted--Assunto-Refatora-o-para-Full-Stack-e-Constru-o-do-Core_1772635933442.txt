@@ -1,0 +1,77 @@
+**Assunto:** Refatoração para Full-Stack e Construção do Core do Medfin v1.0.
+
+**Contexto e Regras Fundamentais:**
+
+Você já construiu um protótipo frontend excelente para o Medfin, com um design system premium (paleta roxa, Plus Jakarta Sans, glassmorphism). **Esta identidade visual é a nossa "verdade absoluta" e deve ser mantida com 100% de consistência em todas as novas telas e componentes.**
+
+Agora, vamos transformar este protótipo em uma aplicação Full-Stack funcional, construindo o backend e a lógica de banco de dados para dar vida ao "Sistema de Conferência Inteligente".
+
+**Sua Tarefa:**
+Execute os seguintes passos para reestruturar o projeto e construir a fundação do backend.
+
+---
+
+### **Passo 1: Configuração do Backend e Banco de Dados**
+
+1.  **Ative o Backend:** Converta o projeto Replit para um ambiente Full-Stack, criando a estrutura de diretórios `server/` para nosso código Node.js (Express) + TypeScript.
+2.  **Ative o Banco de Dados:** No painel do Replit, ative e configure um banco de dados **PostgreSQL**.
+3.  **Instale as Dependências do Backend:** No `server/package.json`, adicione e instale as seguintes dependências essenciais: `express`, `cors`, `dotenv`, `pg` (para o Postgres), `drizzle-orm`, e `drizzle-kit` para o nosso ORM.
+4.  **Crie o Esquema do Banco de Dados:** Crie um arquivo `server/src/db/schema.ts`. Neste arquivo, usando a sintaxe do Drizzle ORM, defina as duas tabelas principais do nosso sistema de conferência:
+
+    *   **Tabela `doctor_entries`:**
+        *   `id` (uuid, chave primária)
+        *   `doctorId` (uuid, futuramente referenciará a tabela de usuários)
+        *   `patientName` (text)
+        *   `procedureDate` (timestamp)
+        *   `insuranceProvider` (text, "convênio")
+        *   `description` (text, "procedimento")
+        *   `entryMethod` (enum: 'photo', 'audio', 'manual')
+        *   `sourceUrl` (text, link para a foto/áudio no S3)
+        *   `status` (enum: 'pending', 'reconciled', 'divergent', default: 'pending')
+        *   `createdAt` (timestamp, default: now())
+
+    *   **Tabela `clinic_reports`:**
+        *   `id` (uuid, chave primária)
+        *   `doctorId` (uuid)
+        *   `patientName` (text)
+        *   `procedureDate` (timestamp)
+        *   `reportedValue` (numeric, valor informado pela clínica)
+        *   `sourcePdfUrl` (text, link para o PDF de origem)
+        *   `createdAt` (timestamp, default: now())
+
+5.  **Gere a Migração:** Após definir o esquema, configure o `drizzle-kit` para gerar o arquivo de migração SQL e aplique-o ao banco de dados do Replit para criar as tabelas.
+
+---
+
+### **Passo 2: Construção do Primeiro Endpoint Crítico (Lançamento por Foto)**
+
+1.  **Crie a Rota:** No backend, crie um novo arquivo de rota em `server/src/routes/entries.ts` e defina o endpoint `POST /api/entries/photo`.
+2.  **Crie o Controlador:** Crie o arquivo `server/src/controllers/entryController.ts`.
+3.  **Implemente a Lógica do Controlador:** Dentro do controlador, crie a função `createEntryFromPhoto`. Esta função deve ser um placeholder funcional que simula o fluxo de IA, preparando-nos para a integração real:
+    *   Ela deve receber um arquivo de imagem da requisição.
+    *   **(Simulação de IA):** Por enquanto, ela não vai chamar as APIs de IA. Em vez disso, ela retornará um objeto JSON *mockado* (falso) com dados de exemplo, como se a IA tivesse processado a imagem.
+        ```json
+        {
+          "success": true,
+          "extractedData": {
+            "patientName": "Amanda Cristina T. G. Leite (Simulado)",
+            "procedureDate": "2026-01-06",
+            "insuranceProvider": "SUS (Simulado)",
+            "description": "Sleeve (Simulado)"
+          }
+        }
+        ```
+    *   Esta resposta será usada pelo frontend para exibir a tela de confirmação.
+
+---
+
+### **Passo 3: Refatoração do Frontend para Conectar ao Backend**
+
+1.  **Crie a Tela de Confirmação:** No frontend (`client/`), crie um novo componente/página chamado `ConfirmEntry.jsx`.
+2.  **Modifique o Fluxo de Lançamento:**
+    *   Altere a função do botão "Lançar por Foto". Agora, ao tirar a foto, ele deve fazer uma chamada `POST` para o nosso novo endpoint `/api/entries/photo`, enviando a imagem.
+    *   Ao receber a resposta (o JSON mockado do backend), o app deve navegar para a tela `ConfirmEntry`, preenchendo os campos do formulário com os dados recebidos.
+    *   A tela `ConfirmEntry` deve ter um botão "Salvar Lançamento". **(Por enquanto, este botão não fará nada, apenas voltará para o Dashboard).**
+
+**Resumo do Entregável:**
+Ao final desta tarefa, o projeto deve estar configurado como Full-Stack, com o banco de dados PostgreSQL criado e as tabelas definidas. O frontend deve ser capaz de enviar uma imagem para um endpoint real no backend e exibir os dados (mockados) recebidos em uma nova tela de confirmação, tudo isso mantendo a consistência visual do design já estabelecido.

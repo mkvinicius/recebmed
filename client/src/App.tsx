@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
+import ConfirmEntry from "@/pages/ConfirmEntry";
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/confirm-entry" component={ConfirmEntry} />
       <Route component={NotFound} />
     </Switch>
   );
