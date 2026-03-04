@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import {
   Stethoscope, Bell, Settings, Camera, Mic, PenLine,
   Clock, CreditCard, AlertTriangle, FileText, Building2,
-  AlertCircle, Loader2, CheckCircle2, X, Trash2, User, Calendar, Save
+  AlertCircle, Loader2, CheckCircle2, X, Trash2, User, Calendar, Save,
+  HelpCircle, ChevronRight, ChevronLeft, Sparkles
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,33 @@ interface DoctorEntry {
   createdAt: string;
 }
 
+const TUTORIAL_STEPS = [
+  {
+    target: "action-card",
+    title: "Novo Lançamento",
+    text: "Aqui você registra seus procedimentos. Use Foto para tirar foto de agendas, Áudio para ditar, ou Manual para digitar.",
+    position: "bottom" as const,
+  },
+  {
+    target: "stats-grid",
+    title: "Resumo de Status",
+    text: "Acompanhe quantos lançamentos estão Pendentes, Conferidos ou Divergentes. Confira com os relatórios das clínicas.",
+    position: "bottom" as const,
+  },
+  {
+    target: "entries-list",
+    title: "Seus Lançamentos",
+    text: "Toque em qualquer lançamento para editar dados ou mudar o status manualmente. Você pode marcar como Conferido, Pendente ou Divergente.",
+    position: "top" as const,
+  },
+  {
+    target: "status-badge-area",
+    title: "Mudança Rápida de Status",
+    text: "Toque no badge de status (Pendente, Conferido, Divergente) para alterar rapidamente sem abrir o editor completo.",
+    position: "top" as const,
+  },
+];
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [userName, setUserName] = useState("");
@@ -34,6 +62,9 @@ export default function Dashboard() {
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [editForm, setEditForm] = useState({ patientName: "", procedureDate: "", insuranceProvider: "", description: "", status: "" });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -45,7 +76,24 @@ export default function Dashboard() {
     const user = getUser();
     if (user) setUserName(user.name);
     fetchEntries(token);
+
+    const tutorialDismissed = localStorage.getItem("medfin_tutorial_dismissed");
+    if (!tutorialDismissed) {
+      setTimeout(() => setShowTutorial(true), 800);
+    }
   }, [setLocation]);
+
+  const quickStatusRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!quickStatusEntry) return;
+    const handler = (e: MouseEvent) => {
+      if (quickStatusRef.current && !quickStatusRef.current.contains(e.target as Node)) {
+        setQuickStatusEntry(null);
+      }
+    };
+    setTimeout(() => document.addEventListener("mousedown", handler), 0);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [quickStatusEntry]);
 
   const fetchEntries = async (token: string) => {
     try {
@@ -194,6 +242,47 @@ export default function Dashboard() {
     }
   };
 
+  const handleQuickStatusChange = async (entryId: string, newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQuickStatusEntry(null);
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/entries/${entryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEntries(prev => prev.map(e => e.id === entryId ? { ...e, ...data.entry } : e));
+        const statusLabels: Record<string, string> = { pending: "Pendente", reconciled: "Conferido", divergent: "Divergente" };
+        toast({ title: "Status atualizado!", description: `Marcado como ${statusLabels[newStatus]}.` });
+      } else {
+        toast({ title: "Erro", description: data.message || "Não foi possível alterar o status.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro", description: "Falha ao atualizar status.", variant: "destructive" });
+    }
+  };
+
+  const dismissTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem("medfin_tutorial_dismissed", "true");
+  };
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+      setTutorialStep(s => s + 1);
+    } else {
+      dismissTutorial();
+    }
+  };
+
+  const prevTutorialStep = () => {
+    if (tutorialStep > 0) setTutorialStep(s => s - 1);
+  };
+
   const pendingCount = entries.filter((e) => e.status === "pending").length;
   const reconciledCount = entries.filter((e) => e.status === "reconciled").length;
   const divergentCount = entries.filter((e) => e.status === "divergent").length;
@@ -225,6 +314,8 @@ export default function Dashboard() {
     return "bg-[#8855f6]/10 text-[#8855f6]";
   };
 
+  const currentTutorialTarget = showTutorial ? TUTORIAL_STEPS[tutorialStep]?.target : null;
+
   return (
     <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
       <div className="hero-gradient h-72 w-full absolute top-0 left-0 z-0" />
@@ -238,6 +329,14 @@ export default function Dashboard() {
             <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setTutorialStep(0); setShowTutorial(true); }}
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md"
+              data-testid="button-help"
+              title="Ver tutorial"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
             <button className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md" data-testid="button-notifications">
               <Bell className="w-5 h-5" />
             </button>
@@ -269,7 +368,8 @@ export default function Dashboard() {
         </div>
 
         {/* Action Card */}
-        <div className="glass-card rounded-2xl p-8 shadow-2xl mb-8">
+        <div className={`glass-card rounded-2xl p-8 shadow-2xl mb-8 relative ${currentTutorialTarget === "action-card" ? "ring-2 ring-[#8855f6] ring-offset-2 z-40" : ""}`}
+          data-tutorial="action-card">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-800">Novo Lançamento</h3>
@@ -298,10 +398,15 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+          {currentTutorialTarget === "action-card" && (
+            <TutorialBalloon step={TUTORIAL_STEPS[tutorialStep]} stepIndex={tutorialStep} totalSteps={TUTORIAL_STEPS.length}
+              onNext={nextTutorialStep} onPrev={prevTutorialStep} onDismiss={dismissTutorial} />
+          )}
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative ${currentTutorialTarget === "stats-grid" ? "ring-2 ring-[#8855f6] ring-offset-2 rounded-2xl z-40" : ""}`}
+          data-tutorial="stats-grid">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col gap-1">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><Clock className="w-5 h-5" /></span>
@@ -326,10 +431,17 @@ export default function Dashboard() {
             <p className="text-slate-500 text-sm font-semibold">Divergentes</p>
             <p className="text-2xl font-extrabold text-slate-900" data-testid="stat-divergent">{divergentCount} lançamentos</p>
           </div>
+          {currentTutorialTarget === "stats-grid" && (
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full z-50">
+              <TutorialBalloon step={TUTORIAL_STEPS[tutorialStep]} stepIndex={tutorialStep} totalSteps={TUTORIAL_STEPS.length}
+                onNext={nextTutorialStep} onPrev={prevTutorialStep} onDismiss={dismissTutorial} />
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
+        <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12 relative ${currentTutorialTarget === "entries-list" || currentTutorialTarget === "status-badge-area" ? "ring-2 ring-[#8855f6] ring-offset-2 z-40" : ""}`}
+          data-tutorial="entries-list">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-lg text-slate-800">Lançamentos Recentes</h3>
             <span className="text-[#8855f6] text-sm font-bold">
@@ -360,7 +472,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p className="font-bold text-slate-800">{entry.description} - {entry.patientName}</p>
-                      <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
                         {formatDate(entry.createdAt)} • {entry.insuranceProvider}
                         <span className="inline-flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">
                           {methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}
@@ -368,18 +480,54 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                    entry.status === "reconciled" ? "bg-green-50 text-green-600"
-                    : entry.status === "divergent" ? "bg-red-50 text-red-600"
-                    : "bg-amber-50 text-amber-600"}`}>
-                    {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
-                  </span>
+                  <div className="relative" data-tutorial="status-badge-area" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${
+                        entry.status === "reconciled" ? "bg-green-50 text-green-600 hover:bg-green-100"
+                        : entry.status === "divergent" ? "bg-red-50 text-red-600 hover:bg-red-100"
+                        : "bg-amber-50 text-amber-600 hover:bg-amber-100"}`}
+                      data-testid={`quick-status-${entry.id}`}
+                    >
+                      {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
+                    </button>
+                    {quickStatusEntry === entry.id && (
+                      <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150"
+                        onClick={(e) => e.stopPropagation()}>
+                        <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alterar status</p>
+                        {[
+                          { value: "pending", label: "Pendente", icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
+                          { value: "reconciled", label: "Conferido", icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
+                          { value: "divergent", label: "Divergente", icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
+                        ].filter(s => s.value !== entry.status).map((s) => (
+                          <button key={s.value}
+                            onClick={(e) => handleQuickStatusChange(entry.id, s.value, e)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 transition-colors ${s.color}`}
+                            data-testid={`quick-set-${s.value}-${entry.id}`}
+                          >
+                            {s.icon} {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             )}
           </div>
+          {(currentTutorialTarget === "entries-list" || currentTutorialTarget === "status-badge-area") && (
+            <div className="px-6 pb-4">
+              <TutorialBalloon step={TUTORIAL_STEPS[tutorialStep]} stepIndex={tutorialStep} totalSteps={TUTORIAL_STEPS.length}
+                onNext={nextTutorialStep} onPrev={prevTutorialStep} onDismiss={dismissTutorial} />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Tutorial overlay */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/20 z-30 pointer-events-none" />
+      )}
 
       {/* Edit Modal */}
       {editingEntry && (
@@ -432,12 +580,12 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 text-sm">Status</Label>
+                <Label className="font-semibold text-slate-700 text-sm">Status da Conferência</Label>
                 <div className="flex gap-2">
                   {[
-                    { value: "pending", label: "Pendente", color: "border-amber-300 bg-amber-50 text-amber-700" },
-                    { value: "reconciled", label: "Conferido", color: "border-green-300 bg-green-50 text-green-700" },
-                    { value: "divergent", label: "Divergente", color: "border-red-300 bg-red-50 text-red-700" },
+                    { value: "pending", label: "Pendente", color: "border-amber-300 bg-amber-50 text-amber-700", desc: "Ainda não conferido" },
+                    { value: "reconciled", label: "Conferido", color: "border-green-300 bg-green-50 text-green-700", desc: "Bateu com a clínica" },
+                    { value: "divergent", label: "Divergente", color: "border-red-300 bg-red-50 text-red-700", desc: "Divergência encontrada" },
                   ].map((s) => (
                     <button key={s.value}
                       onClick={() => setEditForm(f => ({ ...f, status: s.value }))}
@@ -448,6 +596,9 @@ export default function Dashboard() {
                     </button>
                   ))}
                 </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Você pode alterar o status manualmente a qualquer momento, mesmo sem relatório da clínica.
+                </p>
               </div>
             </div>
 
@@ -467,6 +618,61 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function TutorialBalloon({ step, stepIndex, totalSteps, onNext, onPrev, onDismiss }: {
+  step: typeof TUTORIAL_STEPS[number];
+  stepIndex: number;
+  totalSteps: number;
+  onNext: () => void;
+  onPrev: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="relative z-50 pointer-events-auto mt-3" data-testid="tutorial-balloon">
+      <div className="bg-[#8855f6] text-white rounded-2xl p-5 shadow-2xl shadow-[#8855f6]/30 max-w-sm">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-white/20 rounded-xl flex-shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-bold text-sm">{step.title}</h4>
+              <button onClick={onDismiss} className="p-1 hover:bg-white/20 rounded-full transition-colors ml-2 flex-shrink-0" data-testid="tutorial-dismiss">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-white/90 leading-relaxed">{step.text}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/20">
+          <div className="flex gap-1.5">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div key={i} className={`h-1.5 rounded-full transition-all ${i === stepIndex ? "w-5 bg-white" : "w-1.5 bg-white/40"}`} />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            {stepIndex > 0 && (
+              <button onClick={onPrev} className="p-1.5 hover:bg-white/20 rounded-full transition-colors" data-testid="tutorial-prev">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+            <button onClick={onNext}
+              className="flex items-center gap-1 bg-white text-[#8855f6] px-3.5 py-1.5 rounded-full text-xs font-bold hover:bg-white/90 transition-colors"
+              data-testid="tutorial-next">
+              {stepIndex === totalSteps - 1 ? "Entendi!" : "Próximo"}
+              {stepIndex < totalSteps - 1 && <ChevronRight className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+        <button onClick={onDismiss}
+          className="w-full text-center text-xs text-white/60 mt-2 hover:text-white/90 transition-colors"
+          data-testid="tutorial-never-show">
+          Não mostrar novamente
+        </button>
+      </div>
     </div>
   );
 }
