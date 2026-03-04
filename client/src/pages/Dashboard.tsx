@@ -47,6 +47,11 @@ export default function Dashboard() {
       const res = await fetch("/api/entries", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        clearAuth();
+        setLocation("/login");
+        return;
+      }
       const data = await res.json();
       if (res.ok) setEntries(data.entries || []);
     } catch { /* ignore */ }

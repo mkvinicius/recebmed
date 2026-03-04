@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 
 export function getOpenAIClient() {
   return new OpenAI({
@@ -71,7 +71,7 @@ export async function extractDataFromAudio(base64Audio: string): Promise<{
   const client = getOpenAIClient();
 
   const audioBuffer = Buffer.from(base64Audio, "base64");
-  const audioFile = new File([audioBuffer], "audio.wav", { type: "audio/wav" });
+  const audioFile = await toFile(audioBuffer, "audio.wav");
 
   const transcription = await client.audio.transcriptions.create({
     model: "gpt-4o-mini-transcribe",

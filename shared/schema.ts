@@ -63,3 +63,5 @@ export type DoctorEntry = typeof doctorEntries.$inferSelect;
 export type InsertDoctorEntry = z.infer<typeof insertDoctorEntrySchema>;
 export type ClinicReport = typeof clinicReports.$inferSelect;
 export type InsertClinicReport = z.infer<typeof insertClinicReportSchema>;
+
+export * from "./models/chat";
