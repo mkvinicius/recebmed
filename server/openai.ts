@@ -23,6 +23,7 @@ export interface ExtractedEntry {
   procedureDate: string;
   insuranceProvider: string;
   description: string;
+  procedureValue?: string;
 }
 
 export async function extractDataFromImage(base64Image: string): Promise<ExtractedEntry[]> {
@@ -40,6 +41,7 @@ Para cada paciente, extraia:
 - procedureDate: data do procedimento no formato YYYY-MM-DD
 - insuranceProvider: nome do convênio/plano de saúde
 - description: descrição do procedimento realizado
+- procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não encontrado, omita o campo.
 
 A imagem pode conter UM ou VÁRIOS pacientes (por exemplo, uma agenda médica com múltiplos atendimentos).
 
@@ -48,7 +50,7 @@ Se houver apenas 1 paciente, retorne um array com 1 objeto.
 Se houver múltiplos pacientes, retorne um array com todos.
 
 Exemplo para múltiplos pacientes:
-[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio"},{"patientName":"Maria Santos","procedureDate":"2026-01-29","insuranceProvider":"Unimed","description":"Retirada"}]
+[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00"},{"patientName":"Maria Santos","procedureDate":"2026-01-29","insuranceProvider":"Unimed","description":"Retirada"}]
 
 Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
       },
@@ -111,6 +113,7 @@ Para cada paciente, extraia:
 - procedureDate: data do procedimento no formato YYYY-MM-DD (se não mencionada, use a data de hoje: ${new Date().toISOString().split("T")[0]})
 - insuranceProvider: nome do convênio/plano de saúde (se não mencionado, use "Particular")
 - description: descrição do procedimento realizado
+- procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não mencionado, omita o campo.
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
 Se não conseguir identificar algum campo, use "Não identificado" como valor.`,

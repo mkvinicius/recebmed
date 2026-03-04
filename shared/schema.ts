@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -20,6 +20,7 @@ export const doctorEntries = pgTable("doctor_entries", {
   procedureDate: timestamp("procedure_date").notNull(),
   insuranceProvider: text("insurance_provider").notNull(),
   description: text("description").notNull(),
+  procedureValue: numeric("procedure_value", { precision: 12, scale: 2 }),
   entryMethod: entryMethodEnum("entry_method").notNull().default("manual"),
   sourceUrl: text("source_url"),
   status: entryStatusEnum("status").notNull().default("pending"),
@@ -32,7 +33,18 @@ export const clinicReports = pgTable("clinic_reports", {
   patientName: text("patient_name").notNull(),
   procedureDate: timestamp("procedure_date").notNull(),
   reportedValue: numeric("reported_value", { precision: 12, scale: 2 }).notNull(),
+  description: text("description"),
   sourcePdfUrl: text("source_pdf_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -63,5 +75,12 @@ export type DoctorEntry = typeof doctorEntries.$inferSelect;
 export type InsertDoctorEntry = z.infer<typeof insertDoctorEntrySchema>;
 export type ClinicReport = typeof clinicReports.$inferSelect;
 export type InsertClinicReport = z.infer<typeof insertClinicReportSchema>;
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export * from "./models/chat";

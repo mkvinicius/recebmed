@@ -9,6 +9,9 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import ConfirmEntry from "@/pages/ConfirmEntry";
+import ClinicReports from "@/pages/ClinicReports";
+import Settings from "@/pages/Settings";
+import Reports from "@/pages/Reports";
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -28,6 +31,9 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/confirm-entry" component={ConfirmEntry} />
+      <Route path="/clinic-reports" component={ClinicReports} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/reports" component={Reports} />
       <Route component={NotFound} />
     </Switch>
   );

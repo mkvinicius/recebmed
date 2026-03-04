@@ -32,6 +32,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // ── Auth ──
+
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const parsed = insertUserSchema.safeParse(req.body);
@@ -91,6 +93,48 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/auth/profile", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { name } = req.body;
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ message: "Nome é obrigatório" });
+      }
+      const updated = await storage.updateUserName(userId, name.trim());
+      if (!updated) return res.status(404).json({ message: "Usuário não encontrado" });
+      return res.json({ user: { id: updated.id, name: updated.name, email: updated.email } });
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return res.status(500).json({ message: "Erro ao atualizar perfil" });
+    }
+  });
+
+  app.put("/api/auth/password", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Senhas são obrigatórias" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) return res.status(401).json({ message: "Senha atual incorreta" });
+      const salt = await bcrypt.genSalt(10);
+      const hashed = await bcrypt.hash(newPassword, salt);
+      await storage.updateUserPassword(userId, hashed);
+      return res.json({ success: true, message: "Senha alterada com sucesso" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      return res.status(500).json({ message: "Erro ao alterar senha" });
+    }
+  });
+
+  // ── AI Extraction ──
+
   app.post("/api/entries/photo", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { image } = req.body;
@@ -121,10 +165,12 @@ export async function registerRoutes(
     }
   });
 
+  // ── Entries CRUD ──
+
   app.post("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, procedureDate, insuranceProvider, description, entryMethod } = req.body;
+      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue } = req.body;
 
       if (!patientName || !procedureDate || !insuranceProvider || !description) {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
@@ -136,9 +182,18 @@ export async function registerRoutes(
         procedureDate: new Date(procedureDate),
         insuranceProvider,
         description,
+        procedureValue: procedureValue || null,
         entryMethod: entryMethod || "manual",
         sourceUrl: null,
         status: "pending",
+      });
+
+      await storage.createNotification({
+        doctorId: userId,
+        type: "entry_created",
+        title: "Novo lançamento",
+        message: `Lançamento registrado: ${patientName} - ${description}`,
+        read: false,
       });
 
       return res.status(201).json({ entry });
@@ -168,11 +223,22 @@ export async function registerRoutes(
           procedureDate: new Date(item.procedureDate),
           insuranceProvider: item.insuranceProvider,
           description: item.description,
+          procedureValue: item.procedureValue || null,
           entryMethod: entryMethod || "manual",
           sourceUrl: null,
           status: "pending",
         });
         savedEntries.push(entry);
+      }
+
+      if (savedEntries.length > 0) {
+        await storage.createNotification({
+          doctorId: userId,
+          type: "batch_created",
+          title: "Lançamentos em lote",
+          message: `${savedEntries.length} lançamentos registrados com sucesso`,
+          read: false,
+        });
       }
 
       return res.status(201).json({ entries: savedEntries, count: savedEntries.length });
@@ -202,13 +268,24 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Lançamento não encontrado" });
       }
 
-      const { patientName, procedureDate, insuranceProvider, description, status } = req.body;
+      const { patientName, procedureDate, insuranceProvider, description, status, procedureValue } = req.body;
       const updates: any = {};
       if (patientName !== undefined) updates.patientName = patientName;
       if (procedureDate !== undefined) updates.procedureDate = new Date(procedureDate);
       if (insuranceProvider !== undefined) updates.insuranceProvider = insuranceProvider;
       if (description !== undefined) updates.description = description;
       if (status !== undefined) updates.status = status;
+      if (procedureValue !== undefined) updates.procedureValue = procedureValue;
+
+      if (status === "divergent" && existing.status !== "divergent") {
+        await storage.createNotification({
+          doctorId: userId,
+          type: "divergence",
+          title: "Divergência detectada",
+          message: `Atenção: divergência marcada em ${existing.patientName} - ${existing.description}`,
+          read: false,
+        });
+      }
 
       const updated = await storage.updateDoctorEntry(id, updates);
       return res.json({ entry: updated });
@@ -231,6 +308,92 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete entry error:", error);
       return res.status(500).json({ message: "Erro ao excluir lançamento" });
+    }
+  });
+
+  // ── Clinic Reports ──
+
+  app.get("/api/clinic-reports", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const reports = await storage.getClinicReports(userId);
+      return res.json({ reports });
+    } catch (error) {
+      console.error("Get clinic reports error:", error);
+      return res.status(500).json({ message: "Erro ao buscar relatórios" });
+    }
+  });
+
+  app.post("/api/clinic-reports", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { patientName, procedureDate, reportedValue, description } = req.body;
+      if (!patientName || !procedureDate || !reportedValue) {
+        return res.status(400).json({ message: "Nome do paciente, data e valor são obrigatórios" });
+      }
+      const report = await storage.createClinicReport({
+        doctorId: userId,
+        patientName,
+        procedureDate: new Date(procedureDate),
+        reportedValue,
+        description: description || null,
+        sourcePdfUrl: null,
+      });
+      return res.status(201).json({ report });
+    } catch (error) {
+      console.error("Create clinic report error:", error);
+      return res.status(500).json({ message: "Erro ao criar relatório" });
+    }
+  });
+
+  app.delete("/api/clinic-reports/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const existing = await storage.getClinicReport(id);
+      if (!existing || existing.doctorId !== userId) {
+        return res.status(404).json({ message: "Relatório não encontrado" });
+      }
+      await storage.deleteClinicReport(id);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Delete clinic report error:", error);
+      return res.status(500).json({ message: "Erro ao excluir relatório" });
+    }
+  });
+
+  // ── Notifications ──
+
+  app.get("/api/notifications", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const notifs = await storage.getNotifications(userId);
+      const unreadCount = await storage.getUnreadNotificationCount(userId);
+      return res.json({ notifications: notifs, unreadCount });
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      return res.status(500).json({ message: "Erro ao buscar notificações" });
+    }
+  });
+
+  app.put("/api/notifications/:id/read", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      await storage.markNotificationRead(req.params.id);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Mark read error:", error);
+      return res.status(500).json({ message: "Erro ao marcar notificação" });
+    }
+  });
+
+  app.put("/api/notifications/read-all", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      await storage.markAllNotificationsRead(userId);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Mark all read error:", error);
+      return res.status(500).json({ message: "Erro ao marcar notificações" });
     }
   });
 

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Stethoscope, ArrowLeft, Check, Loader2, User, Calendar,
-  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus
+  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 
@@ -15,6 +15,7 @@ interface EntryData {
   procedureDate: string;
   insuranceProvider: string;
   description: string;
+  procedureValue: string;
 }
 
 export default function ConfirmEntry() {
@@ -34,7 +35,7 @@ export default function ConfirmEntry() {
     if (!token) { setLocation("/login"); return; }
 
     if (entryMethod === "manual") {
-      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
+      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "", procedureValue: "" }]);
       return;
     }
 
@@ -48,6 +49,7 @@ export default function ConfirmEntry() {
             procedureDate: d.procedureDate || "",
             insuranceProvider: d.insuranceProvider || "",
             description: d.description || "",
+            procedureValue: d.procedureValue || "",
           })));
         } else {
           setEntries([{
@@ -55,14 +57,15 @@ export default function ConfirmEntry() {
             procedureDate: data.procedureDate || "",
             insuranceProvider: data.insuranceProvider || "",
             description: data.description || "",
+            procedureValue: data.procedureValue || "",
           }]);
         }
         sessionStorage.removeItem("medfin_extracted");
       } catch {
-        setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
+        setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "", procedureValue: "" }]);
       }
     } else {
-      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
+      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "", procedureValue: "" }]);
     }
   }, [setLocation, entryMethod]);
 
@@ -82,6 +85,7 @@ export default function ConfirmEntry() {
       procedureDate: lastEntry?.procedureDate || new Date().toISOString().split("T")[0],
       insuranceProvider: lastEntry?.insuranceProvider || "",
       description: "",
+      procedureValue: "",
     }]);
   };
 
@@ -229,14 +233,25 @@ export default function ConfirmEntry() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
-                    <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
-                  </Label>
-                  <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
-                    placeholder="Ex: Consulta, Retorno, Sleeve"
-                    className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
-                    data-testid={`input-description-${index}`} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                      <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
+                    </Label>
+                    <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
+                      placeholder="Ex: Consulta, Retorno, Sleeve"
+                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      data-testid={`input-description-${index}`} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                      <DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)
+                    </Label>
+                    <Input type="number" step="0.01" min="0" value={entry.procedureValue} onChange={(e) => updateEntry(index, "procedureValue", e.target.value)}
+                      placeholder="0.00"
+                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      data-testid={`input-value-${index}`} />
+                  </div>
                 </div>
               </div>
             </div>
