@@ -148,6 +148,40 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/entries/batch", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { entries: entriesData, entryMethod } = req.body;
+
+      if (!Array.isArray(entriesData) || entriesData.length === 0) {
+        return res.status(400).json({ message: "Nenhum lançamento fornecido" });
+      }
+
+      const savedEntries = [];
+      for (const item of entriesData) {
+        if (!item.patientName || !item.procedureDate || !item.insuranceProvider || !item.description) {
+          continue;
+        }
+        const entry = await storage.createDoctorEntry({
+          doctorId: userId,
+          patientName: item.patientName,
+          procedureDate: new Date(item.procedureDate),
+          insuranceProvider: item.insuranceProvider,
+          description: item.description,
+          entryMethod: entryMethod || "manual",
+          sourceUrl: null,
+          status: "pending",
+        });
+        savedEntries.push(entry);
+      }
+
+      return res.status(201).json({ entries: savedEntries, count: savedEntries.length });
+    } catch (error) {
+      console.error("Batch create error:", error);
+      return res.status(500).json({ message: "Erro ao salvar lançamentos" });
+    }
+  });
+
   app.get("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;

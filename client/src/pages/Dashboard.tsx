@@ -263,7 +263,6 @@ export default function Dashboard() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={handlePhotoCapture}
                 data-testid="input-photo-capture"

@@ -18,12 +18,14 @@ function detectAudioExtension(buffer: Buffer): string {
   return "webm";
 }
 
-export async function extractDataFromImage(base64Image: string): Promise<{
+export interface ExtractedEntry {
   patientName: string;
   procedureDate: string;
   insuranceProvider: string;
   description: string;
-}> {
+}
+
+export async function extractDataFromImage(base64Image: string): Promise<ExtractedEntry[]> {
   const client = getOpenAIClient();
 
   const response = await client.chat.completions.create({
@@ -32,14 +34,21 @@ export async function extractDataFromImage(base64Image: string): Promise<{
       {
         role: "system",
         content: `Você é um assistente especializado em extrair dados de documentos médicos.
-Analise a imagem e extraia as seguintes informações:
+Analise a imagem e extraia TODOS os registros de pacientes encontrados.
+Para cada paciente, extraia:
 - patientName: nome completo do paciente
 - procedureDate: data do procedimento no formato YYYY-MM-DD
 - insuranceProvider: nome do convênio/plano de saúde
 - description: descrição do procedimento realizado
 
-Responda APENAS com um JSON válido, sem markdown, sem explicações. Exemplo:
-{"patientName":"João Silva","procedureDate":"2026-01-15","insuranceProvider":"Unimed","description":"Consulta cardiológica"}
+A imagem pode conter UM ou VÁRIOS pacientes (por exemplo, uma agenda médica com múltiplos atendimentos).
+
+Responda APENAS com um JSON válido, sem markdown, sem explicações.
+Se houver apenas 1 paciente, retorne um array com 1 objeto.
+Se houver múltiplos pacientes, retorne um array com todos.
+
+Exemplo para múltiplos pacientes:
+[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio"},{"patientName":"Maria Santos","procedureDate":"2026-01-29","insuranceProvider":"Unimed","description":"Retirada"}]
 
 Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
       },
@@ -52,33 +61,30 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
           },
           {
             type: "text",
-            text: "Extraia os dados deste documento médico/recibo.",
+            text: "Extraia os dados de TODOS os pacientes/procedimentos deste documento.",
           },
         ],
       },
     ],
-    max_completion_tokens: 500,
+    max_completion_tokens: 2000,
   });
 
-  const content = response.choices[0]?.message?.content || "{}";
+  const content = response.choices[0]?.message?.content || "[]";
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) return parsed;
+    return [parsed];
   } catch {
-    return {
+    return [{
       patientName: "Não identificado",
       procedureDate: new Date().toISOString().split("T")[0],
       insuranceProvider: "Não identificado",
       description: "Não identificado",
-    };
+    }];
   }
 }
 
-export async function extractDataFromAudio(base64Audio: string): Promise<{
-  patientName: string;
-  procedureDate: string;
-  insuranceProvider: string;
-  description: string;
-}> {
+export async function extractDataFromAudio(base64Audio: string): Promise<ExtractedEntry[]> {
   const client = getOpenAIClient();
 
   const audioBuffer = Buffer.from(base64Audio, "base64");
@@ -99,13 +105,14 @@ export async function extractDataFromAudio(base64Audio: string): Promise<{
       {
         role: "system",
         content: `Você é um assistente especializado em extrair dados de transcrições de áudio de médicos.
-O médico ditou informações sobre um procedimento/consulta. Extraia:
+O médico ditou informações sobre um ou mais procedimentos/consultas. Extraia TODOS os pacientes mencionados.
+Para cada paciente, extraia:
 - patientName: nome completo do paciente
 - procedureDate: data do procedimento no formato YYYY-MM-DD (se não mencionada, use a data de hoje: ${new Date().toISOString().split("T")[0]})
 - insuranceProvider: nome do convênio/plano de saúde (se não mencionado, use "Particular")
 - description: descrição do procedimento realizado
 
-Responda APENAS com um JSON válido, sem markdown, sem explicações.
+Responda APENAS com um array JSON válido, sem markdown, sem explicações.
 Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
       },
       {
@@ -113,18 +120,20 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
         content: `Transcrição do áudio: "${transcribedText}"`,
       },
     ],
-    max_completion_tokens: 500,
+    max_completion_tokens: 2000,
   });
 
-  const content = response.choices[0]?.message?.content || "{}";
+  const content = response.choices[0]?.message?.content || "[]";
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) return parsed;
+    return [parsed];
   } catch {
-    return {
+    return [{
       patientName: "Não identificado",
       procedureDate: new Date().toISOString().split("T")[0],
       insuranceProvider: "Não identificado",
       description: transcribedText || "Não identificado",
-    };
+    }];
   }
 }

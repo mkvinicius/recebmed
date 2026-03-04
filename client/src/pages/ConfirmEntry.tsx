@@ -6,21 +6,23 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Stethoscope, ArrowLeft, Check, Loader2, User, Calendar,
-  Building2, FileText, Camera, Mic, PenLine
+  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
+
+interface EntryData {
+  patientName: string;
+  procedureDate: string;
+  insuranceProvider: string;
+  description: string;
+}
 
 export default function ConfirmEntry() {
   const [, setLocation] = useLocation();
   const search = useSearch();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const [patientName, setPatientName] = useState("");
-  const [procedureDate, setProcedureDate] = useState("");
-  const [insuranceProvider, setInsuranceProvider] = useState("");
-  const [description, setDescription] = useState("");
+  const [entries, setEntries] = useState<EntryData[]>([]);
 
   const params = new URLSearchParams(search);
   const entryMethod = params.get("method") || "manual";
@@ -32,7 +34,7 @@ export default function ConfirmEntry() {
     if (!token) { setLocation("/login"); return; }
 
     if (entryMethod === "manual") {
-      setProcedureDate(new Date().toISOString().split("T")[0]);
+      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
       return;
     }
 
@@ -40,39 +42,89 @@ export default function ConfirmEntry() {
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
-        setPatientName(data.patientName || "");
-        setProcedureDate(data.procedureDate || "");
-        setInsuranceProvider(data.insuranceProvider || "");
-        setDescription(data.description || "");
+        if (Array.isArray(data)) {
+          setEntries(data.map((d: any) => ({
+            patientName: d.patientName || "",
+            procedureDate: d.procedureDate || "",
+            insuranceProvider: d.insuranceProvider || "",
+            description: d.description || "",
+          })));
+        } else {
+          setEntries([{
+            patientName: data.patientName || "",
+            procedureDate: data.procedureDate || "",
+            insuranceProvider: data.insuranceProvider || "",
+            description: data.description || "",
+          }]);
+        }
         sessionStorage.removeItem("medfin_extracted");
       } catch {
-        /* ignore */
+        setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
       }
+    } else {
+      setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "" }]);
     }
   }, [setLocation, entryMethod]);
+
+  const updateEntry = (index: number, field: keyof EntryData, value: string) => {
+    setEntries(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
+  };
+
+  const removeEntry = (index: number) => {
+    if (entries.length <= 1) return;
+    setEntries(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addEntry = () => {
+    const lastEntry = entries[entries.length - 1];
+    setEntries(prev => [...prev, {
+      patientName: "",
+      procedureDate: lastEntry?.procedureDate || new Date().toISOString().split("T")[0],
+      insuranceProvider: lastEntry?.insuranceProvider || "",
+      description: "",
+    }]);
+  };
 
   const handleSave = async () => {
     const token = getToken();
     if (!token) return;
 
-    if (!patientName || !procedureDate || !insuranceProvider || !description) {
-      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos antes de salvar.", variant: "destructive" });
+    const validEntries = entries.filter(e => e.patientName && e.procedureDate && e.insuranceProvider && e.description);
+    if (validEntries.length === 0) {
+      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos de pelo menos um lançamento.", variant: "destructive" });
       return;
     }
 
     setIsSaving(true);
     try {
-      const res = await fetch("/api/entries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ patientName, procedureDate, insuranceProvider, description, entryMethod }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast({ title: "Erro ao salvar", description: data.message, variant: "destructive" });
-        return;
+      if (validEntries.length === 1) {
+        const e = validEntries[0];
+        const res = await fetch("/api/entries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ...e, entryMethod }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast({ title: "Erro ao salvar", description: data.message, variant: "destructive" });
+          return;
+        }
+      } else {
+        const res = await fetch("/api/entries/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ entries: validEntries, entryMethod }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast({ title: "Erro ao salvar", description: data.message, variant: "destructive" });
+          return;
+        }
       }
-      toast({ title: "Lançamento salvo!", description: "Os dados foram registrados com sucesso." });
+      toast({
+        title: validEntries.length > 1 ? `${validEntries.length} lançamentos salvos!` : "Lançamento salvo!",
+        description: "Os dados foram registrados com sucesso.",
+      });
       setLocation("/dashboard");
     } catch {
       toast({ title: "Erro de conexão", description: "Não foi possível salvar.", variant: "destructive" });
@@ -80,6 +132,8 @@ export default function ConfirmEntry() {
       setIsSaving(false);
     }
   };
+
+  const isBatch = entries.length > 1;
 
   return (
     <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
@@ -105,88 +159,116 @@ export default function ConfirmEntry() {
             Voltar ao Dashboard
           </button>
           <h2 className="text-2xl font-extrabold">
-            {entryMethod === "manual" ? "Novo Lançamento Manual" : "Confirmar Lançamento"}
+            {entryMethod === "manual" ? "Novo Lançamento Manual" : "Confirmar Lançamentos"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">
-            {entryMethod === "manual" ? "Preencha os dados do procedimento" : "Revise os dados extraídos pela IA e confirme"}
+            {entryMethod === "manual"
+              ? "Preencha os dados do procedimento"
+              : isBatch
+                ? `${entries.length} registros encontrados — revise e confirme`
+                : "Revise os dados extraídos pela IA e confirme"}
           </p>
         </div>
 
-        <div className="glass-card rounded-2xl p-8 shadow-2xl mb-8">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <Loader2 className="w-10 h-10 text-[#8855f6] animate-spin" />
-              <p className="text-slate-500 font-medium">Processando com IA...</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100">
-                <div className={`p-2 rounded-xl ${entryMethod === "manual" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
-                  {entryMethod === "manual" ? <PenLine className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+        <div className="space-y-4 mb-8">
+          {entries.map((entry, index) => (
+            <div key={index} className="glass-card rounded-2xl p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${entryMethod === "manual" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
+                    {entryMethod === "manual" ? <PenLine className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">
+                      {isBatch ? `Paciente ${index + 1} de ${entries.length}` : entryMethod === "manual" ? "Lançamento Manual" : "Dados extraídos"}
+                    </p>
+                    <p className="text-xs text-slate-400 flex items-center gap-1">
+                      <SourceIcon className="w-3 h-3" /> Via {sourceLabel}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-800">
-                    {entryMethod === "manual" ? "Lançamento Manual" : "Dados extraídos com sucesso"}
-                  </p>
-                  <p className="text-xs text-slate-400 flex items-center gap-1">
-                    <SourceIcon className="w-3 h-3" /> Via {sourceLabel}
-                  </p>
+                {entries.length > 1 && (
+                  <button
+                    onClick={() => removeEntry(index)}
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    data-testid={`button-remove-entry-${index}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente
+                  </Label>
+                  <Input value={entry.patientName} onChange={(e) => updateEntry(index, "patientName", e.target.value)}
+                    placeholder="Nome completo"
+                    className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                    data-testid={`input-patient-name-${index}`} />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#8855f6]" /> Nome do Paciente
-                </Label>
-                <Input value={patientName} onChange={(e) => setPatientName(e.target.value)}
-                  placeholder="Nome completo do paciente"
-                  className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
-                  data-testid="input-patient-name" />
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                      <Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data
+                    </Label>
+                    <Input type="date" value={entry.procedureDate} onChange={(e) => updateEntry(index, "procedureDate", e.target.value)}
+                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      data-testid={`input-procedure-date-${index}`} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                      <Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio
+                    </Label>
+                    <Input value={entry.insuranceProvider} onChange={(e) => updateEntry(index, "insuranceProvider", e.target.value)}
+                      placeholder="Ex: Particular"
+                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      data-testid={`input-insurance-${index}`} />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#8855f6]" /> Data do Procedimento
-                </Label>
-                <Input type="date" value={procedureDate} onChange={(e) => setProcedureDate(e.target.value)}
-                  className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
-                  data-testid="input-procedure-date" />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#8855f6]" /> Convênio
-                </Label>
-                <Input value={insuranceProvider} onChange={(e) => setInsuranceProvider(e.target.value)}
-                  placeholder="Ex: Unimed, SUS, Particular"
-                  className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
-                  data-testid="input-insurance" />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-[#8855f6]" /> Procedimento
-                </Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Consulta, Retorno, Sleeve"
-                  className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
-                  data-testid="input-description" />
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button variant="outline" onClick={() => setLocation("/dashboard")}
-                  className="flex-1 h-12 rounded-full font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50"
-                  data-testid="button-cancel">
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={isSaving}
-                  className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
-                  data-testid="button-save-entry">
-                  {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : "Salvar Lançamento"}
-                </Button>
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
+                  </Label>
+                  <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
+                    placeholder="Ex: Consulta, Retorno, Sleeve"
+                    className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                    data-testid={`input-description-${index}`} />
+                </div>
               </div>
             </div>
-          )}
+          ))}
+        </div>
+
+        <div className="mb-4">
+          <button
+            onClick={addEntry}
+            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 hover:text-[#8855f6] hover:border-[#8855f6]/30 transition-colors font-semibold text-sm"
+            data-testid="button-add-entry"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar mais um lançamento
+          </button>
+        </div>
+
+        <div className="flex gap-4 pb-12">
+          <Button variant="outline" onClick={() => setLocation("/dashboard")}
+            className="flex-1 h-12 rounded-full font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+            data-testid="button-cancel">
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}
+            className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
+            data-testid="button-save-entry">
+            {isSaving
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+              : entries.length > 1
+                ? `Salvar ${entries.length} Lançamentos`
+                : "Salvar Lançamento"}
+          </Button>
         </div>
       </div>
     </div>
