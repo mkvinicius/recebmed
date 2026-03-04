@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 
 interface DoctorEntry {
   id: string;
@@ -128,32 +129,28 @@ export default function Dashboard() {
         setProcessingAudio(true);
 
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = reader.result as string;
-          const token = getToken();
-          if (!token) return;
+        const token = getToken();
+        if (!token) { setProcessingAudio(false); return; }
 
-          try {
-            const res = await fetch("/api/entries/audio", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ audio: base64 }),
-            });
-            const data = await res.json();
-            if (data.success && data.extractedData) {
-              sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData));
-              setLocation("/confirm-entry?method=audio");
-            } else {
-              toast({ title: "Erro", description: data.message || "Não foi possível processar o áudio.", variant: "destructive" });
-            }
-          } catch {
-            toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" });
-          } finally {
-            setProcessingAudio(false);
+        try {
+          const wavBase64 = await convertBlobToWavBase64(audioBlob);
+          const res = await fetch("/api/entries/audio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ audio: wavBase64 }),
+          });
+          const data = await res.json();
+          if (data.success && data.extractedData) {
+            sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData));
+            setLocation("/confirm-entry?method=audio");
+          } else {
+            toast({ title: "Erro", description: data.message || "Não foi possível processar o áudio.", variant: "destructive" });
           }
-        };
-        reader.readAsDataURL(audioBlob);
+        } catch {
+          toast({ title: "Erro", description: "Falha ao processar o áudio. Tente novamente.", variant: "destructive" });
+        } finally {
+          setProcessingAudio(false);
+        }
       };
 
       mediaRecorder.start();
