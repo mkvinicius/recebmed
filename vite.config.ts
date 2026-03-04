@@ -41,11 +41,7 @@ export default defineConfig(async () => {
     server: {
       host: "0.0.0.0",
       watch: {
-        ignored: ["**/.local/**"],
-      },
-      fs: {
-        strict: true,
-        deny: ["**/.*"],
+        ignored: ["**/.local/**", "**/.cache/**"],
       },
     },
   };

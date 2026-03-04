@@ -5,6 +5,8 @@ import { insertUserSchema, loginSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { extractDataFromImage, extractDataFromAudio } from "./openai";
+import { extractPdfData, runReconciliation } from "./reconciliation";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 const JWT_SECRET = process.env.JWT_SECRET || "medfin_jwt_secret_dev_key";
 
@@ -184,7 +186,7 @@ export async function registerRoutes(
         description,
         procedureValue: procedureValue || null,
         entryMethod: entryMethod || "manual",
-        sourceUrl: null,
+        sourceUrl: req.body.sourceUrl || null,
         status: "pending",
       });
 
@@ -225,7 +227,7 @@ export async function registerRoutes(
           description: item.description,
           procedureValue: item.procedureValue || null,
           entryMethod: entryMethod || "manual",
-          sourceUrl: null,
+          sourceUrl: item.sourceUrl || null,
           status: "pending",
         });
         savedEntries.push(entry);
@@ -396,6 +398,130 @@ export async function registerRoutes(
       return res.status(500).json({ message: "Erro ao marcar notificações" });
     }
   });
+
+  // ── Single Entry Detail ──
+
+  app.get("/api/entries/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const entry = await storage.getDoctorEntry(id);
+      if (!entry || entry.doctorId !== userId) {
+        return res.status(404).json({ message: "Lançamento não encontrado" });
+      }
+      return res.json({ entry });
+    } catch (error) {
+      console.error("Get entry error:", error);
+      return res.status(500).json({ message: "Erro ao buscar lançamento" });
+    }
+  });
+
+  // ── PDF Reconciliation ──
+
+  app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { pdf } = req.body;
+      if (!pdf) {
+        return res.status(400).json({ message: "PDF não enviado" });
+      }
+
+      const base64Data = pdf.replace(/^data:[^;]+;base64,/, "");
+      const pdfBuffer = Buffer.from(base64Data, "base64");
+
+      const extractedData = await extractPdfData(pdfBuffer);
+
+      for (const item of extractedData) {
+        await storage.createClinicReport({
+          doctorId: userId,
+          patientName: item.patientName,
+          procedureDate: new Date(item.procedureDate),
+          reportedValue: item.reportedValue || "0.00",
+          description: item.description || null,
+          sourcePdfUrl: null,
+        });
+      }
+
+      await runReconciliation(userId);
+
+      const allEntries = await storage.getDoctorEntries(userId);
+      const reconciled = allEntries.filter(e => e.status === "reconciled");
+      const divergent = allEntries.filter(e => e.status === "divergent");
+      const pending = allEntries.filter(e => e.status === "pending");
+
+      return res.json({
+        success: true,
+        extractedCount: extractedData.length,
+        reconciliation: { reconciled, divergent, pending },
+      });
+    } catch (error) {
+      console.error("PDF reconciliation error:", error);
+      return res.status(500).json({ message: "Erro ao processar PDF" });
+    }
+  });
+
+  app.get("/api/reconciliation/results", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const allEntries = await storage.getDoctorEntries(userId);
+      const reconciled = allEntries.filter(e => e.status === "reconciled");
+      const divergent = allEntries.filter(e => e.status === "divergent");
+      const pending = allEntries.filter(e => e.status === "pending");
+      return res.json({ reconciled, divergent, pending });
+    } catch (error) {
+      console.error("Get reconciliation results error:", error);
+      return res.status(500).json({ message: "Erro ao buscar resultados" });
+    }
+  });
+
+  // ── Financial Projections ──
+
+  app.get("/api/financials/projections", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const entries = await storage.getReconciledAndDivergentEntries(userId);
+      const now = new Date();
+
+      const calculate = (daysAhead: number) => {
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() + daysAhead);
+        return entries
+          .filter(e => {
+            const d = new Date(e.procedureDate);
+            return d >= now && d <= cutoff;
+          })
+          .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+      };
+
+      const allReconciledTotal = entries
+        .filter(e => e.status === "reconciled")
+        .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+
+      const allDivergentTotal = entries
+        .filter(e => e.status === "divergent")
+        .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+
+      return res.json({
+        projections: {
+          days30: calculate(30),
+          days60: calculate(60),
+          days90: calculate(90),
+        },
+        totals: {
+          reconciled: allReconciledTotal,
+          divergent: allDivergentTotal,
+          total: allReconciledTotal + allDivergentTotal,
+        },
+        entryCount: entries.length,
+      });
+    } catch (error) {
+      console.error("Projections error:", error);
+      return res.status(500).json({ message: "Erro ao calcular projeções" });
+    }
+  });
+
+  // ── Object Storage Routes ──
+  registerObjectStorageRoutes(app);
 
   return httpServer;
 }

@@ -1,0 +1,78 @@
+**Assunto:** Evolução do Medfin - Implementação dos Módulos de Conciliação, Evidência e Projeção.
+
+**Contexto e Regra de Ouro:**
+O sistema Medfin já possui uma base funcional com um design system premium. Todas as novas funcionalidades e telas devem aderir estritamente a esta identidade visual (cores, fontes, componentes) para garantir a consistência.
+
+**Sua Tarefa:**
+Implementar as três funcionalidades a seguir, em ordem de prioridade.
+
+---
+
+### **Prioridade 1: Construir o Módulo de Conciliação de PDF**
+
+**Objetivo:** Permitir que o médico faça o upload de um relatório de pagamento (PDF) da clínica e receba um relatório de conferência automático.
+
+**Ações de Backend (`server/`):**
+
+1.  **Crie o Endpoint de Upload:** Em um novo arquivo de rota (`reconciliation.ts`), crie o endpoint `POST /api/reconciliation/upload-pdf`.
+2.  **Implemente o Controlador:** Crie o `reconciliationController.ts` com a função `processPdfReport`. Esta função deve:
+    a. Receber o arquivo PDF.
+    b. Usar uma biblioteca (como `pdf-parse` no Node.js) para extrair o conteúdo textual da tabela do PDF.
+    c. Enviar o texto extraído para uma IA (GPT-4o/Claude 3.5) com o prompt: *"Extraia os seguintes dados de cada linha desta tabela e retorne um array de objetos JSON: `patientName`, `procedureDate`, `reportedValue`."*
+    d. Para cada objeto JSON retornado, insira um novo registro na tabela `clinic_reports` do banco de dados.
+    e. **Acione o Agente Orquestrador:** Após salvar os dados, chame uma nova função assíncrona `runReconciliation(doctorId)`.
+3.  **Implemente o Agente Orquestrador:** Crie a função `runReconciliation(doctorId)`. Esta função é o cérebro da conferência:
+    a. Ela busca todos os `doctor_entries` com status 'pending' e todos os `clinic_reports` recém-adicionados para um determinado médico.
+    b. Ela itera sobre cada `doctor_entry` e tenta encontrar uma correspondência em `clinic_reports` usando `patientName` (com uma lógica de similaridade de texto, ex: Levenshtein distance) e `procedureDate` (com uma tolerância de ±7 dias).
+    c. **Lógica de Status:**
+        *   Se encontrar uma correspondência e o `reportedValue` bater com o valor do médico (se existir), atualiza o status da `doctor_entry` para `'reconciled'`.
+        *   Se encontrar uma correspondência mas o valor for diferente, atualiza o status para `'divergent'`.
+        *   Se não encontrar correspondência após um certo tempo, o status permanece `'pending'`.
+
+**Ações de Frontend (`client/`):**
+
+1.  **Crie a Página de Conciliação:** Crie uma nova página/rota `/reconciliation`. Esta página deve conter:
+    a. Um componente de upload de arquivo com design premium.
+    b. Uma área para exibir o "Último Relatório de Conferência".
+2.  **Crie a Tela de Relatório:** Esta tela (pode ser parte da página `/reconciliation`) deve exibir os resultados da conciliação com abas ou seções claras:
+    a. **Conciliados (Verde):** Lista de lançamentos que bateram.
+    b. **Divergentes (Amarelo):** Lista de lançamentos com problemas. Cada item deve ser clicável para mostrar os detalhes da divergência.
+    c. **Pendentes (Vermelho):** Lançamentos do médico que não foram encontrados no relatório da clínica.
+
+---
+
+### **Prioridade 2: Anexar a Evidência (Imagem da Etiqueta)**
+
+**Objetivo:** Salvar a imagem original de cada lançamento e exibi-la para auditoria.
+
+**Ações de Backend (`server/`):**
+
+1.  **Modifique o Endpoint de Lançamento:** No endpoint `POST /api/entries/photo`, adicione a lógica para fazer o upload da imagem recebida para um serviço de armazenamento de objetos (como o bucket padrão do Replit ou AWS S3).
+2.  **Salve a URL:** Ao salvar um novo registro na tabela `doctor_entries` após a confirmação do médico, preencha o campo `sourceUrl` com a URL da imagem que foi salva no passo anterior.
+
+**Ações de Frontend (`client/`):**
+
+1.  **Crie a Tela de Detalhes:** Crie uma nova página/rota dinâmica, como `/entry/:id`.
+2.  **Torne os Lançamentos Clicáveis:** Na lista de lançamentos do Dashboard, faça com que cada item seja um link que leva para a sua respectiva página de detalhes (ex: `/entry/123-abc`).
+3.  **Exiba os Detalhes:** A página de detalhes deve buscar todas as informações daquele lançamento no backend e exibi-las de forma clara. **Crucialmente, ela deve conter um componente que renderiza a imagem a partir da `sourceUrl` salva no banco de dados.**
+
+---
+
+### **Prioridade 3: Construir o Painel de Projeção de Recebíveis**
+
+**Objetivo:** Dar ao médico uma visão clara de seus recebimentos futuros com base nos relatórios das clínicas.
+
+**Ações de Backend (`server/`):**
+
+1.  **Crie o Endpoint de Projeção:** Crie um novo endpoint `GET /api/financials/projections`.
+2.  **Implemente a Lógica de Cálculo:** A função deste endpoint deve:
+    a. Buscar no banco de dados todos os registros da tabela `clinic_reports` que correspondem a lançamentos com status `'reconciled'` ou `'divergent'`.
+    b. Agrupar a soma dos `reportedValue` desses registros com base em uma data de pagamento estimada (ex: `procedureDate` + 30 dias, `procedureDate` + 60 dias, etc.).
+    c. Retornar um objeto JSON com as projeções. Ex: `{ "next30Days": 15200, "next60Days": 8500, "next90Days": 4300 }`.
+
+**Ações de Frontend (`client/`):**
+
+1.  **Crie o Componente de Projeção:** Crie um novo componente React chamado `ProjectionsPanel`.
+2.  **Integre ao Dashboard:**
+    a. Faça o `ProjectionsPanel` buscar os dados do endpoint `/api/financials/projections` quando for montado.
+    b. Adicione este componente em um local de destaque no Dashboard principal, exibindo os valores de forma clara e visualmente atraente (ex: cards individuais para "30 dias", "60 dias", etc.).

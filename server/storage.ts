@@ -5,7 +5,7 @@ import {
   type Notification, type InsertNotification, notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, gte, inArray, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -31,6 +31,11 @@ export interface IStorage {
   markNotificationRead(id: string): Promise<boolean>;
   markAllNotificationsRead(doctorId: string): Promise<boolean>;
   getUnreadNotificationCount(doctorId: string): Promise<number>;
+
+  getPendingDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
+  getRecentClinicReports(doctorId: string, since: Date): Promise<ClinicReport[]>;
+  batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void>;
+  getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -124,6 +129,24 @@ export class DatabaseStorage implements IStorage {
   async getUnreadNotificationCount(doctorId: string): Promise<number> {
     const result = await db.select().from(notifications).where(and(eq(notifications.doctorId, doctorId), eq(notifications.read, false)));
     return result.length;
+  }
+
+  async getPendingDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
+    return db.select().from(doctorEntries).where(and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.status, "pending"))).orderBy(desc(doctorEntries.createdAt));
+  }
+
+  async getRecentClinicReports(doctorId: string, since: Date): Promise<ClinicReport[]> {
+    return db.select().from(clinicReports).where(and(eq(clinicReports.doctorId, doctorId), gte(clinicReports.createdAt, since))).orderBy(desc(clinicReports.createdAt));
+  }
+
+  async batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void> {
+    for (const update of updates) {
+      await db.update(doctorEntries).set({ status: update.status as any }).where(eq(doctorEntries.id, update.id));
+    }
+  }
+
+  async getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]> {
+    return db.select().from(doctorEntries).where(and(eq(doctorEntries.doctorId, doctorId), or(eq(doctorEntries.status, "reconciled"), eq(doctorEntries.status, "divergent")))).orderBy(desc(doctorEntries.procedureDate));
   }
 }
 

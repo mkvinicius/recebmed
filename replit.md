@@ -15,8 +15,11 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 
 ```
 client/src/
-  pages/             - Login, Register, Dashboard, ConfirmEntry, Settings, ClinicReports, Reports
+  pages/             - Login, Register, Dashboard, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail
   components/ui/     - shadcn/ui components
+  components/ProjectionsPanel.tsx - Financial projections panel (30/60/90 days)
+  components/ObjectUploader.tsx   - Uppy-based file upload component
+  hooks/use-upload.ts             - Upload hook for presigned URL flow
   lib/auth.ts        - Token/user management utilities
   lib/audioUtils.ts  - WAV conversion for iPhone audio compatibility
   lib/queryClient.ts
@@ -24,10 +27,12 @@ client/src/
 
 server/
   index.ts           - Express entry point (50mb body limit)
-  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI processing)
+  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + object storage)
   openai.ts          - OpenAI client + image/audio extraction functions
+  reconciliation.ts  - PDF extraction (pdf-parse + OpenAI) + reconciliation engine (Levenshtein matching)
   storage.ts         - Database storage interface (Drizzle)
   db.ts              - Database connection pool
+  replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
 
 shared/
   schema.ts          - Drizzle schema + Zod validation schemas
@@ -65,6 +70,17 @@ shared/
 - `POST /api/clinic-reports` - Create a clinic report
 - `DELETE /api/clinic-reports/:id` - Delete a clinic report (with ownership check)
 
+### Reconciliation
+- `POST /api/reconciliation/upload-pdf` - Upload PDF, extract data with AI, auto-reconcile entries
+- `GET /api/reconciliation/results` - Get entries grouped by reconciliation status
+
+### Financial Projections
+- `GET /api/financials/projections` - Calculate projected receivables (30/60/90 days)
+
+### Object Storage
+- `POST /api/uploads/request-url` - Get presigned upload URL
+- `GET /objects/{*objectPath}` - Serve uploaded files
+
 ### Notifications
 - `GET /api/notifications` - List notifications with unread count
 - `PUT /api/notifications/:id/read` - Mark single notification as read
@@ -78,6 +94,9 @@ shared/
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
 - **Reports**: Financial charts with recharts (bar chart by month, pie chart by insurance), summary cards, period filters
+- **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries (Levenshtein name matching + date proximity). Results shown in three tabs: Conciliados/Divergentes/Pendentes
+- **EntryDetail**: Detailed view of individual entry with image evidence display (if sourceUrl exists)
+- **ProjectionsPanel**: Dashboard component showing projected receivables for 30/60/90 day windows
 - **Tutorial**: 4-step balloon tutorial with localStorage persistence, help button to re-open
 
 ## Design System
@@ -91,14 +110,6 @@ shared/
 - Buttons: rounded-full, shadow-lg with primary/30 shadow
 - All UI text in pt-BR (Brazilian Portuguese)
 
-## Key Dependencies
-
-- bcryptjs, jsonwebtoken (auth)
-- openai (AI integrations - uses AI_INTEGRATIONS_OPENAI_API_KEY + AI_INTEGRATIONS_OPENAI_BASE_URL)
-- drizzle-orm, drizzle-zod, pg (database)
-- wouter (routing), @tanstack/react-query (data fetching)
-- lucide-react (icons), recharts (charts)
-
 ## Entry Flow
 
 1. Dashboard: User clicks Photo/Audio/Manual button
@@ -111,5 +122,34 @@ shared/
 ## Entry Status
 
 - `pending` (Pendente): Default status for new entries
-- `reconciled` (Conferido): Manually set when confirmed against clinic report
-- `divergent` (Divergente): Manually set when discrepancy found
+- `reconciled` (Conferido): Set automatically by reconciliation engine or manually
+- `divergent` (Divergente): Set automatically when values don't match or manually
+
+## Key Dependencies
+
+- bcryptjs, jsonwebtoken (auth)
+- openai (AI integrations - uses AI_INTEGRATIONS_OPENAI_API_KEY + AI_INTEGRATIONS_OPENAI_BASE_URL)
+- pdf-parse (PDF text extraction for reconciliation)
+- @google-cloud/storage, google-auth-library (object storage via Replit sidecar)
+- drizzle-orm, drizzle-zod, pg (database)
+- wouter (routing), @tanstack/react-query (data fetching)
+- lucide-react (icons), recharts (charts)
+- @uppy/core, @uppy/dashboard, @uppy/react, @uppy/aws-s3 (file uploads)
+
+## Environment Variables
+
+- `JWT_SECRET` - JWT signing secret
+- `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI API key (Replit AI Integrations)
+- `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI base URL
+- `DEFAULT_OBJECT_STORAGE_BUCKET_ID` - Replit object storage bucket ID
+- `PUBLIC_OBJECT_SEARCH_PATHS` - Public asset search paths
+- `PRIVATE_OBJECT_DIR` - Private object storage directory
+
+## Important Notes
+
+- Vite 3.2.11 + Rollup 2.80.0 (security requirement) - do NOT upgrade rollup above 2.x
+- CSS uses @tailwindcss/postcss v4 (NOT the Vite plugin). postcss.config.js at root
+- tw-animate-css uses direct import path (not package name, incompatible exports with Vite 3)
+- CSS pre-warm in server/vite.ts to avoid 16s first load delay
+- Express 5.2.1 with path-to-regexp v8 - use `{*param}` syntax for wildcard routes
+- pdf-parse imported via `import * as pdfParseModule` (no default export in ESM)

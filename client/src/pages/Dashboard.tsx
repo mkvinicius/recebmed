@@ -13,6 +13,7 @@ import {
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
+import ProjectionsPanel from "@/components/ProjectionsPanel";
 
 interface DoctorEntry {
   id: string;
@@ -382,6 +383,9 @@ export default function Dashboard() {
           <button onClick={() => setLocation("/reports")} className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition-colors" data-testid="nav-reports">
             <BarChart3 className="w-4 h-4 text-[#8855f6]" /> Relatórios Financeiros
           </button>
+          <button onClick={() => setLocation("/reconciliation")} className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition-colors" data-testid="nav-reconciliation">
+            <CheckCheck className="w-4 h-4 text-[#8855f6]" /> Conciliação PDF
+          </button>
           <button onClick={() => setLocation("/settings")} className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition-colors" data-testid="nav-settings">
             <Settings className="w-4 h-4 text-[#8855f6]" /> Configurações
           </button>
@@ -423,6 +427,9 @@ export default function Dashboard() {
           </div>
           {currentTutorialTarget === "stats-grid" && <div className="col-span-full"><TutorialBalloon step={TUTORIAL_STEPS[tutorialStep]} stepIndex={tutorialStep} totalSteps={TUTORIAL_STEPS.length} onNext={nextTutorialStep} onPrev={prevTutorialStep} onDismiss={dismissTutorial} /></div>}
         </div>
+
+        {/* Projections Panel */}
+        <ProjectionsPanel />
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
@@ -469,7 +476,7 @@ export default function Dashboard() {
               </div>
             ) : (
               filteredEntries.map(entry => (
-                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
+                <div key={entry.id} onClick={() => setLocation(`/entry/${entry.id}`)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={`size-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                     <div className="min-w-0 flex-1">

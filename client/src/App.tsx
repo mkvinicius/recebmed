@@ -12,6 +12,8 @@ import ConfirmEntry from "@/pages/ConfirmEntry";
 import ClinicReports from "@/pages/ClinicReports";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
+import Reconciliation from "@/pages/Reconciliation";
+import EntryDetail from "@/pages/EntryDetail";
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -34,6 +36,8 @@ function Router() {
       <Route path="/clinic-reports" component={ClinicReports} />
       <Route path="/settings" component={Settings} />
       <Route path="/reports" component={Reports} />
+      <Route path="/reconciliation" component={Reconciliation} />
+      <Route path="/entry/:id" component={EntryDetail} />
       <Route component={NotFound} />
     </Switch>
   );
