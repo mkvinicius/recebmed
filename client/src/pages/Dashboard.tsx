@@ -476,7 +476,7 @@ export default function Dashboard() {
               </div>
             ) : (
               filteredEntries.map(entry => (
-                <div key={entry.id} onClick={() => setLocation(`/entry/${entry.id}`)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
+                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={`size-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                     <div className="min-w-0 flex-1">

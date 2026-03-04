@@ -42,9 +42,7 @@ export default defineConfig(async () => {
     },
     server: {
       host: "0.0.0.0",
-      hmr: {
-        path: "/__vite_hmr",
-      },
+      hmr: false,
       watch: {
         ignored: ["**/.local/**", "**/.cache/**"],
       },
