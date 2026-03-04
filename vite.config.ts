@@ -15,10 +15,12 @@ export default defineConfig(async () => {
     process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
   ) {
-    const cartographerModule = await import("@replit/vite-plugin-cartographer");
-    const devBannerModule = await import("@replit/vite-plugin-dev-banner");
-    plugins.push(cartographerModule.cartographer());
-    plugins.push(devBannerModule.devBanner());
+    try {
+      const cartographerModule = await import("@replit/vite-plugin-cartographer");
+      const devBannerModule = await import("@replit/vite-plugin-dev-banner");
+      plugins.push(cartographerModule.cartographer());
+      plugins.push(devBannerModule.devBanner());
+    } catch {}
   }
 
   return {
@@ -40,6 +42,9 @@ export default defineConfig(async () => {
     },
     server: {
       host: "0.0.0.0",
+      hmr: {
+        path: "/__vite_hmr",
+      },
       watch: {
         ignored: ["**/.local/**", "**/.cache/**"],
       },
