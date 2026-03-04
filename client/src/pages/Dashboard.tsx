@@ -458,7 +458,7 @@ export default function Dashboard() {
         </div>
 
         {/* Entries List */}
-        <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12 relative ${currentTutorialTarget === "entries-list" ? "ring-2 ring-[#8855f6] ring-offset-2 z-40" : ""}`} data-tutorial="entries-list">
+        <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 mb-12 relative ${currentTutorialTarget === "entries-list" ? "ring-2 ring-[#8855f6] ring-offset-2 z-40" : ""}`} data-tutorial="entries-list">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-lg text-slate-800">Lançamentos</h3>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
@@ -497,7 +497,7 @@ export default function Dashboard() {
                       {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
                     </button>
                     {quickStatusEntry === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+                      <div className="absolute right-0 bottom-full mb-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
                         <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alterar status</p>
                         {[
                           { value: "pending", label: "Pendente", icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
@@ -534,25 +534,21 @@ export default function Dashboard() {
                 <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
                 <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-patient-name" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
-                  <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-procedure-date" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
-                  <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-insurance" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
+                <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-procedure-date" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
-                  <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-description" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-value" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
+                <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-insurance" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
+                <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-description" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-value" />
               </div>
               <div className="space-y-1.5">
                 <Label className="font-semibold text-slate-700 text-sm">Status da Conferência</Label>
