@@ -112,7 +112,7 @@ export async function registerRoutes(
       if (!audio) {
         return res.status(400).json({ message: "Áudio não enviado" });
       }
-      const base64 = audio.replace(/^data:audio\/\w+;base64,/, "");
+      const base64 = audio.replace(/^data:[^;]+;base64,/, "");
       const extractedData = await extractDataFromAudio(base64);
       return res.json({ success: true, extractedData });
     } catch (error) {

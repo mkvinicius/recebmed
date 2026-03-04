@@ -1,4 +1,5 @@
 import OpenAI, { toFile } from "openai";
+import { ensureCompatibleFormat } from "./replit_integrations/audio/client";
 
 export function getOpenAIClient() {
   return new OpenAI({
@@ -70,8 +71,9 @@ export async function extractDataFromAudio(base64Audio: string): Promise<{
 }> {
   const client = getOpenAIClient();
 
-  const audioBuffer = Buffer.from(base64Audio, "base64");
-  const audioFile = await toFile(audioBuffer, "audio.wav");
+  const rawBuffer = Buffer.from(base64Audio, "base64");
+  const { buffer: audioBuffer, format } = await ensureCompatibleFormat(rawBuffer);
+  const audioFile = await toFile(audioBuffer, `audio.${format}`);
 
   const transcription = await client.audio.transcriptions.create({
     model: "gpt-4o-mini-transcribe",
