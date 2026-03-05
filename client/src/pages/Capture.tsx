@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Camera, Mic, PenLine, Loader2, Sparkles, Images } from "lucide-react";
-import { getToken } from "@/lib/auth";
+import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope } from "lucide-react";
+import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 
@@ -15,6 +15,11 @@ export default function Capture() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
+
+  const user = getUser();
+  const profilePhotoUrl = user?.profilePhotoUrl || null;
+  const userName = user?.name || "";
+  const initials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
 
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -124,10 +129,27 @@ export default function Capture() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
-      <div className="max-w-lg mx-auto px-4 sm:px-6 pt-6">
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" data-testid="text-page-title">Novo Lançamento</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Escolha como deseja registrar o procedimento</p>
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
+      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
+
+      <div className="relative z-10 max-w-lg mx-auto px-4 sm:px-6">
+        <header className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-3 text-white">
+            <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+              {profilePhotoUrl ? (
+                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
+              )}
+            </div>
+            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+          </div>
+        </header>
+
+        <div className="pt-2 pb-8 text-white">
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Novo Lançamento</h2>
+          <p className="text-white/80 mt-1 text-sm">Escolha como deseja registrar o procedimento</p>
+        </div>
 
         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
 
