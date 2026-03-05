@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Stethoscope, ArrowLeft, Check, Loader2, User, Calendar,
-  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign
+  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign, Brain
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 
@@ -20,6 +20,14 @@ interface ConfidenceData {
   procedureValue: ConfidenceLevel;
 }
 
+interface OriginalData {
+  patientName: string;
+  procedureDate: string;
+  insuranceProvider: string;
+  description: string;
+  procedureValue: string;
+}
+
 interface EntryData {
   patientName: string;
   procedureDate: string;
@@ -27,6 +35,7 @@ interface EntryData {
   description: string;
   procedureValue: string;
   confidence?: ConfidenceData;
+  _originalData?: OriginalData;
 }
 
 const confidenceConfig: Record<ConfidenceLevel, { dotClass: string; text: string; bannerClass: string; bannerText: string }> = {
@@ -89,20 +98,24 @@ export default function ConfirmEntry() {
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
-        const parseEntry = (d: any): EntryData => ({
-          patientName: d.patientName || "",
-          procedureDate: d.procedureDate || "",
-          insuranceProvider: d.insuranceProvider || "",
-          description: d.description || "",
-          procedureValue: d.procedureValue || "",
-          confidence: d.confidence ? {
-            patientName: d.confidence.patientName || "medium",
-            procedureDate: d.confidence.procedureDate || "medium",
-            insuranceProvider: d.confidence.insuranceProvider || "medium",
-            description: d.confidence.description || "medium",
-            procedureValue: d.confidence.procedureValue || "medium",
-          } : undefined,
-        });
+        const parseEntry = (d: any): EntryData => {
+          const entry: EntryData = {
+            patientName: d.patientName || "",
+            procedureDate: d.procedureDate || "",
+            insuranceProvider: d.insuranceProvider || "",
+            description: d.description || "",
+            procedureValue: d.procedureValue || "",
+            confidence: d.confidence ? {
+              patientName: d.confidence.patientName || "medium",
+              procedureDate: d.confidence.procedureDate || "medium",
+              insuranceProvider: d.confidence.insuranceProvider || "medium",
+              description: d.confidence.description || "medium",
+              procedureValue: d.confidence.procedureValue || "medium",
+            } : undefined,
+          };
+          entry._originalData = { patientName: entry.patientName, procedureDate: entry.procedureDate, insuranceProvider: entry.insuranceProvider, description: entry.description, procedureValue: entry.procedureValue };
+          return entry;
+        };
         if (Array.isArray(data)) {
           setEntries(data.map(parseEntry));
         } else {
@@ -141,20 +154,25 @@ export default function ConfirmEntry() {
     const token = getToken();
     if (!token) return;
 
-    const validEntries = entries.filter(e => e.patientName && e.procedureDate && e.insuranceProvider && e.description);
-    if (validEntries.length === 0) {
+    const validIndices: number[] = [];
+    entries.forEach((e, i) => { if (e.patientName && e.procedureDate && e.insuranceProvider && e.description) validIndices.push(i); });
+    if (validIndices.length === 0) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos de pelo menos um lançamento.", variant: "destructive" });
       return;
     }
 
     setIsSaving(true);
     try {
-      if (validEntries.length === 1) {
-        const e = validEntries[0];
+      const isAiMethod = entryMethod !== "manual";
+      if (validIndices.length === 1) {
+        const idx = validIndices[0];
+        const e = entries[idx];
+        const body: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue, entryMethod };
+        if (isAiMethod && e._originalData) body._originalData = e._originalData;
         const res = await fetch("/api/entries", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ ...e, entryMethod }),
+          body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -162,10 +180,16 @@ export default function ConfirmEntry() {
           return;
         }
       } else {
+        const batchEntries = validIndices.map(idx => {
+          const e = entries[idx];
+          const item: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue };
+          if (isAiMethod && e._originalData) item._originalData = e._originalData;
+          return item;
+        });
         const res = await fetch("/api/entries/batch", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ entries: validEntries, entryMethod }),
+          body: JSON.stringify({ entries: batchEntries, entryMethod }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -174,7 +198,7 @@ export default function ConfirmEntry() {
         }
       }
       toast({
-        title: validEntries.length > 1 ? `${validEntries.length} lançamentos salvos!` : "Lançamento salvo!",
+        title: validIndices.length > 1 ? `${validIndices.length} lançamentos salvos!` : "Lançamento salvo!",
         description: "Os dados foram registrados com sucesso.",
       });
       setLocation("/dashboard");
@@ -326,6 +350,15 @@ export default function ConfirmEntry() {
             Adicionar mais um lançamento
           </button>
         </div>
+
+        {showConfidence && (
+          <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl bg-[#8855f6]/5 dark:bg-[#8855f6]/10 border border-[#8855f6]/10 dark:border-[#8855f6]/20" data-testid="learning-indicator">
+            <Brain className="w-4 h-4 text-[#8855f6] flex-shrink-0" />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Suas correções ensinam a IA — futuras extrações serão mais precisas com base no seu histórico.
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-4 pb-12">
           <Button variant="outline" onClick={() => setLocation("/dashboard")}

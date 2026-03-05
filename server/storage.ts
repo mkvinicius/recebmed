@@ -3,6 +3,7 @@ import {
   type DoctorEntry, type InsertDoctorEntry, doctorEntries,
   type ClinicReport, type InsertClinicReport, clinicReports,
   type Notification, type InsertNotification, notifications,
+  type AiCorrection, type InsertAiCorrection, aiCorrections,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
@@ -37,6 +38,10 @@ export interface IStorage {
   batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void>;
   getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]>;
   searchDoctorEntries(doctorId: string, query: string): Promise<DoctorEntry[]>;
+
+  createAiCorrection(correction: InsertAiCorrection): Promise<AiCorrection>;
+  createAiCorrections(corrections: InsertAiCorrection[]): Promise<AiCorrection[]>;
+  getRecentAiCorrections(doctorId: string, limit?: number): Promise<AiCorrection[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -162,6 +167,20 @@ export class DatabaseStorage implements IStorage {
         )
       )
     ).orderBy(desc(doctorEntries.createdAt)).limit(20);
+  }
+  async createAiCorrection(correction: InsertAiCorrection): Promise<AiCorrection> {
+    const [result] = await db.insert(aiCorrections).values(correction).returning();
+    return result;
+  }
+
+  async createAiCorrections(corrections: InsertAiCorrection[]): Promise<AiCorrection[]> {
+    if (corrections.length === 0) return [];
+    const results = await db.insert(aiCorrections).values(corrections).returning();
+    return results;
+  }
+
+  async getRecentAiCorrections(doctorId: string, limit: number = 30): Promise<AiCorrection[]> {
+    return db.select().from(aiCorrections).where(eq(aiCorrections.doctorId, doctorId)).orderBy(desc(aiCorrections.createdAt)).limit(limit);
   }
 }
 

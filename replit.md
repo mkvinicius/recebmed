@@ -45,6 +45,7 @@ shared/
 - **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, status (pending/reconciled/divergent), createdAt
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
+- **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
 - **conversations**: id, title, createdAt (AI integration)
 - **messages**: id, conversationId, role, content, createdAt (AI integration)
 
@@ -134,8 +135,9 @@ Pages without tab bar: Login, Register, ConfirmEntry
 2b. Photo (batch): Multiple file picker -> base64 array -> POST /api/entries/photos-batch -> parallel AI extraction with confidence -> ConfirmEntry page
 3. Audio: MediaRecorder -> WAV conversion -> base64 -> POST /api/entries/audio -> AI transcribes + extracts -> ConfirmEntry page
 4. Manual: Direct navigation to ConfirmEntry with empty form
-5. ConfirmEntry: User reviews/edits extracted data + value -> POST /api/entries -> saved to DB -> back to Dashboard
-6. Notifications auto-generated on entry creation and divergence marking
+5. ConfirmEntry: User reviews/edits extracted data + value -> POST /api/entries (with _originalData for AI methods) -> saved to DB + corrections stored in ai_corrections -> back to Dashboard
+6. Learning loop: On next photo/audio extraction, recent corrections from ai_corrections are fetched and injected into AI prompts as context to improve accuracy
+7. Notifications auto-generated on entry creation and divergence marking
 
 ## Entry Status
 

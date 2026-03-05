@@ -83,4 +83,21 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+export const aiCorrections = pgTable("ai_corrections", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  field: text("field").notNull(),
+  originalValue: text("original_value").notNull(),
+  correctedValue: text("corrected_value").notNull(),
+  entryMethod: entryMethodEnum("entry_method").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAiCorrectionSchema = createInsertSchema(aiCorrections).omit({
+  id: true,
+  createdAt: true,
+});
+export type AiCorrection = typeof aiCorrections.$inferSelect;
+export type InsertAiCorrection = z.infer<typeof insertAiCorrectionSchema>;
+
 export * from "./models/chat";

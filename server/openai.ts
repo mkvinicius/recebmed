@@ -35,8 +35,33 @@ export interface ExtractedEntry {
   confidence?: FieldConfidence;
 }
 
-export async function extractDataFromImage(base64Image: string): Promise<ExtractedEntry[]> {
+export interface CorrectionHint {
+  field: string;
+  originalValue: string;
+  correctedValue: string;
+}
+
+function buildCorrectionContext(corrections: CorrectionHint[]): string {
+  if (corrections.length === 0) return "";
+  const grouped: Record<string, CorrectionHint[]> = {};
+  for (const c of corrections) {
+    if (!grouped[c.field]) grouped[c.field] = [];
+    grouped[c.field].push(c);
+  }
+  let ctx = "\n\nAPRENDIZADO COM CORREÇÕES ANTERIORES - Use estas correções para melhorar a extração:\n";
+  for (const [field, hints] of Object.entries(grouped)) {
+    ctx += `Campo "${field}":\n`;
+    for (const h of hints.slice(0, 5)) {
+      ctx += `  - Antes: "${h.originalValue}" → Correto: "${h.correctedValue}"\n`;
+    }
+  }
+  ctx += "\nAplique estes padrões de correção quando encontrar dados semelhantes.";
+  return ctx;
+}
+
+export async function extractDataFromImage(base64Image: string, corrections: CorrectionHint[] = []): Promise<ExtractedEntry[]> {
   const client = getOpenAIClient();
+  const correctionContext = buildCorrectionContext(corrections);
 
   const response = await client.chat.completions.create({
     model: "gpt-5-mini",
@@ -62,7 +87,7 @@ Se houver múltiplos pacientes, retorne um array com todos.
 Exemplo:
 [{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]
 
-Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".`,
+Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".${correctionContext}`,
       },
       {
         role: "user",
@@ -97,7 +122,7 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor e 
   }
 }
 
-export async function extractDataFromAudio(base64Audio: string): Promise<ExtractedEntry[]> {
+export async function extractDataFromAudio(base64Audio: string, corrections: CorrectionHint[] = []): Promise<ExtractedEntry[]> {
   const client = getOpenAIClient();
 
   const audioBuffer = Buffer.from(base64Audio, "base64");
@@ -128,7 +153,7 @@ Para cada paciente, extraia:
 - confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente ditado/identificado), "medium" (parcialmente audível, possível inferência), "low" (inaudível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
-Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".`,
+Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".${buildCorrectionContext(corrections)}`,
       },
       {
         role: "user",

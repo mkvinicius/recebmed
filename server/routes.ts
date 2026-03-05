@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, loginSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { extractDataFromImage, extractDataFromAudio } from "./openai";
+import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
 import { extractPdfData, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
@@ -137,14 +137,34 @@ export async function registerRoutes(
 
   // ── AI Extraction ──
 
+  async function getCorrectionHints(doctorId: string): Promise<CorrectionHint[]> {
+    const corrections = await storage.getRecentAiCorrections(doctorId, 30);
+    return corrections.map(c => ({ field: c.field, originalValue: c.originalValue, correctedValue: c.correctedValue }));
+  }
+
+  function detectCorrections(original: Record<string, string>, corrected: Record<string, string>, entryMethod: string, doctorId: string) {
+    const fields = ["patientName", "procedureDate", "insuranceProvider", "description", "procedureValue"];
+    const diffs: Array<{ doctorId: string; field: string; originalValue: string; correctedValue: string; entryMethod: string }> = [];
+    for (const field of fields) {
+      const origVal = (original[field] || "").trim();
+      const corrVal = (corrected[field] || "").trim();
+      if (origVal && corrVal && origVal !== corrVal) {
+        diffs.push({ doctorId, field, originalValue: origVal, correctedValue: corrVal, entryMethod });
+      }
+    }
+    return diffs;
+  }
+
   app.post("/api/entries/photo", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { image } = req.body;
       if (!image) {
         return res.status(400).json({ message: "Imagem não enviada" });
       }
+      const userId = (req as any).userId;
+      const corrections = await getCorrectionHints(userId);
       const base64 = image.replace(/^data:image\/\w+;base64,/, "");
-      const extractedData = await extractDataFromImage(base64);
+      const extractedData = await extractDataFromImage(base64, corrections);
       return res.json({ success: true, extractedData });
     } catch (error) {
       console.error("Photo entry error:", error);
@@ -161,11 +181,13 @@ export async function registerRoutes(
       if (images.length > 10) {
         return res.status(400).json({ message: "Máximo de 10 imagens por vez" });
       }
+      const userId = (req as any).userId;
+      const corrections = await getCorrectionHints(userId);
       const results = await Promise.all(
         images.map(async (image: string, index: number) => {
           try {
             const base64 = image.replace(/^data:image\/\w+;base64,/, "");
-            const entries = await extractDataFromImage(base64);
+            const entries = await extractDataFromImage(base64, corrections);
             return entries.map(e => ({ ...e, _sourceImage: index + 1 }));
           } catch (err) {
             console.error(`Error processing image ${index + 1}:`, err);
@@ -187,8 +209,10 @@ export async function registerRoutes(
       if (!audio) {
         return res.status(400).json({ message: "Áudio não enviado" });
       }
+      const userId = (req as any).userId;
+      const corrections = await getCorrectionHints(userId);
       const base64 = audio.replace(/^data:[^;]+;base64,/, "");
-      const extractedData = await extractDataFromAudio(base64);
+      const extractedData = await extractDataFromAudio(base64, corrections);
       return res.json({ success: true, extractedData });
     } catch (error) {
       console.error("Audio entry error:", error);
@@ -201,7 +225,7 @@ export async function registerRoutes(
   app.post("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue } = req.body;
+      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue, _originalData } = req.body;
 
       if (!patientName || !procedureDate || !insuranceProvider || !description) {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
@@ -218,6 +242,13 @@ export async function registerRoutes(
         sourceUrl: req.body.sourceUrl || null,
         status: "pending",
       });
+
+      if (_originalData && entryMethod && entryMethod !== "manual") {
+        const diffs = detectCorrections(_originalData, { patientName, procedureDate, insuranceProvider, description, procedureValue: procedureValue || "" }, entryMethod, userId);
+        if (diffs.length > 0) {
+          await storage.createAiCorrections(diffs.map(d => ({ doctorId: d.doctorId, field: d.field, originalValue: d.originalValue, correctedValue: d.correctedValue, entryMethod: d.entryMethod as any })));
+        }
+      }
 
       await storage.createNotification({
         doctorId: userId,
@@ -244,6 +275,7 @@ export async function registerRoutes(
       }
 
       const savedEntries = [];
+      const allDiffs: Array<{ doctorId: string; field: string; originalValue: string; correctedValue: string; entryMethod: string }> = [];
       for (const item of entriesData) {
         if (!item.patientName || !item.procedureDate || !item.insuranceProvider || !item.description) {
           continue;
@@ -260,6 +292,14 @@ export async function registerRoutes(
           status: "pending",
         });
         savedEntries.push(entry);
+        if (item._originalData && entryMethod && entryMethod !== "manual") {
+          const diffs = detectCorrections(item._originalData, { patientName: item.patientName, procedureDate: item.procedureDate, insuranceProvider: item.insuranceProvider, description: item.description, procedureValue: item.procedureValue || "" }, entryMethod, userId);
+          allDiffs.push(...diffs);
+        }
+      }
+
+      if (allDiffs.length > 0) {
+        await storage.createAiCorrections(allDiffs.map(d => ({ doctorId: d.doctorId, field: d.field, originalValue: d.originalValue, correctedValue: d.correctedValue, entryMethod: d.entryMethod as any })));
       }
 
       if (savedEntries.length > 0) {
