@@ -53,6 +53,7 @@ const formatDate = (dateStr: string) => {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [userName, setUserName] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
@@ -74,7 +75,10 @@ export default function Dashboard() {
     const token = getToken();
     if (!token) { setLocation("/login"); return; }
     const user = getUser();
-    if (user) setUserName(user.name);
+    if (user) {
+      setUserName(user.name);
+      setProfilePhotoUrl(user.profilePhotoUrl || null);
+    }
     fetchEntries(token);
     fetchNotifications(token);
   }, [setLocation]);
@@ -201,8 +205,12 @@ export default function Dashboard() {
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg" data-testid="avatar-profile">
-              <span className="text-sm font-bold text-white tracking-wide">{userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"}</span>
+            <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+              {profilePhotoUrl ? (
+                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-white tracking-wide">{userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"}</span>
+              )}
             </div>
             <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>

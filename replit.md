@@ -41,7 +41,7 @@ shared/
 
 ## Database Tables
 
-- **users**: id, name, email, password
+- **users**: id, name, email, password, profilePhotoUrl
 - **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, status (pending/reconciled/divergent), createdAt
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
@@ -57,6 +57,7 @@ shared/
 - `GET /api/auth/me` - Get current user (requires Bearer token)
 - `PUT /api/auth/profile` - Update user name
 - `PUT /api/auth/password` - Change password (requires currentPassword, newPassword)
+- `PUT /api/auth/profile-photo` - Update profile photo URL
 
 ### Entries
 - `POST /api/entries/photo` - Process single photo with OpenAI Vision API -> extracted data with confidence scores
@@ -85,6 +86,9 @@ shared/
 - `POST /api/uploads/request-url` - Get presigned upload URL
 - `GET /objects/{*objectPath}` - Serve uploaded files
 
+### AI Corrections
+- `GET /api/ai-corrections/stats` - Get correction statistics (totalCorrections, fieldCounts, recentCorrections)
+
 ### Notifications
 - `GET /api/notifications` - List notifications with unread count
 - `PUT /api/notifications/:id/read` - Mark single notification as read
@@ -107,7 +111,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - **Dashboard (Início)**: Clean widget home with greeting, smart search bar (debounced, server-side via /api/entries/search), stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
 - **Entries (Lançamentos)**: Full entries list with search, status/date/insurance filters, edit modal, quick status change
 - **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing; photo supports batch upload (multiple files)
-- **Profile (Perfil)**: User info, dark mode toggle, links to Settings/ClinicReports/Reconciliation, logout
+- **Profile (Perfil)**: User info with profile photo upload (camera button + remove), dark mode toggle, links to Settings/ClinicReports/Reconciliation, logout
 - **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field); shows per-field AI confidence indicators (green/amber/red dots) and overall confidence banner for photo/audio entries
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)

@@ -51,7 +51,7 @@ export async function registerRoutes(
       const hashedPassword = await bcrypt.hash(password, salt);
       const user = await storage.createUser({ name, email, password: hashedPassword });
       const token = generateToken(user.id);
-      return res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+      return res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl } });
     } catch (error) {
       console.error("Register error:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
@@ -74,7 +74,7 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Email ou senha incorretos" });
       }
       const token = generateToken(user.id);
-      return res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl } });
     } catch (error) {
       console.error("Login error:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
@@ -88,7 +88,7 @@ export async function registerRoutes(
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      return res.json({ user: { id: user.id, name: user.name, email: user.email } });
+      return res.json({ user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl } });
     } catch (error) {
       console.error("Me error:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
@@ -132,6 +132,19 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Change password error:", error);
       return res.status(500).json({ message: "Erro ao alterar senha" });
+    }
+  });
+
+  app.put("/api/auth/profile-photo", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { profilePhotoUrl } = req.body;
+      const user = await storage.updateUserProfilePhoto(userId, profilePhotoUrl || null);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+      return res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl } });
+    } catch (error) {
+      console.error("Update profile photo error:", error);
+      return res.status(500).json({ message: "Erro ao atualizar foto" });
     }
   });
 
@@ -316,6 +329,22 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Batch create error:", error);
       return res.status(500).json({ message: "Erro ao salvar lançamentos" });
+    }
+  });
+
+  app.get("/api/ai-corrections/stats", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const corrections = await storage.getRecentAiCorrections(userId, 100);
+      const totalCorrections = corrections.length;
+      const fieldCounts: Record<string, number> = {};
+      for (const c of corrections) {
+        fieldCounts[c.field] = (fieldCounts[c.field] || 0) + 1;
+      }
+      return res.json({ totalCorrections, fieldCounts, recentCorrections: corrections.slice(0, 10) });
+    } catch (error) {
+      console.error("AI corrections stats error:", error);
+      return res.status(500).json({ message: "Erro ao buscar estatísticas" });
     }
   });
 

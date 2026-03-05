@@ -19,6 +19,18 @@ function storageAuthMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 }
 
+function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+      (req as any).userId = decoded.id;
+    } catch {}
+  }
+  next();
+}
+
 export function registerObjectStorageRoutes(app: Express): void {
   const objectStorageService = new ObjectStorageService();
 
@@ -46,7 +58,7 @@ export function registerObjectStorageRoutes(app: Express): void {
     }
   });
 
-  app.get("/objects/{*objectPath}", storageAuthMiddleware, async (req, res) => {
+  app.get("/objects/{*objectPath}", optionalAuthMiddleware, async (req, res) => {
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       await objectStorageService.downloadObject(objectFile, res);
