@@ -10,12 +10,58 @@ import {
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 
+type ConfidenceLevel = "high" | "medium" | "low";
+
+interface ConfidenceData {
+  patientName: ConfidenceLevel;
+  procedureDate: ConfidenceLevel;
+  insuranceProvider: ConfidenceLevel;
+  description: ConfidenceLevel;
+  procedureValue: ConfidenceLevel;
+}
+
 interface EntryData {
   patientName: string;
   procedureDate: string;
   insuranceProvider: string;
   description: string;
   procedureValue: string;
+  confidence?: ConfidenceData;
+}
+
+const confidenceConfig: Record<ConfidenceLevel, { dotClass: string; text: string; bannerClass: string; bannerText: string }> = {
+  high: { dotClass: "bg-green-500", text: "Alta confiança", bannerClass: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800", bannerText: "Alta confiança na extração" },
+  medium: { dotClass: "bg-amber-500", text: "Confiança média", bannerClass: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800", bannerText: "Confiança média - revise os campos" },
+  low: { dotClass: "bg-red-500", text: "Baixa confiança", bannerClass: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800", bannerText: "Baixa confiança - verifique todos os campos" },
+};
+
+function getOverallConfidence(confidence: ConfidenceData): ConfidenceLevel {
+  const values: ConfidenceLevel[] = [confidence.patientName, confidence.procedureDate, confidence.insuranceProvider, confidence.description, confidence.procedureValue];
+  const numericMap: Record<ConfidenceLevel, number> = { high: 3, medium: 2, low: 1 };
+  const avg = values.reduce((sum, v) => sum + numericMap[v], 0) / values.length;
+  if (avg >= 2.5) return "high";
+  if (avg >= 1.5) return "medium";
+  return "low";
+}
+
+function ConfidenceIndicator({ level }: { level: ConfidenceLevel }) {
+  const config = confidenceConfig[level];
+  return (
+    <span className="inline-flex items-center gap-1 ml-1.5">
+      <span className={`inline-block w-2 h-2 rounded-full ${config.dotClass}`} />
+      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{config.text}</span>
+    </span>
+  );
+}
+
+function ConfidenceBanner({ confidence }: { confidence: ConfidenceData }) {
+  const overall = getOverallConfidence(confidence);
+  const config = confidenceConfig[overall];
+  return (
+    <div className={`mb-4 px-3 py-2 rounded-xl border text-xs font-semibold text-center ${config.bannerClass}`} data-testid="confidence-banner">
+      {config.bannerText}
+    </div>
+  );
 }
 
 export default function ConfirmEntry() {
@@ -43,22 +89,24 @@ export default function ConfirmEntry() {
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
+        const parseEntry = (d: any): EntryData => ({
+          patientName: d.patientName || "",
+          procedureDate: d.procedureDate || "",
+          insuranceProvider: d.insuranceProvider || "",
+          description: d.description || "",
+          procedureValue: d.procedureValue || "",
+          confidence: d.confidence ? {
+            patientName: d.confidence.patientName || "medium",
+            procedureDate: d.confidence.procedureDate || "medium",
+            insuranceProvider: d.confidence.insuranceProvider || "medium",
+            description: d.confidence.description || "medium",
+            procedureValue: d.confidence.procedureValue || "medium",
+          } : undefined,
+        });
         if (Array.isArray(data)) {
-          setEntries(data.map((d: any) => ({
-            patientName: d.patientName || "",
-            procedureDate: d.procedureDate || "",
-            insuranceProvider: d.insuranceProvider || "",
-            description: d.description || "",
-            procedureValue: d.procedureValue || "",
-          })));
+          setEntries(data.map(parseEntry));
         } else {
-          setEntries([{
-            patientName: data.patientName || "",
-            procedureDate: data.procedureDate || "",
-            insuranceProvider: data.insuranceProvider || "",
-            description: data.description || "",
-            procedureValue: data.procedureValue || "",
-          }]);
+          setEntries([parseEntry(data)]);
         }
         sessionStorage.removeItem("medfin_extracted");
       } catch {
@@ -138,6 +186,7 @@ export default function ConfirmEntry() {
   };
 
   const isBatch = entries.length > 1;
+  const showConfidence = entryMethod !== "manual";
 
   return (
     <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
@@ -202,10 +251,15 @@ export default function ConfirmEntry() {
                 )}
               </div>
 
+              {showConfidence && entry.confidence && (
+                <ConfidenceBanner confidence={entry.confidence} />
+              )}
+
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                     <User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente
+                    {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.patientName} />}
                   </Label>
                   <Input value={entry.patientName} onChange={(e) => updateEntry(index, "patientName", e.target.value)}
                     placeholder="Nome completo"
@@ -217,6 +271,7 @@ export default function ConfirmEntry() {
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data
+                      {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.procedureDate} />}
                     </Label>
                     <Input type="date" value={entry.procedureDate} onChange={(e) => updateEntry(index, "procedureDate", e.target.value)}
                       className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
@@ -225,6 +280,7 @@ export default function ConfirmEntry() {
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio
+                      {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.insuranceProvider} />}
                     </Label>
                     <Input value={entry.insuranceProvider} onChange={(e) => updateEntry(index, "insuranceProvider", e.target.value)}
                       placeholder="Ex: Particular"
@@ -237,6 +293,7 @@ export default function ConfirmEntry() {
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
+                      {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.description} />}
                     </Label>
                     <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
                       placeholder="Ex: Consulta, Retorno, Sleeve"
@@ -246,6 +303,7 @@ export default function ConfirmEntry() {
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)
+                      {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.procedureValue} />}
                     </Label>
                     <Input type="number" step="0.01" min="0" value={entry.procedureValue} onChange={(e) => updateEntry(index, "procedureValue", e.target.value)}
                       placeholder="0.00"

@@ -152,6 +152,35 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/entries/photos-batch", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { images } = req.body;
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        return res.status(400).json({ message: "Nenhuma imagem enviada" });
+      }
+      if (images.length > 10) {
+        return res.status(400).json({ message: "Máximo de 10 imagens por vez" });
+      }
+      const results = await Promise.all(
+        images.map(async (image: string, index: number) => {
+          try {
+            const base64 = image.replace(/^data:image\/\w+;base64,/, "");
+            const entries = await extractDataFromImage(base64);
+            return entries.map(e => ({ ...e, _sourceImage: index + 1 }));
+          } catch (err) {
+            console.error(`Error processing image ${index + 1}:`, err);
+            return [];
+          }
+        })
+      );
+      const allEntries = results.flat();
+      return res.json({ success: true, extractedData: allEntries, totalImages: images.length, totalEntries: allEntries.length });
+    } catch (error) {
+      console.error("Batch photo error:", error);
+      return res.status(500).json({ message: "Erro ao processar imagens em lote" });
+    }
+  });
+
   app.post("/api/entries/audio", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { audio } = req.body;

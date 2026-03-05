@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Camera, Mic, PenLine, Loader2, Sparkles } from "lucide-react";
+import { Camera, Mic, PenLine, Loader2, Sparkles, Images } from "lucide-react";
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
@@ -8,6 +8,7 @@ import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 export default function Capture() {
   const [, setLocation] = useLocation();
   const [processingPhoto, setProcessingPhoto] = useState(false);
+  const [photoProgress, setPhotoProgress] = useState("");
   const [processingAudio, setProcessingAudio] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,26 +16,49 @@ export default function Capture() {
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setProcessingPhoto(true);
     const token = getToken();
-    if (!token) return;
+    if (!token) { setProcessingPhoto(false); return; }
+
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          const res = await fetch("/api/entries/photo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ image: base64 }) });
-          const data = await res.json();
-          if (data.success && data.extractedData) { sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=photo"); }
-          else toast({ title: "Erro", description: "Não foi possível processar a imagem.", variant: "destructive" });
-        } catch { toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" }); }
-        finally { setProcessingPhoto(false); }
-      };
-      reader.readAsDataURL(file);
-    } catch { setProcessingPhoto(false); }
+      if (files.length === 1) {
+        setPhotoProgress("Processando imagem...");
+        const base64 = await readFileAsDataURL(files[0]);
+        const res = await fetch("/api/entries/photo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ image: base64 }) });
+        const data = await res.json();
+        if (data.success && data.extractedData) { sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=photo"); }
+        else toast({ title: "Erro", description: "Não foi possível processar a imagem.", variant: "destructive" });
+      } else {
+        setPhotoProgress(`Lendo ${files.length} imagens...`);
+        const images: string[] = [];
+        for (let i = 0; i < files.length; i++) {
+          images.push(await readFileAsDataURL(files[i]));
+        }
+        setPhotoProgress(`Processando ${files.length} imagens com IA...`);
+        const res = await fetch("/api/entries/photos-batch", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ images }) });
+        const data = await res.json();
+        if (data.success && data.extractedData && data.extractedData.length > 0) {
+          sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData));
+          toast({ title: `${data.totalEntries} registros encontrados`, description: `Extraídos de ${data.totalImages} imagens` });
+          setLocation("/confirm-entry?method=photo");
+        } else {
+          toast({ title: "Erro", description: "Não foi possível extrair dados das imagens.", variant: "destructive" });
+        }
+      }
+    } catch { toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" }); }
+    finally { setProcessingPhoto(false); setPhotoProgress(""); }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -73,9 +97,10 @@ export default function Capture() {
       id: "photo",
       icon: Camera,
       title: "Foto",
-      description: "Tire uma foto do recibo ou documento e a IA extrai os dados automaticamente",
+      description: "Tire fotos de recibos ou documentos — selecione várias de uma vez para extração em lote",
       gradient: "from-[#8855f6] to-[#6633cc]",
       processing: processingPhoto,
+      progressText: photoProgress,
       onClick: () => fileInputRef.current?.click(),
     },
     {
@@ -104,7 +129,7 @@ export default function Capture() {
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" data-testid="text-page-title">Novo Lançamento</h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Escolha como deseja registrar o procedimento</p>
 
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
+        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
 
         <div className="space-y-4">
           {cards.map(card => (
@@ -126,7 +151,7 @@ export default function Capture() {
                     {card.id !== "manual" && <Sparkles className="w-4 h-4 text-white/60" />}
                   </div>
                   <p className="text-sm text-white/80 mt-1 leading-relaxed">{card.description}</p>
-                  {card.processing && <p className="text-xs text-white/60 mt-2">Processando com IA...</p>}
+                  {card.processing && <p className="text-xs text-white/60 mt-2">{card.progressText || "Processando com IA..."}</p>}
                 </div>
               </div>
             </button>

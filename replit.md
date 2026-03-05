@@ -58,8 +58,9 @@ shared/
 - `PUT /api/auth/password` - Change password (requires currentPassword, newPassword)
 
 ### Entries
-- `POST /api/entries/photo` - Process photo with OpenAI Vision API -> extracted data
-- `POST /api/entries/audio` - Process audio with OpenAI STT + text extraction -> extracted data
+- `POST /api/entries/photo` - Process single photo with OpenAI Vision API -> extracted data with confidence scores
+- `POST /api/entries/photos-batch` - Process multiple photos (up to 10) in parallel -> extracted data with confidence scores
+- `POST /api/entries/audio` - Process audio with OpenAI STT + text extraction -> extracted data with confidence scores
 - `POST /api/entries` - Save a doctor entry to database
 - `POST /api/entries/batch` - Save multiple entries at once
 - `GET /api/entries` - List all entries for authenticated doctor
@@ -104,9 +105,9 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - **Login/Register**: Authentication flow
 - **Dashboard (Início)**: Clean widget home with greeting, smart search bar (debounced, server-side via /api/entries/search), stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
 - **Entries (Lançamentos)**: Full entries list with search, status/date/insurance filters, edit modal, quick status change
-- **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing
+- **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing; photo supports batch upload (multiple files)
 - **Profile (Perfil)**: User info, dark mode toggle, links to Settings/ClinicReports/Reconciliation, logout
-- **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field)
+- **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field); shows per-field AI confidence indicators (green/amber/red dots) and overall confidence banner for photo/audio entries
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
 - **Reports**: Financial charts with recharts (bar chart by month, pie chart by insurance), summary cards, period filters
@@ -129,7 +130,8 @@ Pages without tab bar: Login, Register, ConfirmEntry
 ## Entry Flow
 
 1. Capture tab: User clicks Photo/Audio/Manual card
-2. Photo: File picker -> base64 -> POST /api/entries/photo -> AI extracts data (including procedureValue) -> ConfirmEntry page
+2. Photo (single): File picker -> base64 -> POST /api/entries/photo -> AI extracts data with confidence scores -> ConfirmEntry page
+2b. Photo (batch): Multiple file picker -> base64 array -> POST /api/entries/photos-batch -> parallel AI extraction with confidence -> ConfirmEntry page
 3. Audio: MediaRecorder -> WAV conversion -> base64 -> POST /api/entries/audio -> AI transcribes + extracts -> ConfirmEntry page
 4. Manual: Direct navigation to ConfirmEntry with empty form
 5. ConfirmEntry: User reviews/edits extracted data + value -> POST /api/entries -> saved to DB -> back to Dashboard

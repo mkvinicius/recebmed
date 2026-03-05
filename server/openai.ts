@@ -18,12 +18,21 @@ function detectAudioExtension(buffer: Buffer): string {
   return "webm";
 }
 
+export interface FieldConfidence {
+  patientName: "high" | "medium" | "low";
+  procedureDate: "high" | "medium" | "low";
+  insuranceProvider: "high" | "medium" | "low";
+  description: "high" | "medium" | "low";
+  procedureValue: "high" | "medium" | "low";
+}
+
 export interface ExtractedEntry {
   patientName: string;
   procedureDate: string;
   insuranceProvider: string;
   description: string;
   procedureValue?: string;
+  confidence?: FieldConfidence;
 }
 
 export async function extractDataFromImage(base64Image: string): Promise<ExtractedEntry[]> {
@@ -42,6 +51,7 @@ Para cada paciente, extraia:
 - insuranceProvider: nome do convênio/plano de saúde
 - description: descrição do procedimento realizado
 - procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não encontrado, omita o campo.
+- confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente legível/identificado), "medium" (parcialmente legível, possível inferência), "low" (ilegível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
 A imagem pode conter UM ou VÁRIOS pacientes (por exemplo, uma agenda médica com múltiplos atendimentos).
 
@@ -49,10 +59,10 @@ Responda APENAS com um JSON válido, sem markdown, sem explicações.
 Se houver apenas 1 paciente, retorne um array com 1 objeto.
 Se houver múltiplos pacientes, retorne um array com todos.
 
-Exemplo para múltiplos pacientes:
-[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00"},{"patientName":"Maria Santos","procedureDate":"2026-01-29","insuranceProvider":"Unimed","description":"Retirada"}]
+Exemplo:
+[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]
 
-Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
+Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".`,
       },
       {
         role: "user",
@@ -82,6 +92,7 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
       procedureDate: new Date().toISOString().split("T")[0],
       insuranceProvider: "Não identificado",
       description: "Não identificado",
+      confidence: { patientName: "low", procedureDate: "low", insuranceProvider: "low", description: "low", procedureValue: "low" },
     }];
   }
 }
@@ -114,9 +125,10 @@ Para cada paciente, extraia:
 - insuranceProvider: nome do convênio/plano de saúde (se não mencionado, use "Particular")
 - description: descrição do procedimento realizado
 - procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não mencionado, omita o campo.
+- confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente ditado/identificado), "medium" (parcialmente audível, possível inferência), "low" (inaudível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
-Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
+Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".`,
       },
       {
         role: "user",
@@ -137,6 +149,7 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor.`,
       procedureDate: new Date().toISOString().split("T")[0],
       insuranceProvider: "Não identificado",
       description: transcribedText || "Não identificado",
+      confidence: { patientName: "low", procedureDate: "low", insuranceProvider: "low", description: "low", procedureValue: "low" },
     }];
   }
 }
