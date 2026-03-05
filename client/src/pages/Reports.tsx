@@ -184,7 +184,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-6">
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Período</p>
           <div className="flex flex-wrap gap-2">
             {PERIOD_OPTIONS.map(opt => (
@@ -205,7 +205,7 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-total-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-total-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Total Faturado</span>
@@ -214,7 +214,7 @@ export default function Reports() {
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.length} lançamentos</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-reconciled-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-reconciled-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Conferido</span>
@@ -223,7 +223,7 @@ export default function Reports() {
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} lançamentos</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-pending-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-pending-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Pendente</span>
@@ -232,7 +232,7 @@ export default function Reports() {
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "pending").length} lançamentos</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-divergent-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-divergent-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Divergente</span>
@@ -243,7 +243,7 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="chart-monthly">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="chart-monthly">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-[#8855f6]" />
               <h3 className="font-bold text-slate-800 dark:text-slate-100">Faturamento por Mês</h3>
@@ -268,7 +268,7 @@ export default function Reports() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="chart-insurance">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="chart-insurance">
             <div className="flex items-center gap-2 mb-4">
               <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
               <h3 className="font-bold text-slate-800 dark:text-slate-100">Distribuição por Convênio</h3>
@@ -305,7 +305,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-12" data-testid="table-top-insurers">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-12" data-testid="table-top-insurers">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Top Convênios por Valor</h3>
           </div>

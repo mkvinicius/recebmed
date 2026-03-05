@@ -131,7 +131,7 @@ export default function Profile() {
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} data-testid="input-profile-photo" />
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="relative group">
               <div
@@ -172,7 +172,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-amber-500 dark:text-amber-400">
@@ -193,7 +193,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-6">
           {links.map((link, i) => (
             <button
               key={link.path}

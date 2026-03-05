@@ -87,7 +87,7 @@ export default function EntryDetail() {
               <ArrowLeft className="w-4 h-4" /> Voltar
             </button>
           </header>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 text-center mt-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] text-center mt-8">
             <AlertCircle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-error">{error || "Lançamento não encontrado"}</p>
           </div>
@@ -118,7 +118,7 @@ export default function EntryDetail() {
           <h2 className="text-2xl font-extrabold">Detalhes do Lançamento</h2>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mt-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mt-4">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`size-10 rounded-full flex items-center justify-center ${statusStyle(entry.status)}`}>

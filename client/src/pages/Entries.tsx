@@ -180,7 +180,7 @@ export default function Entries() {
           <p className="text-white/80 mt-1 text-sm">Gerencie todos os seus procedimentos</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -205,7 +205,7 @@ export default function Entries() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-6">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
             <span className="font-bold text-slate-800 dark:text-slate-200">Todos os Lançamentos</span>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">

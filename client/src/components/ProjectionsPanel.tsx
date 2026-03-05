@@ -27,7 +27,7 @@ export default function ProjectionsPanel() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 mb-8 flex items-center justify-center">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-8 flex items-center justify-center">
         <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
       </div>
     );

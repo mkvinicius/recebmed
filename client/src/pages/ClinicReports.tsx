@@ -238,7 +238,7 @@ export default function ClinicReports() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-12">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-12">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Relatórios Cadastrados</h3>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-report-count">

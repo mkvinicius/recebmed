@@ -126,7 +126,7 @@ export default function Settings() {
           <p className="text-white/80 text-sm mt-1">Gerencie seu perfil e segurança</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
               <User className="w-5 h-5 text-[#8855f6]" />
@@ -162,7 +162,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mb-12">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-6 mb-12">
           <div className="flex items-center gap-3 mb-6">
             <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
               <Lock className="w-5 h-5 text-[#8855f6]" />
