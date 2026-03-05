@@ -51,7 +51,7 @@ export default function Login() {
           <h1 className="text-3xl font-extrabold text-white tracking-tight">RecebMed</h1>
         </div>
 
-        <div className="glass-card dark:glass-card-dark rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white/80 dark:bg-[#1a1225]/90 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Entrar na sua conta</h2>
             <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Digite seu email e senha para acessar o painel</p>
