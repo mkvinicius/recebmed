@@ -265,13 +265,13 @@ export default function Entries() {
       </div>
 
       {editingEntry && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>
-          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4 fixed bottom-0 sm:relative sm:bottom-auto">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
               <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">Editar Lançamento</h3>
               <button onClick={() => setEditingEntry(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit"><X className="w-5 h-5 text-slate-400" /></button>
             </div>
-            <div className="px-6 py-6 space-y-5">
+            <div className="px-6 py-6 space-y-5 overflow-y-auto flex-1">
               <div className="space-y-1.5">
                 <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
                 <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-patient-name" />
@@ -305,7 +305,7 @@ export default function Entries() {
                 </div>
               </div>
             </div>
-            <div className="px-6 pb-6 flex gap-3">
+            <div className="px-6 py-4 flex gap-3 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-2xl">
               <Button onClick={handleDeleteEntry} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 text-red-500 hover:bg-red-50" data-testid="button-delete-entry"><Trash2 className="w-4 h-4" /></Button>
               <Button onClick={handleSaveEdit} disabled={isSavingEdit} className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl transition-all" data-testid="button-save-edit">
                 {isSavingEdit ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
