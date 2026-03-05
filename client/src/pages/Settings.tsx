@@ -109,7 +109,7 @@ export default function Settings() {
                 {photoUrl ? <img src={photoUrl} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{ini}</span>}
               </div>
             ); })()}
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <button
             onClick={() => setLocation("/profile")}

@@ -120,7 +120,7 @@ export default function Profile() {
                 <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
               )}
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
         </header>
 

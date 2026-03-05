@@ -31,7 +31,7 @@ export default function Register() {
         return;
       }
       saveAuth(data.token, data.user);
-      toast({ title: "Conta criada!", description: `Bem-vindo ao Medfin, ${data.user.name}!` });
+      toast({ title: "Conta criada!", description: `Bem-vindo ao RecebMed, ${data.user.name}!` });
       setLocation("/dashboard");
     } catch {
       toast({ title: "Erro de conexão", description: "Não foi possível conectar ao servidor.", variant: "destructive" });
@@ -49,13 +49,13 @@ export default function Register() {
           <div className="size-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
             <Stethoscope className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Medfin</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">RecebMed</h1>
         </div>
 
         <div className="glass-card dark:glass-card-dark rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Criar uma conta</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Preencha seus dados para começar a usar o Medfin</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Preencha seus dados para começar a usar o RecebMed</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">

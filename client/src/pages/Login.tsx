@@ -48,7 +48,7 @@ export default function Login() {
           <div className="size-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
             <Stethoscope className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Medfin</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">RecebMed</h1>
         </div>
 
         <div className="glass-card dark:glass-card-dark rounded-2xl p-8 shadow-2xl">

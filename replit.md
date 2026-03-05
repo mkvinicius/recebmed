@@ -1,4 +1,4 @@
-# Medfin
+# RecebMed
 
 Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. Sistema de Conferência Inteligente que permite lançamentos por foto, áudio ou manual com processamento real por IA.
 

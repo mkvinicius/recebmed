@@ -131,7 +131,7 @@ export default function ClinicReports() {
                 {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <button
             onClick={() => setLocation("/dashboard")}

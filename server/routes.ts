@@ -8,7 +8,7 @@ import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from 
 import { extractPdfData, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
-const JWT_SECRET = process.env.JWT_SECRET || "medfin_jwt_secret_dev_key";
+const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
 
 function generateToken(userId: string): string {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "7d" });

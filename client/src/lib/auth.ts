@@ -1,5 +1,5 @@
-const TOKEN_KEY = "medfin_token";
-const USER_KEY = "medfin_user";
+const TOKEN_KEY = "recebmed_token";
+const USER_KEY = "recebmed_user";
 
 export interface UserData {
   id: string;

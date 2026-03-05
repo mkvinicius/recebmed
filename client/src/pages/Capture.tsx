@@ -43,7 +43,7 @@ export default function Capture() {
         const base64 = await readFileAsDataURL(files[0]);
         const res = await fetch("/api/entries/photo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ image: base64 }) });
         const data = await res.json();
-        if (data.success && data.extractedData) { sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=photo"); }
+        if (data.success && data.extractedData) { sessionStorage.setItem("recebmed_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=photo"); }
         else toast({ title: "Erro", description: "Não foi possível processar a imagem.", variant: "destructive" });
       } else {
         setPhotoProgress(`Lendo ${files.length} imagens...`);
@@ -55,7 +55,7 @@ export default function Capture() {
         const res = await fetch("/api/entries/photos-batch", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ images }) });
         const data = await res.json();
         if (data.success && data.extractedData && data.extractedData.length > 0) {
-          sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData));
+          sessionStorage.setItem("recebmed_extracted", JSON.stringify(data.extractedData));
           toast({ title: `${data.totalEntries} registros encontrados`, description: `Extraídos de ${data.totalImages} imagens` });
           setLocation("/confirm-entry?method=photo");
         } else {
@@ -86,7 +86,7 @@ export default function Capture() {
           const wavBase64 = await convertBlobToWavBase64(audioBlob);
           const res = await fetch("/api/entries/audio", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ audio: wavBase64 }) });
           const data = await res.json();
-          if (data.success && data.extractedData) { sessionStorage.setItem("medfin_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=audio"); }
+          if (data.success && data.extractedData) { sessionStorage.setItem("recebmed_extracted", JSON.stringify(data.extractedData)); setLocation("/confirm-entry?method=audio"); }
           else toast({ title: "Erro", description: data.message || "Não foi possível processar o áudio.", variant: "destructive" });
         } catch { toast({ title: "Erro", description: "Falha ao processar o áudio.", variant: "destructive" }); }
         finally { setProcessingAudio(false); }
@@ -142,7 +142,7 @@ export default function Capture() {
                 <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
               )}
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
         </header>
 

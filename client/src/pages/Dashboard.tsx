@@ -212,7 +212,7 @@ export default function Dashboard() {
                 <span className="text-sm font-bold text-white tracking-wide">{userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"}</span>
               )}
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative" ref={notifRef}>

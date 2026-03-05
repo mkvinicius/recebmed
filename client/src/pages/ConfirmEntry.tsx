@@ -94,7 +94,7 @@ export default function ConfirmEntry() {
       return;
     }
 
-    const storedData = sessionStorage.getItem("medfin_extracted");
+    const storedData = sessionStorage.getItem("recebmed_extracted");
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
@@ -121,7 +121,7 @@ export default function ConfirmEntry() {
         } else {
           setEntries([parseEntry(data)]);
         }
-        sessionStorage.removeItem("medfin_extracted");
+        sessionStorage.removeItem("recebmed_extracted");
       } catch {
         setEntries([{ patientName: "", procedureDate: new Date().toISOString().split("T")[0], insuranceProvider: "", description: "", procedureValue: "" }]);
       }
@@ -224,7 +224,7 @@ export default function ConfirmEntry() {
                 {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
         </header>
 

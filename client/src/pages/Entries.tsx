@@ -171,7 +171,7 @@ export default function Entries() {
                 <span className="text-sm font-bold text-white tracking-wide">{userInitials}</span>
               )}
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
         </header>
 

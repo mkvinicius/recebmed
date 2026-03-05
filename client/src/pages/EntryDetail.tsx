@@ -81,7 +81,7 @@ export default function EntryDetail() {
                   {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
                 </div>
               ); })()}
-              <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+              <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
             </div>
             <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
               <ArrowLeft className="w-4 h-4" /> Voltar
@@ -107,7 +107,7 @@ export default function EntryDetail() {
                 {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
+            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" /> Voltar

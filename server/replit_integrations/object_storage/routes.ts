@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "medfin_jwt_secret_dev_key";
+const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
 
 function storageAuthMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
