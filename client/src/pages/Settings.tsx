@@ -8,8 +8,10 @@ import {
 } from "lucide-react";
 import { getToken, getUser, saveAuth, clearAuth, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Settings() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -33,7 +35,7 @@ export default function Settings() {
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
-      toast({ title: "Erro", description: "O nome é obrigatório.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.nameRequired"), variant: "destructive" });
       return;
     }
     const token = getToken();
@@ -48,12 +50,12 @@ export default function Settings() {
       const data = await res.json();
       if (res.ok) {
         saveAuth(token, data.user);
-        toast({ title: "Sucesso!", description: "Perfil atualizado com sucesso." });
+        toast({ title: t("common.success"), description: t("settings.profileUpdated") });
       } else {
-        toast({ title: "Erro", description: data.message || "Erro ao atualizar perfil.", variant: "destructive" });
+        toast({ title: t("common.error"), description: data.message || t("settings.profileUpdateError"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally {
       setSavingProfile(false);
     }
@@ -61,15 +63,15 @@ export default function Settings() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({ title: "Erro", description: "Preencha todos os campos de senha.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.fillAllPassword"), variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-      toast({ title: "Erro", description: "A nova senha deve ter pelo menos 6 caracteres.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.passwordTooShort"), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Erro", description: "As senhas não coincidem.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.passwordMismatch"), variant: "destructive" });
       return;
     }
     const token = getToken();
@@ -86,12 +88,12 @@ export default function Settings() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        toast({ title: "Sucesso!", description: "Senha alterada com sucesso." });
+        toast({ title: t("common.success"), description: t("settings.passwordChanged") });
       } else {
-        toast({ title: "Erro", description: data.message || "Erro ao alterar senha.", variant: "destructive" });
+        toast({ title: t("common.error"), description: data.message || t("settings.passwordChangeError"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally {
       setSavingPassword(false);
     }
@@ -106,7 +108,7 @@ export default function Settings() {
           <div className="flex items-center gap-3 text-white">
             {(() => { const u = getUser(); const photoUrl = u?.profilePhotoUrl; const ini = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
               <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {photoUrl ? <img src={photoUrl} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{ini}</span>}
+                {photoUrl ? <img src={photoUrl} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{ini}</span>}
               </div>
             ); })()}
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
@@ -117,13 +119,13 @@ export default function Settings() {
             data-testid="button-back-dashboard"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar
+            {t("common.back")}
           </button>
         </header>
 
         <div className="pt-2 pb-8 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">Configurações</h2>
-          <p className="text-white/80 text-sm mt-1">Gerencie seu perfil e segurança</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">{t("settings.title")}</h2>
+          <p className="text-white/80 text-sm mt-1">{t("settings.subtitle")}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-6 mb-6">
@@ -132,20 +134,20 @@ export default function Settings() {
               <User className="w-5 h-5 text-[#8855f6]" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-profile-section">Perfil</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Atualize suas informações pessoais</p>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-profile-section">{t("settings.profileSection")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.profileSectionDesc")}</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nome completo</Label>
+              <Label htmlFor="name" className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.fullName")}</Label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Seu nome completo"
+                placeholder={t("settings.fullNamePlaceholder")}
                 className="mt-1.5 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6]"
                 data-testid="input-profile-name"
               />
@@ -157,7 +159,7 @@ export default function Settings() {
               data-testid="button-save-profile"
             >
               {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {savingProfile ? "Salvando..." : "Salvar Perfil"}
+              {savingProfile ? t("settings.savingProfile") : t("settings.saveProfile")}
             </Button>
           </div>
         </div>
@@ -168,21 +170,21 @@ export default function Settings() {
               <Lock className="w-5 h-5 text-[#8855f6]" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-password-section">Alterar Senha</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Mantenha sua conta segura</p>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-password-section">{t("settings.changePassword")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.changePasswordDesc")}</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="currentPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Senha atual</Label>
+              <Label htmlFor="currentPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.currentPassword")}</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="currentPassword"
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Digite sua senha atual"
+                  placeholder={t("settings.currentPasswordPlaceholder")}
                   className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-current-password"
                 />
@@ -198,14 +200,14 @@ export default function Settings() {
             </div>
 
             <div>
-              <Label htmlFor="newPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nova senha</Label>
+              <Label htmlFor="newPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.newPassword")}</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="newPassword"
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo de 6 caracteres"
+                  placeholder={t("settings.newPasswordPlaceholder")}
                   className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-new-password"
                 />
@@ -221,14 +223,14 @@ export default function Settings() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Confirmar nova senha</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("settings.confirmPassword")}</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repita a nova senha"
+                  placeholder={t("settings.confirmPasswordPlaceholder")}
                   className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-confirm-password"
                 />
@@ -250,7 +252,7 @@ export default function Settings() {
               data-testid="button-save-password"
             >
               {savingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              {savingPassword ? "Alterando..." : "Alterar Senha"}
+              {savingPassword ? t("settings.changingPassword") : t("settings.changePassword")}
             </Button>
           </div>
         </div>

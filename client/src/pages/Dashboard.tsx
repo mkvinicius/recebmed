@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import ProjectionsPanel from "@/components/ProjectionsPanel";
 
 interface DoctorEntry {
@@ -34,23 +36,25 @@ interface NotificationItem {
   createdAt: string;
 }
 
-const formatCurrency = (val: string | number | null | undefined) => {
-  if (!val) return null;
-  const num = typeof val === "string" ? parseFloat(val) : val;
-  if (isNaN(num)) return null;
-  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-};
-
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return `Hoje, ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-  if (d.toDateString() === yesterday.toDateString()) return `Ontem, ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-};
-
 export default function Dashboard() {
+  const { t } = useTranslation();
+
+  const formatCurrency = (val: string | number | null | undefined) => {
+    if (!val) return null;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    if (isNaN(num)) return null;
+    return num.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
+  };
+
+  const formatDate = (dateStr: string) => {
+    const locale = getLocale();
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return `${t("dashboard.today")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+    if (d.toDateString() === yesterday.toDateString()) return `${t("dashboard.yesterday")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
+  };
   const [, setLocation] = useLocation();
   const [userName, setUserName] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
@@ -171,22 +175,22 @@ export default function Dashboard() {
     try {
       const res = await fetch(`/api/entries/${editingEntry.id}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(editForm) });
       const data = await res.json();
-      if (res.ok) { setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, ...data.entry } : e)); setEditingEntry(null); toast({ title: "Atualizado!", description: "Lançamento atualizado com sucesso." }); }
-      else toast({ title: "Erro", description: data.message, variant: "destructive" });
-    } catch { toast({ title: "Erro", description: "Falha ao atualizar.", variant: "destructive" }); }
+      if (res.ok) { setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, ...data.entry } : e)); setEditingEntry(null); toast({ title: t("dashboard.updated"), description: t("dashboard.updatedDesc") }); }
+      else toast({ title: t("common.error"), description: data.message, variant: "destructive" });
+    } catch { toast({ title: t("common.error"), description: t("dashboard.updateFailed"), variant: "destructive" }); }
     finally { setIsSavingEdit(false); }
   };
 
   const handleDeleteEntry = async () => {
     if (!editingEntry) return;
-    if (!window.confirm("Tem certeza que deseja excluir este lançamento?")) return;
+    if (!window.confirm(t("dashboard.confirmDelete"))) return;
     const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`/api/entries/${editingEntry.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { setEntries(prev => prev.filter(e => e.id !== editingEntry.id)); setEditingEntry(null); toast({ title: "Excluído!", description: "Lançamento removido." }); }
-      else toast({ title: "Erro", description: "Não foi possível excluir.", variant: "destructive" });
-    } catch { toast({ title: "Erro", description: "Falha ao excluir.", variant: "destructive" }); }
+      if (res.ok) { setEntries(prev => prev.filter(e => e.id !== editingEntry.id)); setEditingEntry(null); toast({ title: t("dashboard.deleted"), description: t("dashboard.deletedDesc") }); }
+      else toast({ title: t("common.error"), description: t("dashboard.deleteFailed"), variant: "destructive" });
+    } catch { toast({ title: t("common.error"), description: t("dashboard.deleteFailedDesc"), variant: "destructive" }); }
   };
 
   const pendingCount = entries.filter(e => e.status === "pending").length;
@@ -223,12 +227,12 @@ export default function Dashboard() {
               {showNotifications && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">Notificações</h4>
-                    {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />Marcar todas</button>}
+                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("dashboard.notifications")}</h4>
+                    {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />{t("dashboard.markAllRead")}</button>}
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
                     {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center"><Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" /><p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma notificação</p></div>
+                      <div className="px-4 py-8 text-center"><Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" /><p className="text-sm text-slate-400 dark:text-slate-500">{t("dashboard.noNotifications")}</p></div>
                     ) : notifications.slice(0, 15).map(n => (
                       <div key={n.id} className={`px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${n.read ? "" : "bg-[#8855f6]/5"}`} onClick={async () => { if (!n.read) { const token = getToken(); if (!token) return; try { await fetch(`/api/notifications/${n.id}/read`, { method: "PUT", headers: { Authorization: `Bearer ${token}` } }); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnreadCount(prev => Math.max(0, prev - 1)); } catch {} } }}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{n.title}</p>
@@ -244,9 +248,9 @@ export default function Dashboard() {
         </header>
 
         <div className="pt-2 pb-4 text-white">
-          <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? "Bom dia" : new Date().getHours() < 18 ? "Boa tarde" : "Boa noite"},</p>
+          <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
           <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">Dr. {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
-          <p className="text-white/60 text-sm mt-1">Resumo financeiro do seu consultório</p>
+          <p className="text-white/60 text-sm mt-1">{t("dashboard.financialSummary")}</p>
         </div>
 
         <div className="relative mb-5" ref={searchRef}>
@@ -256,7 +260,7 @@ export default function Dashboard() {
               value={searchQuery}
               onChange={e => { handleSearchChange(e.target.value); if (!showSearch) setShowSearch(true); }}
               onFocus={() => setShowSearch(true)}
-              placeholder="Buscar paciente, procedimento, convênio..."
+              placeholder={t("dashboard.searchPlaceholder")}
               className="w-full pl-11 pr-10 h-12 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-white/50 dark:border-slate-700 shadow-lg text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all"
               data-testid="input-smart-search"
             />
@@ -270,16 +274,16 @@ export default function Dashboard() {
           {showSearch && searchQuery.length >= 2 && (
             <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-80 overflow-y-auto">
               {searchLoading ? (
-                <div className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 text-[#8855f6] animate-spin mx-auto mb-2" /><p className="text-xs text-slate-400">Buscando...</p></div>
+                <div className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 text-[#8855f6] animate-spin mx-auto mb-2" /><p className="text-xs text-slate-400">{t("dashboard.searching")}</p></div>
               ) : searchResults.length === 0 ? (
                 <div className="px-6 py-8 text-center">
                   <Search className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Nenhum resultado para "{searchQuery}"</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t("dashboard.noResultsFor", { query: searchQuery })}</p>
                 </div>
               ) : (
                 <>
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{searchResults.length} resultado{searchResults.length !== 1 ? "s" : ""}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("dashboard.resultCount", { count: searchResults.length })}</p>
                   </div>
                   {searchResults.map(entry => (
                     <div
@@ -308,7 +312,7 @@ export default function Dashboard() {
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl"><Clock className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">{pendingCount}</span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Pendentes</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.pendingLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-pending">{pendingCount}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
@@ -316,7 +320,7 @@ export default function Dashboard() {
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl"><CreditCard className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">{reconciledCount}</span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Conferidos</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.reconciledLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-reconciled">{reconciledCount}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
@@ -324,15 +328,15 @@ export default function Dashboard() {
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{divergentCount}</span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Divergentes</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.divergentLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-divergent">{divergentCount}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">Total</p>
-            <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-total-value">{formatCurrency(totalValue) || "R$ 0,00"}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.totalLabel")}</p>
+            <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-total-value">{formatCurrency(totalValue) || formatCurrency(0)}</p>
           </div>
         </div>
 
@@ -340,9 +344,9 @@ export default function Dashboard() {
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-6">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800 dark:text-slate-100">Últimos Lançamentos</h3>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("dashboard.recentEntries")}</h3>
             <button onClick={() => setLocation("/entries")} className="text-xs text-[#8855f6] font-bold flex items-center gap-1 hover:underline" data-testid="link-view-all">
-              Ver todos <ChevronRight className="w-3.5 h-3.5" />
+              {t("dashboard.viewAll")} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
           <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -351,8 +355,8 @@ export default function Dashboard() {
             ) : recentEntries.length === 0 ? (
               <div className="px-6 py-10 text-center">
                 <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Nenhum lançamento ainda</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Use a aba Captura para criar seu primeiro</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t("dashboard.noEntries")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("dashboard.noEntriesHint")}</p>
               </div>
             ) : (
               recentEntries.map(entry => (
@@ -376,37 +380,37 @@ export default function Dashboard() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>
           <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4 fixed bottom-0 sm:relative sm:bottom-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Editar Lançamento</h3>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("dashboard.editEntry")}</h3>
               <button onClick={() => setEditingEntry(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit"><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <div className="px-6 py-6 space-y-5 overflow-y-auto flex-1">
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}</Label>
                 <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium" data-testid="edit-patient-name" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}</Label>
                 <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium" data-testid="edit-procedure-date" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}</Label>
                 <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium" data-testid="edit-insurance" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}</Label>
                 <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium" data-testid="edit-description" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</Label>
                 <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium" data-testid="edit-value" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Status da Conferência</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{t("common.status")}</Label>
                 <div className="flex gap-2">
                   {[
-                    { value: "pending", label: "Pendente", color: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-                    { value: "reconciled", label: "Conferido", color: "border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400" },
-                    { value: "divergent", label: "Divergente", color: "border-red-300 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-400" },
+                    { value: "pending", label: t("common.pending"), color: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+                    { value: "reconciled", label: t("common.reconciled"), color: "border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400" },
+                    { value: "divergent", label: t("common.divergent"), color: "border-red-300 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-400" },
                   ].map(s => (
                     <button key={s.value} onClick={() => setEditForm(f => ({ ...f, status: s.value }))} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${editForm.status === s.value ? s.color : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`} data-testid={`edit-status-${s.value}`}>{s.label}</button>
                   ))}
@@ -416,7 +420,7 @@ export default function Dashboard() {
             <div className="px-6 py-4 flex gap-3 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-2xl">
               <Button onClick={handleDeleteEntry} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30" data-testid="button-delete-entry"><Trash2 className="w-4 h-4" /></Button>
               <Button onClick={handleSaveEdit} disabled={isSavingEdit} className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl transition-all" data-testid="button-save-edit">
-                {isSavingEdit ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
+                {isSavingEdit ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("common.saving")}</> : <><Save className="w-4 h-4 mr-2" /> {t("dashboard.saveChanges")}</>}
               </Button>
             </div>
           </div>

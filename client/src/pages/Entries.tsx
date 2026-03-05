@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 interface DoctorEntry {
   id: string;
@@ -27,19 +29,11 @@ const formatCurrency = (val: string | number | null | undefined) => {
   if (!val) return null;
   const num = typeof val === "string" ? parseFloat(val) : val;
   if (isNaN(num)) return null;
-  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-};
-
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return `Hoje, ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-  if (d.toDateString() === yesterday.toDateString()) return `Ontem, ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  return num.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
 };
 
 export default function Entries() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
@@ -53,6 +47,23 @@ export default function Entries() {
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const locale = getLocale();
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return `${t("dashboard.today")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+    if (d.toDateString() === yesterday.toDateString()) return `${t("dashboard.yesterday")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    pending: t("common.pending"),
+    reconciled: t("common.reconciled"),
+    divergent: t("common.divergent"),
+  };
 
   useEffect(() => {
     const token = getToken();
@@ -99,22 +110,22 @@ export default function Entries() {
     try {
       const res = await fetch(`/api/entries/${editingEntry.id}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(editForm) });
       const data = await res.json();
-      if (res.ok) { setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, ...data.entry } : e)); setEditingEntry(null); toast({ title: "Atualizado!", description: "Lançamento atualizado com sucesso." }); }
-      else toast({ title: "Erro", description: data.message, variant: "destructive" });
-    } catch { toast({ title: "Erro", description: "Falha ao atualizar.", variant: "destructive" }); }
+      if (res.ok) { setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, ...data.entry } : e)); setEditingEntry(null); toast({ title: t("entries.updated"), description: t("entries.updatedDesc") }); }
+      else toast({ title: t("common.error"), description: data.message, variant: "destructive" });
+    } catch { toast({ title: t("common.error"), description: t("entries.updateFailed"), variant: "destructive" }); }
     finally { setIsSavingEdit(false); }
   };
 
   const handleDeleteEntry = async () => {
     if (!editingEntry) return;
-    if (!window.confirm("Tem certeza que deseja excluir este lançamento?")) return;
+    if (!window.confirm(t("entries.confirmDelete"))) return;
     const token = getToken();
     if (!token) return;
     try {
       const res = await fetch(`/api/entries/${editingEntry.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { setEntries(prev => prev.filter(e => e.id !== editingEntry.id)); setEditingEntry(null); toast({ title: "Excluído!", description: "Lançamento removido." }); }
-      else toast({ title: "Erro", description: "Não foi possível excluir.", variant: "destructive" });
-    } catch { toast({ title: "Erro", description: "Falha ao excluir.", variant: "destructive" }); }
+      if (res.ok) { setEntries(prev => prev.filter(e => e.id !== editingEntry.id)); setEditingEntry(null); toast({ title: t("entries.deleted"), description: t("entries.deletedDesc") }); }
+      else toast({ title: t("common.error"), description: t("entries.deleteFailed"), variant: "destructive" });
+    } catch { toast({ title: t("common.error"), description: t("entries.deleteFailedDesc"), variant: "destructive" }); }
   };
 
   const handleQuickStatusChange = async (entryId: string, newStatus: string, e: React.MouseEvent) => {
@@ -125,9 +136,9 @@ export default function Entries() {
     try {
       const res = await fetch(`/api/entries/${entryId}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: newStatus }) });
       const data = await res.json();
-      if (res.ok) { setEntries(prev => prev.map(e => e.id === entryId ? { ...e, ...data.entry } : e)); toast({ title: "Status atualizado!", description: `Marcado como ${{ pending: "Pendente", reconciled: "Conferido", divergent: "Divergente" }[newStatus]}.` }); }
-      else toast({ title: "Erro", description: data.message || "Falha.", variant: "destructive" });
-    } catch { toast({ title: "Erro", description: "Falha ao atualizar status.", variant: "destructive" }); }
+      if (res.ok) { setEntries(prev => prev.map(e => e.id === entryId ? { ...e, ...data.entry } : e)); toast({ title: t("entries.statusUpdated"), description: t("entries.markedAs", { status: statusLabelMap[newStatus] }) }); }
+      else toast({ title: t("common.error"), description: data.message || t("entries.statusUpdateFailed"), variant: "destructive" });
+    } catch { toast({ title: t("common.error"), description: t("entries.statusUpdateFailed"), variant: "destructive" }); }
   };
 
   const filteredEntries = entries.filter(e => {
@@ -149,7 +160,7 @@ export default function Entries() {
 
   const uniqueInsurances = [...new Set(entries.map(e => e.insuranceProvider).filter(Boolean))];
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
-  const methodLabel = (m: string) => m === "photo" ? "Foto" : m === "audio" ? "Áudio" : "Manual";
+  const methodLabel = (m: string) => m === "photo" ? t("common.photo") : m === "audio" ? t("common.audio") : t("common.manual");
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
   const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
 
@@ -166,7 +177,7 @@ export default function Entries() {
           <div className="flex items-center gap-3 text-white">
             <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
               {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-white tracking-wide">{userInitials}</span>
               )}
@@ -176,29 +187,29 @@ export default function Entries() {
         </header>
 
         <div className="pt-2 pb-8 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Lançamentos</h2>
-          <p className="text-white/80 mt-1 text-sm">Gerencie todos os seus procedimentos</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("entries.title")}</h2>
+          <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar paciente, procedimento..." className="pl-10 h-10 rounded-xl border-slate-200 text-sm" data-testid="input-search" />
+              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("entries.searchPlaceholder")} className="pl-10 h-10 rounded-xl border-slate-200 text-sm" data-testid="input-search" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {[{ v: "all", l: "Todos" }, { v: "pending", l: "Pendentes" }, { v: "reconciled", l: "Conferidos" }, { v: "divergent", l: "Divergentes" }].map(f => (
+              {[{ v: "all", l: t("common.all") }, { v: "pending", l: t("common.pending") }, { v: "reconciled", l: t("common.reconciled") }, { v: "divergent", l: t("common.divergent") }].map(f => (
                 <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === f.v ? "bg-[#8855f6] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
               ))}
             </div>
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
-            {[{ v: "all", l: "Todas as datas" }, { v: "today", l: "Hoje" }, { v: "week", l: "Esta semana" }, { v: "month", l: "Este mês" }].map(f => (
+            {[{ v: "all", l: t("entries.allDates") }, { v: "today", l: t("entries.todayFilter") }, { v: "week", l: t("entries.thisWeek") }, { v: "month", l: t("entries.thisMonth") }].map(f => (
               <button key={f.v} onClick={() => setDateFilter(f.v)} className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dateFilter === f.v ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900" : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"}`} data-testid={`filter-date-${f.v}`}>{f.l}</button>
             ))}
             {uniqueInsurances.length > 1 && (
               <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance">
-                <option value="all">Todos os convênios</option>
+                <option value="all">{t("entries.allInsurances")}</option>
                 {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
               </select>
             )}
@@ -207,9 +218,9 @@ export default function Entries() {
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-6">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-            <span className="font-bold text-slate-800 dark:text-slate-200">Todos os Lançamentos</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">{t("entries.allEntries")}</span>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
-              {filteredEntries.length === entries.length ? `${entries.length} registros` : `${filteredEntries.length} de ${entries.length}`}
+              {filteredEntries.length === entries.length ? t("entries.recordCount", { count: entries.length }) : t("entries.filteredCount", { filtered: filteredEntries.length, total: entries.length })}
             </span>
           </div>
           <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -218,7 +229,7 @@ export default function Entries() {
             ) : filteredEntries.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">{entries.length === 0 ? "Nenhum lançamento ainda" : "Nenhum resultado para os filtros"}</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">{entries.length === 0 ? t("entries.noEntries") : t("entries.noFilterResults")}</p>
               </div>
             ) : (
               filteredEntries.map(entry => (
@@ -240,15 +251,15 @@ export default function Entries() {
                     <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
                       className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" : entry.status === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"}`}
                       data-testid={`quick-status-${entry.id}`}>
-                      {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
+                      {statusLabelMap[entry.status] || t("common.pending")}
                     </button>
                     {quickStatusEntry === entry.id && (
                       <div className="absolute right-0 bottom-full mb-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
-                        <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alterar status</p>
+                        <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("entries.changeStatus")}</p>
                         {[
-                          { value: "pending", label: "Pendente", icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
-                          { value: "reconciled", label: "Conferido", icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
-                          { value: "divergent", label: "Divergente", icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
+                          { value: "pending", label: t("common.pending"), icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
+                          { value: "reconciled", label: t("common.reconciled"), icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
+                          { value: "divergent", label: t("common.divergent"), icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
                         ].filter(s => s.value !== entry.status).map(s => (
                           <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
                             {s.icon} {s.label}
@@ -268,37 +279,37 @@ export default function Entries() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>
           <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4 fixed bottom-0 sm:relative sm:bottom-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">Editar Lançamento</h3>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">{t("entries.editEntry")}</h3>
               <button onClick={() => setEditingEntry(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit"><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <div className="px-6 py-6 space-y-5 overflow-y-auto flex-1">
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}</Label>
                 <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-patient-name" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}</Label>
                 <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-procedure-date" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}</Label>
                 <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-insurance" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}</Label>
                 <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-description" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</Label>
                 <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-value" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Status da Conferência</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{t("entries.conferenceStatus")}</Label>
                 <div className="flex gap-2">
                   {[
-                    { value: "pending", label: "Pendente", color: "border-amber-300 bg-amber-50 text-amber-700" },
-                    { value: "reconciled", label: "Conferido", color: "border-green-300 bg-green-50 text-green-700" },
-                    { value: "divergent", label: "Divergente", color: "border-red-300 bg-red-50 text-red-700" },
+                    { value: "pending", label: t("common.pending"), color: "border-amber-300 bg-amber-50 text-amber-700" },
+                    { value: "reconciled", label: t("common.reconciled"), color: "border-green-300 bg-green-50 text-green-700" },
+                    { value: "divergent", label: t("common.divergent"), color: "border-red-300 bg-red-50 text-red-700" },
                   ].map(s => (
                     <button key={s.value} onClick={() => setEditForm(f => ({ ...f, status: s.value }))} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${editForm.status === s.value ? s.color : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-400"}`} data-testid={`edit-status-${s.value}`}>{s.label}</button>
                   ))}
@@ -308,7 +319,7 @@ export default function Entries() {
             <div className="px-6 py-4 flex gap-3 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-2xl">
               <Button onClick={handleDeleteEntry} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 text-red-500 hover:bg-red-50" data-testid="button-delete-entry"><Trash2 className="w-4 h-4" /></Button>
               <Button onClick={handleSaveEdit} disabled={isSavingEdit} className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl transition-all" data-testid="button-save-edit">
-                {isSavingEdit ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
+                {isSavingEdit ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("common.saving")}</> : <><Save className="w-4 h-4 mr-2" /> {t("dashboard.saveChanges")}</>}
               </Button>
             </div>
           </div>

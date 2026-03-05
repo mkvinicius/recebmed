@@ -4,8 +4,10 @@ import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope } from "lucide-rea
 import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
+import { useTranslation } from "react-i18next";
 
 export default function Capture() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [processingPhoto, setProcessingPhoto] = useState(false);
   const [photoProgress, setPhotoProgress] = useState("");
@@ -39,7 +41,7 @@ export default function Capture() {
 
     try {
       if (files.length === 1) {
-        setPhotoProgress("Processando imagem...");
+        setPhotoProgress(t("capture.processingImage"));
         const base64 = await readFileAsDataURL(files[0]);
         const res = await fetch("/api/entries/photo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ image: base64 }) });
         const data = await res.json();
@@ -48,26 +50,26 @@ export default function Capture() {
           sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
           setLocation("/confirm-entry?method=photo");
         }
-        else toast({ title: "Erro", description: "Não foi possível processar a imagem.", variant: "destructive" });
+        else toast({ title: t("common.error"), description: t("capture.imageError"), variant: "destructive" });
       } else {
-        setPhotoProgress(`Lendo ${files.length} imagens...`);
+        setPhotoProgress(t("capture.readingImages", { count: files.length }));
         const images: string[] = [];
         for (let i = 0; i < files.length; i++) {
           images.push(await readFileAsDataURL(files[i]));
         }
-        setPhotoProgress(`Processando ${files.length} imagens com IA...`);
+        setPhotoProgress(t("capture.processingImages", { count: files.length }));
         const res = await fetch("/api/entries/photos-batch", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ images }) });
         const data = await res.json();
         if (data.success && data.extractedData && data.extractedData.length > 0) {
           const payload = { entries: data.extractedData, sourceUrl: null };
           sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
-          toast({ title: `${data.totalEntries} registros encontrados`, description: `Extraídos de ${data.totalImages} imagens` });
+          toast({ title: t("capture.recordsFound", { count: data.totalEntries }), description: t("capture.extractedFrom", { count: data.totalImages }) });
           setLocation("/confirm-entry?method=photo");
         } else {
-          toast({ title: "Erro", description: "Não foi possível extrair dados das imagens.", variant: "destructive" });
+          toast({ title: t("common.error"), description: t("capture.imagesError"), variant: "destructive" });
         }
       }
-    } catch { toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" }); }
+    } catch { toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" }); }
     finally { setProcessingPhoto(false); setPhotoProgress(""); }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -96,22 +98,22 @@ export default function Capture() {
             sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
             setLocation("/confirm-entry?method=audio");
           }
-          else toast({ title: "Erro", description: data.message || "Não foi possível processar o áudio.", variant: "destructive" });
-        } catch { toast({ title: "Erro", description: "Falha ao processar o áudio.", variant: "destructive" }); }
+          else toast({ title: t("common.error"), description: data.message || t("capture.audioError"), variant: "destructive" });
+        } catch { toast({ title: t("common.error"), description: t("capture.audioProcessError"), variant: "destructive" }); }
         finally { setProcessingAudio(false); }
       };
       mediaRecorder.start();
       setIsRecording(true);
-      toast({ title: "Gravando...", description: "Dite os dados do procedimento. Clique novamente para parar." });
-    } catch { toast({ title: "Erro", description: "Não foi possível acessar o microfone.", variant: "destructive" }); }
+      toast({ title: t("capture.recordingToast"), description: t("capture.recordingToastDesc") });
+    } catch { toast({ title: t("common.error"), description: t("capture.micError"), variant: "destructive" }); }
   };
 
   const cards = [
     {
       id: "photo",
       icon: Camera,
-      title: "Foto",
-      description: "Tire fotos de recibos ou documentos — selecione várias de uma vez para extração em lote",
+      title: t("capture.photoTitle"),
+      description: t("capture.photoDesc"),
       gradient: "from-[#8855f6] to-[#6633cc]",
       processing: processingPhoto,
       progressText: photoProgress,
@@ -120,8 +122,8 @@ export default function Capture() {
     {
       id: "audio",
       icon: Mic,
-      title: isRecording ? "Parar Gravação" : "Áudio",
-      description: isRecording ? "Gravando... Clique para parar e processar" : "Dite os dados do procedimento e a IA transcreve e extrai tudo",
+      title: isRecording ? t("capture.stopRecording") : t("capture.audioTitle"),
+      description: isRecording ? t("capture.recordingDesc") : t("capture.audioDesc"),
       gradient: isRecording ? "from-red-500 to-red-600" : "from-[#6633cc] to-[#4422aa]",
       processing: processingAudio,
       onClick: handleAudioToggle,
@@ -129,8 +131,8 @@ export default function Capture() {
     {
       id: "manual",
       icon: PenLine,
-      title: "Manual",
-      description: "Preencha os dados manualmente no formulário",
+      title: t("capture.manualTitle"),
+      description: t("capture.manualDesc"),
       gradient: "from-slate-600 to-slate-700",
       processing: false,
       onClick: () => setLocation("/confirm-entry?method=manual"),
@@ -146,7 +148,7 @@ export default function Capture() {
           <div className="flex items-center gap-3 text-white">
             <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
               {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
               )}
@@ -156,8 +158,8 @@ export default function Capture() {
         </header>
 
         <div className="pt-2 pb-8 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Novo Lançamento</h2>
-          <p className="text-white/80 mt-1 text-sm">Escolha como deseja registrar o procedimento</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("capture.title")}</h2>
+          <p className="text-white/80 mt-1 text-sm">{t("capture.subtitle")}</p>
         </div>
 
         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
@@ -182,7 +184,7 @@ export default function Capture() {
                     {card.id !== "manual" && <Sparkles className="w-4 h-4 text-white/60" />}
                   </div>
                   <p className="text-sm text-white/80 mt-1 leading-relaxed">{card.description}</p>
-                  {card.processing && <p className="text-xs text-white/60 mt-2">{card.progressText || "Processando com IA..."}</p>}
+                  {card.processing && <p className="text-xs text-white/60 mt-2">{card.progressText || t("capture.processingAI")}</p>}
                 </div>
               </div>
             </button>

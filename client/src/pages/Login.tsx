@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Stethoscope } from "lucide-react";
 import { saveAuth } from "@/lib/auth";
+import { useTranslation } from "react-i18next";
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,14 +28,14 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Erro ao fazer login", description: data.message || "Verifique suas credenciais.", variant: "destructive" });
+        toast({ title: t("login.errorTitle"), description: data.message || t("login.errorDesc"), variant: "destructive" });
         return;
       }
       saveAuth(data.token, data.user);
-      toast({ title: "Login realizado!", description: `Bem-vindo de volta, ${data.user.name}!` });
+      toast({ title: t("login.successTitle"), description: t("login.welcomeBack", { name: data.user.name }) });
       setLocation("/dashboard");
     } catch {
-      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao servidor.", variant: "destructive" });
+      toast({ title: t("common.connectionError"), description: t("common.connectionErrorDesc"), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -53,17 +55,17 @@ export default function Login() {
 
         <div className="bg-white/80 dark:bg-[#1a1225]/90 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Entrar na sua conta</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Digite seu email e senha para acessar o painel</p>
+            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{t("login.title")}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">{t("login.subtitle")}</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-semibold text-slate-700 dark:text-slate-300">Email</Label>
+              <Label htmlFor="email" className="font-semibold text-slate-700 dark:text-slate-300">{t("login.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="nome@exemplo.com"
+                placeholder={t("login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -73,8 +75,8 @@ export default function Login() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">Senha</Label>
-                <a href="#" className="text-xs font-bold text-[#8855f6] hover:underline">Esqueceu a senha?</a>
+                <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">{t("login.password")}</Label>
+                <a href="#" className="text-xs font-bold text-[#8855f6] hover:underline">{t("login.forgotPassword")}</a>
               </div>
               <Input
                 id="password"
@@ -92,13 +94,13 @@ export default function Login() {
               className="w-full h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold text-md shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
               data-testid="button-login"
             >
-              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entrando...</> : "Entrar"}
+              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("login.submitting")}</> : t("login.submit")}
             </Button>
           </form>
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-            Não tem uma conta?{" "}
-            <Link href="/register" className="font-bold text-[#8855f6] hover:underline">Registre-se</Link>
+            {t("login.noAccount")}{" "}
+            <Link href="/register" className="font-bold text-[#8855f6] hover:underline">{t("login.register")}</Link>
           </p>
         </div>
       </div>

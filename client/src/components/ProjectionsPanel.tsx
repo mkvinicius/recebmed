@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TrendingUp, Loader2 } from "lucide-react";
 import { getToken } from "@/lib/auth";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 interface ProjectionsData {
   projections: { days30: number; days60: number; days90: number };
@@ -8,10 +10,12 @@ interface ProjectionsData {
   entryCount: number;
 }
 
-const formatCurrency = (val: number) =>
-  val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
 export default function ProjectionsPanel() {
+  const { t } = useTranslation();
+
+  const formatCurrency = (val: number) =>
+    val.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
+
   const [data, setData] = useState<ProjectionsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,16 +40,16 @@ export default function ProjectionsPanel() {
   if (!data) return null;
 
   const cards = [
-    { label: "Próx. 30 dias", value: data.projections.days30, gradient: "from-[#8855f6] to-[#6633cc]" },
-    { label: "Próx. 60 dias", value: data.projections.days60, gradient: "from-[#6633cc] to-[#4422aa]" },
-    { label: "Próx. 90 dias", value: data.projections.days90, gradient: "from-[#4422aa] to-[#331188]" },
+    { label: t("projections.next30"), value: data.projections.days30, gradient: "from-[#8855f6] to-[#6633cc]" },
+    { label: t("projections.next60"), value: data.projections.days60, gradient: "from-[#6633cc] to-[#4422aa]" },
+    { label: t("projections.next90"), value: data.projections.days90, gradient: "from-[#4422aa] to-[#331188]" },
   ];
 
   return (
     <div className="mb-8" data-testid="projections-panel">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-5 h-5 text-[#8855f6]" />
-        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Projeções Financeiras</h3>
+        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("projections.title")}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {cards.map((card, i) => (
@@ -64,15 +68,15 @@ export default function ProjectionsPanel() {
       </div>
       <div className="grid grid-cols-3 gap-4 mt-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Conferido</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.reconciledTotal")}</p>
           <p className="text-sm font-bold text-green-600" data-testid="projection-total-reconciled">{formatCurrency(data.totals.reconciled)}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Divergente</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.divergentTotal")}</p>
           <p className="text-sm font-bold text-red-500" data-testid="projection-total-divergent">{formatCurrency(data.totals.divergent)}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Total</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.totalLabel")}</p>
           <p className="text-sm font-bold text-[#8855f6]" data-testid="projection-total">{formatCurrency(data.totals.total)}</p>
         </div>
       </div>

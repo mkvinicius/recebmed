@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, ArrowLeft, DollarSign, CheckCircle2, Clock,
@@ -10,6 +11,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 interface DoctorEntry {
   id: string;
@@ -25,18 +27,7 @@ interface DoctorEntry {
 
 type PeriodFilter = "month" | "3months" | "6months" | "year";
 
-const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
-  { value: "month", label: "Este mês" },
-  { value: "3months", label: "Últimos 3 meses" },
-  { value: "6months", label: "Últimos 6 meses" },
-  { value: "year", label: "Este ano" },
-];
-
 const PIE_COLORS = ["#8855f6", "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444", "#ec4899"];
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 function getFilterDate(period: PeriodFilter): Date {
   const now = new Date();
@@ -52,15 +43,30 @@ function getFilterDate(period: PeriodFilter): Date {
   }
 }
 
-function getMonthLabel(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-}
-
 export default function Reports() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodFilter>("6months");
+
+  const locale = getLocale();
+  const currency = getCurrencyCode();
+
+  const formatCurrency = (value: number): string => {
+    return value.toLocaleString(locale, { style: "currency", currency });
+  };
+
+  const getMonthLabel = (date: Date): string => {
+    return date.toLocaleDateString(locale, { month: "short", year: "2-digit" });
+  };
+
+  const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+    { value: "month", label: t("reports.thisMonth") },
+    { value: "3months", label: t("reports.last3Months") },
+    { value: "6months", label: t("reports.last6Months") },
+    { value: "year", label: t("reports.thisYear") },
+  ];
 
   useEffect(() => {
     const token = getToken();
@@ -130,13 +136,13 @@ export default function Reports() {
   const insuranceData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredEntries.forEach(e => {
-      const provider = e.insuranceProvider || "Sem convênio";
+      const provider = e.insuranceProvider || t("reports.noInsurance");
       map[provider] = (map[provider] || 0) + (e.procedureValue ? parseFloat(e.procedureValue) : 0);
     });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredEntries]);
+  }, [filteredEntries, t]);
 
   const topInsurers = useMemo(() => insuranceData.slice(0, 10), [insuranceData]);
 
@@ -157,7 +163,7 @@ export default function Reports() {
           <div className="flex items-center gap-3 text-white">
             {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
               <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
@@ -168,7 +174,7 @@ export default function Reports() {
             className="text-white hover:bg-white/20 rounded-full font-bold gap-2"
             data-testid="button-back-dashboard"
           >
-            <ArrowLeft className="w-4 h-4" /> Voltar
+            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
           </Button>
         </header>
 
@@ -178,14 +184,14 @@ export default function Reports() {
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Relatórios Financeiros</h2>
-              <p className="text-sm opacity-90">Acompanhe seu faturamento e desempenho</p>
+              <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reports.title")}</h2>
+              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
             </div>
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-6">
-          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Período</p>
+          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reports.period")}</p>
           <div className="flex flex-wrap gap-2">
             {PERIOD_OPTIONS.map(opt => (
               <button
@@ -214,8 +220,8 @@ export default function Reports() {
               <Stethoscope className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Conciliação</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Conferir PDFs</p>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("reports.reconciliation")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.checkPDFs")}</p>
             </div>
           </button>
           <button
@@ -227,8 +233,8 @@ export default function Reports() {
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Relatórios Clínica</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Dados extraídos</p>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("reports.clinicReports")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.extractedData")}</p>
             </div>
           </button>
           <button
@@ -240,8 +246,8 @@ export default function Reports() {
               <FileUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Auditoria Retroativa</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Importar dados históricos</p>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("reports.retroactiveAudit")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.importHistorical")}</p>
             </div>
           </button>
         </div>
@@ -250,37 +256,37 @@ export default function Reports() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-total-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Total Faturado</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalBilled")}</span>
             </div>
             <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100" data-testid="value-total">{formatCurrency(totalValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.length} {t("common.entries")}</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-reconciled-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Conferido</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.reconciledLabel")}</span>
             </div>
             <p className="text-xl font-extrabold text-green-600" data-testid="value-reconciled">{formatCurrency(reconciledValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} {t("common.entries")}</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-pending-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Pendente</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.pendingLabel")}</span>
             </div>
             <p className="text-xl font-extrabold text-amber-600" data-testid="value-pending">{formatCurrency(pendingValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "pending").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "pending").length} {t("common.entries")}</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="card-divergent-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Divergente</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.divergentLabel")}</span>
             </div>
             <p className="text-xl font-extrabold text-red-600" data-testid="value-divergent">{formatCurrency(divergentValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "divergent").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "divergent").length} {t("common.entries")}</p>
           </div>
         </div>
 
@@ -288,16 +294,16 @@ export default function Reports() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="chart-monthly">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-[#8855f6]" />
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">Faturamento por Mês</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.monthlyRevenue")}</h3>
             </div>
             {monthlyData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:[&>line]:stroke-slate-700" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#94a3b8" }} />
-                  <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => new Intl.NumberFormat(locale, { style: "currency", currency, notation: "compact", maximumFractionDigits: 0 }).format(v)} />
                   <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), "Faturamento"]}
+                    formatter={(value: number) => [formatCurrency(value), t("reports.revenue")]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
                   />
                   <Bar dataKey="value" fill="#8855f6" radius={[6, 6, 0, 0]} />
@@ -305,7 +311,7 @@ export default function Reports() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                Sem dados para o período selecionado
+                {t("reports.noDataForPeriod")}
               </div>
             )}
           </div>
@@ -313,7 +319,7 @@ export default function Reports() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]" data-testid="chart-insurance">
             <div className="flex items-center gap-2 mb-4">
               <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">Distribuição por Convênio</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.insuranceDistribution")}</h3>
             </div>
             {insuranceData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -334,14 +340,14 @@ export default function Reports() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), "Valor"]}
+                    formatter={(value: number) => [formatCurrency(value), t("common.value")]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                Sem dados para o período selecionado
+                {t("reports.noDataForPeriod")}
               </div>
             )}
           </div>
@@ -349,29 +355,29 @@ export default function Reports() {
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-12" data-testid="table-top-insurers">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Top Convênios por Valor</h3>
+            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("reports.topInsurers")}</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-700">
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">#</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Convênio</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Valor Total</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lançamentos</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">% do Total</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.insurerColumn")}</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.totalValueColumn")}</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.entriesColumn")}</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.percentColumn")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {topInsurers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
-                      Sem dados para o período selecionado
+                      {t("reports.noDataForPeriod")}
                     </td>
                   </tr>
                 ) : (
                   topInsurers.map((ins, i) => {
-                    const count = filteredEntries.filter(e => (e.insuranceProvider || "Sem convênio") === ins.name).length;
+                    const count = filteredEntries.filter(e => (e.insuranceProvider || t("reports.noInsurance")) === ins.name).length;
                     const pct = totalValue > 0 ? ((ins.value / totalValue) * 100).toFixed(1) : "0.0";
                     return (
                       <tr key={ins.name} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-testid={`row-insurer-${i}`}>

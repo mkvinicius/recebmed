@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 interface ClinicReport {
   id: string;
@@ -19,6 +21,7 @@ interface ClinicReport {
 }
 
 export default function ClinicReports() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [reports, setReports] = useState<ClinicReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +35,9 @@ export default function ClinicReports() {
     description: "",
   });
   const { toast } = useToast();
+
+  const locale = getLocale();
+  const currency = getCurrencyCode();
 
   useEffect(() => {
     const token = getToken();
@@ -57,7 +63,7 @@ export default function ClinicReports() {
     if (!token) return;
 
     if (!form.patientName || !form.procedureDate || !form.reportedValue) {
-      toast({ title: "Erro", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("clinicReports.requiredFields"), variant: "destructive" });
       return;
     }
 
@@ -78,17 +84,17 @@ export default function ClinicReports() {
         setReports(prev => [data.report, ...prev]);
         setForm({ patientName: "", procedureDate: "", reportedValue: "", description: "" });
         setShowForm(false);
-        toast({ title: "Sucesso!", description: "Relatório da clínica adicionado." });
+        toast({ title: t("common.success"), description: t("clinicReports.saved") });
       } else {
-        toast({ title: "Erro", description: data.message || "Não foi possível salvar.", variant: "destructive" });
+        toast({ title: t("common.error"), description: data.message || t("clinicReports.saveError"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha na conexão.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("clinicReports.connectionError"), variant: "destructive" });
     } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este relatório?")) return;
+    if (!window.confirm(t("clinicReports.confirmDelete"))) return;
     const token = getToken();
     if (!token) return;
     setDeletingId(id);
@@ -99,24 +105,24 @@ export default function ClinicReports() {
       });
       if (res.ok) {
         setReports(prev => prev.filter(r => r.id !== id));
-        toast({ title: "Excluído!", description: "Relatório removido com sucesso." });
+        toast({ title: t("clinicReports.deleted"), description: t("clinicReports.deletedDesc") });
       } else {
-        toast({ title: "Erro", description: "Não foi possível excluir.", variant: "destructive" });
+        toast({ title: t("common.error"), description: t("clinicReports.deleteError"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha na conexão.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("clinicReports.connectionError"), variant: "destructive" });
     } finally { setDeletingId(null); }
   };
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "R$ 0,00";
-    return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    if (isNaN(num)) return (0).toLocaleString(locale, { style: "currency", currency });
+    return num.toLocaleString(locale, { style: "currency", currency });
   };
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
   return (
@@ -128,7 +134,7 @@ export default function ClinicReports() {
           <div className="flex items-center gap-3 text-white">
             {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
               <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
@@ -138,18 +144,18 @@ export default function ClinicReports() {
             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md"
             data-testid="button-back-dashboard"
           >
-            <ArrowLeft className="w-4 h-4" /> Voltar
+            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
           </button>
         </header>
 
         <div className="pt-2 pb-6 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Relatórios da Clínica</h2>
-          <p className="text-white/80 text-sm mt-1">Gerencie os relatórios recebidos das clínicas e convênios</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
+          <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>
 
         <div className="glass-card dark:glass-card-dark rounded-2xl p-6 shadow-2xl mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Adicionar Relatório</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t("clinicReports.addReport")}</h3>
             <Button
               onClick={() => setShowForm(!showForm)}
               className={`flex items-center gap-2 px-4 py-2 h-auto rounded-full font-bold transition-all ${
@@ -160,7 +166,7 @@ export default function ClinicReports() {
               data-testid="button-toggle-form"
             >
               <Plus className={`w-4 h-4 transition-transform ${showForm ? "rotate-45" : ""}`} />
-              {showForm ? "Cancelar" : "Novo Relatório"}
+              {showForm ? t("clinicReports.cancelAdd") : t("clinicReports.newReport")}
             </Button>
           </div>
 
@@ -169,20 +175,20 @@ export default function ClinicReports() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="patientName" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    Nome do Paciente *
+                    {t("clinicReports.patientName")}
                   </Label>
                   <Input
                     id="patientName"
                     value={form.patientName}
                     onChange={e => setForm(f => ({ ...f, patientName: e.target.value }))}
-                    placeholder="Nome completo do paciente"
+                    placeholder={t("clinicReports.patientPlaceholder")}
                     className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-patient-name"
                   />
                 </div>
                 <div>
                   <Label htmlFor="procedureDate" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    Data do Procedimento *
+                    {t("clinicReports.procedureDate")}
                   </Label>
                   <Input
                     id="procedureDate"
@@ -195,7 +201,7 @@ export default function ClinicReports() {
                 </div>
                 <div>
                   <Label htmlFor="reportedValue" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    Valor Reportado (R$) *
+                    {t("clinicReports.reportedValue")}
                   </Label>
                   <Input
                     id="reportedValue"
@@ -211,13 +217,13 @@ export default function ClinicReports() {
                 </div>
                 <div>
                   <Label htmlFor="description" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    Descrição / Notas
+                    {t("clinicReports.description")}
                   </Label>
                   <Input
                     id="description"
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Observações opcionais"
+                    placeholder={t("clinicReports.descriptionPlaceholder")}
                     className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-description"
                   />
@@ -231,7 +237,7 @@ export default function ClinicReports() {
                   data-testid="button-save-report"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  {saving ? "Salvando..." : "Salvar Relatório"}
+                  {saving ? t("clinicReports.savingReport") : t("clinicReports.saveReport")}
                 </Button>
               </div>
             </form>
@@ -240,9 +246,9 @@ export default function ClinicReports() {
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-12">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Relatórios Cadastrados</h3>
+            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("clinicReports.registeredReports")}</h3>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-report-count">
-              {reports.length} {reports.length === 1 ? "relatório" : "relatórios"}
+              {reports.length === 1 ? t("clinicReports.reportCount", { count: reports.length }) : t("clinicReports.reportCountPlural", { count: reports.length })}
             </span>
           </div>
           <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -253,8 +259,8 @@ export default function ClinicReports() {
             ) : reports.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhum relatório cadastrado</p>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Clique em "Novo Relatório" para adicionar</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">{t("clinicReports.noReports")}</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("clinicReports.noReportsHint")}</p>
               </div>
             ) : (
               reports.map((report) => (
@@ -294,7 +300,7 @@ export default function ClinicReports() {
                     disabled={deletingId === report.id}
                     className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0 ml-2"
                     data-testid={`button-delete-report-${report.id}`}
-                    title="Excluir relatório"
+                    title={t("common.delete")}
                   >
                     {deletingId === report.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

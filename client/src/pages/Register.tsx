@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Stethoscope } from "lucide-react";
 import { saveAuth } from "@/lib/auth";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,14 +29,14 @@ export default function Register() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Erro no cadastro", description: data.message || "Verifique os dados informados.", variant: "destructive" });
+        toast({ title: t("register.errorTitle"), description: data.message || t("register.errorDesc"), variant: "destructive" });
         return;
       }
       saveAuth(data.token, data.user);
-      toast({ title: "Conta criada!", description: `Bem-vindo ao RecebMed, ${data.user.name}!` });
+      toast({ title: t("register.successTitle"), description: t("register.welcomeNew", { name: data.user.name }) });
       setLocation("/dashboard");
     } catch {
-      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao servidor.", variant: "destructive" });
+      toast({ title: t("common.connectionError"), description: t("common.connectionErrorDesc"), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -54,16 +56,16 @@ export default function Register() {
 
         <div className="bg-white/80 dark:bg-[#1a1225]/90 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Criar uma conta</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Preencha seus dados para começar a usar o RecebMed</p>
+            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{t("register.title")}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">{t("register.subtitle")}</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="font-semibold text-slate-700 dark:text-slate-300">Nome completo</Label>
+              <Label htmlFor="name" className="font-semibold text-slate-700 dark:text-slate-300">{t("register.fullName")}</Label>
               <Input
                 id="name"
-                placeholder="Dr. João Silva"
+                placeholder={t("register.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -72,11 +74,11 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-semibold text-slate-700 dark:text-slate-300">Email</Label>
+              <Label htmlFor="email" className="font-semibold text-slate-700 dark:text-slate-300">{t("register.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="nome@exemplo.com"
+                placeholder={t("register.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -85,11 +87,11 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">Senha</Label>
+              <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">{t("register.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Crie uma senha forte"
+                placeholder={t("register.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -104,13 +106,13 @@ export default function Register() {
               className="w-full h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold text-md shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
               data-testid="button-register"
             >
-              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Criando...</> : "Criar conta"}
+              {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("register.submitting")}</> : t("register.submit")}
             </Button>
           </form>
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-            Já tem uma conta?{" "}
-            <Link href="/login" className="font-bold text-[#8855f6] hover:underline">Faça login</Link>
+            {t("register.hasAccount")}{" "}
+            <Link href="/login" className="font-bold text-[#8855f6] hover:underline">{t("register.login")}</Link>
           </p>
         </div>
       </div>

@@ -136,7 +136,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - Glass card: .glass-card (light) / .glass-card-dark (dark mode)
 - Cards: rounded-2xl, shadow-sm
 - Buttons: rounded-full, shadow-lg with primary/30 shadow
-- All UI text in pt-BR (Brazilian Portuguese)
+- i18n: 4 languages (pt-BR, en, es, fr) with auto-detection (localStorage → navigator → htmlTag). Language switcher in Profile page. Translation files in client/src/locales/. Config in client/src/lib/i18n.ts. Helper exports: getLocale(), getCurrencyCode() for locale-aware formatting
 
 ## Entry Flow
 
@@ -167,6 +167,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - next-themes (dark mode)
 - wouter (routing), @tanstack/react-query (data fetching)
 - lucide-react (icons), recharts (charts)
+- i18next, react-i18next, i18next-browser-languagedetector (i18n)
 - @uppy/core, @uppy/dashboard, @uppy/react, @uppy/aws-s3 (file uploads)
 
 ## Environment Variables

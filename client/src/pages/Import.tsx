@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, Download, Upload, FileSpreadsheet, FileText, Loader2,
@@ -7,20 +8,25 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 const currentYear = new Date().getFullYear();
 const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
-const formatCurrency = (val: string | number | null | undefined) => {
-  if (!val) return null;
-  const num = typeof val === "string" ? parseFloat(val) : val;
-  if (isNaN(num)) return null;
-  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-};
-
 export default function Import() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const locale = getLocale();
+  const currency = getCurrencyCode();
+
+  const formatCurrency = (val: string | number | null | undefined) => {
+    if (!val) return null;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    if (isNaN(num)) return null;
+    return num.toLocaleString(locale, { style: "currency", currency });
+  };
 
   const [csvYear, setCsvYear] = useState(currentYear - 1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -40,7 +46,7 @@ export default function Import() {
   const handleCsvUpload = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!["csv", "xls", "xlsx"].includes(ext || "")) {
-      toast({ title: "Formato inválido", description: "Envie um arquivo CSV ou Excel (.csv, .xls, .xlsx).", variant: "destructive" });
+      toast({ title: t("import.invalidFormat"), description: t("import.invalidFormatDesc"), variant: "destructive" });
       return;
     }
     setCsvFile(file);
@@ -63,12 +69,12 @@ export default function Import() {
           const data = await res.json();
           if (res.ok) {
             setCsvResult({ count: data.imported, year: data.year, skipped: data.skipped || 0 });
-            toast({ title: "Importação concluída!", description: `${data.imported} lançamentos importados.` });
+            toast({ title: t("import.importCompleted"), description: t("import.importedCount", { count: data.imported }) });
           } else {
-            toast({ title: "Erro", description: data.message || "Falha ao importar.", variant: "destructive" });
+            toast({ title: t("common.error"), description: data.message || t("import.importError"), variant: "destructive" });
           }
         } catch {
-          toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" });
+          toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
         } finally {
           setCsvProcessing(false);
         }
@@ -76,18 +82,18 @@ export default function Import() {
       reader.readAsDataURL(file);
     } catch {
       setCsvProcessing(false);
-      toast({ title: "Erro", description: "Falha ao ler o arquivo.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("import.readError"), variant: "destructive" });
     }
-  }, [toast, setLocation, csvYear]);
+  }, [toast, setLocation, csvYear, t]);
 
   const handlePdfUpload = useCallback(async (files: File[]) => {
     const validFiles = files.filter(f => f.type === "application/pdf" || f.name.endsWith(".pdf"));
     if (validFiles.length === 0) {
-      toast({ title: "Formato inválido", description: "Envie apenas arquivos PDF.", variant: "destructive" });
+      toast({ title: t("import.invalidFormat"), description: t("import.invalidPDF"), variant: "destructive" });
       return;
     }
     if (validFiles.length > 20) {
-      toast({ title: "Limite excedido", description: "Máximo de 20 PDFs por vez.", variant: "destructive" });
+      toast({ title: t("import.limitExceeded"), description: t("import.limitExceededDesc"), variant: "destructive" });
       return;
     }
     setPdfFiles(validFiles);
@@ -123,17 +129,17 @@ export default function Import() {
           divergent: data.reconciliation?.divergent || 0,
           pending: data.reconciliation?.pending || 0,
         });
-        const errMsg = data.pdfErrors > 0 ? ` (${data.pdfErrors} PDF(s) com erro)` : "";
-        toast({ title: "PDFs processados!", description: `${data.extractedCount} registros extraídos de ${validFiles.length} PDF(s).${errMsg}` });
+        const errMsg = data.pdfErrors > 0 ? t("import.pdfErrors", { count: data.pdfErrors }) : "";
+        toast({ title: t("import.pdfProcessed"), description: t("import.pdfProcessedDesc", { count: data.extractedCount, files: validFiles.length }) + errMsg });
       } else {
-        toast({ title: "Erro", description: data.message || "Falha ao processar PDFs.", variant: "destructive" });
+        toast({ title: t("common.error"), description: data.message || t("import.pdfProcessError"), variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha na conexão com o servidor.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally {
       setPdfProcessing(false);
     }
-  }, [toast, setLocation, pdfYear]);
+  }, [toast, setLocation, pdfYear, t]);
 
   const user = getUser();
   const profileInitials = user?.name ? user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
@@ -145,18 +151,18 @@ export default function Import() {
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
             <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-              {user?.profilePhotoUrl ? <img src={user.profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{profileInitials}</span>}
+              {user?.profilePhotoUrl ? <img src={user.profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{profileInitials}</span>}
             </div>
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <button onClick={() => setLocation("/reports")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
-            <ArrowLeft className="w-4 h-4" /> Voltar
+            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
           </button>
         </header>
 
         <div className="pt-2 pb-6 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Auditoria Retroativa</h2>
-          <p className="text-white/80 mt-1 text-sm">Importe dados históricos para auditar seus recebimentos de anos anteriores</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("import.title")}</h2>
+          <p className="text-white/80 mt-1 text-sm">{t("import.subtitle")}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
@@ -165,8 +171,8 @@ export default function Import() {
               <Download className="w-5 h-5 text-[#8855f6]" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">Template de Importação</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Baixe o modelo de planilha e preencha com seus dados</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("import.templateTitle")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("import.templateDesc")}</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -176,12 +182,12 @@ export default function Import() {
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl transition-colors shadow-lg shadow-[#8855f6]/20"
               data-testid="link-download-template"
             >
-              <FileSpreadsheet className="w-4 h-4" /> Baixar Template CSV
+              <FileSpreadsheet className="w-4 h-4" /> {t("import.downloadTemplate")}
             </a>
           </div>
           <div className="mt-3 bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Colunas do template:</p>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-mono">data_procedimento (dd/mm/aaaa) | nome_paciente | convenio | descricao_procedimento | valor (opcional)</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("import.templateColumns")}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-mono">{t("import.templateColumnsList")}</p>
           </div>
         </div>
 
@@ -191,14 +197,14 @@ export default function Import() {
               <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">Importar Lançamentos</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Suba sua planilha de lançamentos (CSV ou Excel)</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("import.importEntries")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("import.importEntriesDesc")}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 mb-4">
             <Calendar className="w-4 h-4 text-slate-400" />
-            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">Ano de referência:</label>
+            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.referenceYear")}</label>
             <div className="relative">
               <select
                 value={csvYear}
@@ -232,14 +238,14 @@ export default function Import() {
             {csvProcessing ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Processando planilha...</p>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("import.processingSpreadsheet")}</p>
                 {csvFile && <p className="text-xs text-slate-400">{csvFile.name}</p>}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Upload className="w-8 h-8 text-slate-400" />
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Arraste a planilha aqui ou clique para selecionar</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Formatos aceitos: .csv, .xls, .xlsx</p>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.dragCsvOrClick")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t("import.acceptedFormats")}</p>
               </div>
             )}
           </div>
@@ -248,14 +254,14 @@ export default function Import() {
             <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4" data-testid="csv-result">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <p className="font-bold text-emerald-700 dark:text-emerald-300">Importação concluída!</p>
+                <p className="font-bold text-emerald-700 dark:text-emerald-300">{t("import.importCompleted")}</p>
               </div>
               <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                <span className="font-bold">{csvResult.count}</span> lançamentos de <span className="font-bold">{csvResult.year}</span> importados com sucesso.
+                {t("import.importedResult", { count: csvResult.count, year: csvResult.year })}
               </p>
               {csvResult.skipped > 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  {csvResult.skipped} linha(s) ignorada(s) por dados incompletos.
+                  {t("import.skippedRows", { count: csvResult.skipped })}
                 </p>
               )}
             </div>
@@ -268,14 +274,14 @@ export default function Import() {
               <Files className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">Relatórios das Clínicas (PDFs)</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Suba os PDFs das clínicas para conciliar com os lançamentos</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("import.clinicPDFs")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("import.clinicPDFsDesc")}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 mb-4">
             <Calendar className="w-4 h-4 text-slate-400" />
-            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">Ano de referência:</label>
+            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.referenceYear")}</label>
             <div className="relative">
               <select
                 value={pdfYear}
@@ -310,14 +316,14 @@ export default function Import() {
             {pdfProcessing ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Processando PDFs...</p>
-                <p className="text-xs text-slate-400">{pdfFiles.length} arquivo(s)</p>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("import.processingPDFs")}</p>
+                <p className="text-xs text-slate-400">{t("import.filesCount", { count: pdfFiles.length })}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Upload className="w-8 h-8 text-slate-400" />
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Arraste os PDFs aqui ou clique para selecionar</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Aceita múltiplos PDFs (até 20 de uma vez)</p>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.dragPdfsOrClick")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t("import.multiplePDFs")}</p>
               </div>
             )}
           </div>
@@ -336,23 +342,23 @@ export default function Import() {
             <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4" data-testid="pdf-result">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <p className="font-bold text-blue-700 dark:text-blue-300">Processamento concluído!</p>
+                <p className="font-bold text-blue-700 dark:text-blue-300">{t("import.pdfCompleted")}</p>
               </div>
               <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
-                <span className="font-bold">{pdfResult.extractedCount}</span> registros extraídos de {pdfFiles.length} PDF(s).
+                {t("import.pdfExtracted", { count: pdfResult.extractedCount, files: pdfFiles.length })}
               </p>
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2.5 text-center">
                   <p className="text-lg font-extrabold text-green-600 dark:text-green-400" data-testid="text-reconciled-count">{pdfResult.reconciled}</p>
-                  <p className="text-[10px] font-semibold text-green-600/80 dark:text-green-400/80 uppercase tracking-wider">Conciliados</p>
+                  <p className="text-[10px] font-semibold text-green-600/80 dark:text-green-400/80 uppercase tracking-wider">{t("import.reconciledLabel")}</p>
                 </div>
                 <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-2.5 text-center">
                   <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400" data-testid="text-divergent-count">{pdfResult.divergent}</p>
-                  <p className="text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wider">Divergentes</p>
+                  <p className="text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wider">{t("import.divergentLabel")}</p>
                 </div>
                 <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2.5 text-center">
                   <p className="text-lg font-extrabold text-red-500 dark:text-red-400" data-testid="text-pending-count">{pdfResult.pending}</p>
-                  <p className="text-[10px] font-semibold text-red-500/80 dark:text-red-400/80 uppercase tracking-wider">Pendentes</p>
+                  <p className="text-[10px] font-semibold text-red-500/80 dark:text-red-400/80 uppercase tracking-wider">{t("import.pendingLabel")}</p>
                 </div>
               </div>
               <button
@@ -360,7 +366,7 @@ export default function Import() {
                 className="mt-3 w-full text-center text-sm text-[#8855f6] font-bold hover:underline"
                 data-testid="link-view-reconciliation"
               >
-                Ver detalhes na Conciliação
+                {t("import.viewReconciliation")}
               </button>
             </div>
           )}

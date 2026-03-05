@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,12 +40,6 @@ interface EntryData {
   sourceUrl?: string;
 }
 
-const confidenceConfig: Record<ConfidenceLevel, { dotClass: string; text: string; bannerClass: string; bannerText: string }> = {
-  high: { dotClass: "bg-green-500", text: "Alta confiança", bannerClass: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800", bannerText: "Alta confiança na extração" },
-  medium: { dotClass: "bg-amber-500", text: "Confiança média", bannerClass: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800", bannerText: "Confiança média - revise os campos" },
-  low: { dotClass: "bg-red-500", text: "Baixa confiança", bannerClass: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800", bannerText: "Baixa confiança - verifique todos os campos" },
-};
-
 function getOverallConfidence(confidence: ConfidenceData): ConfidenceLevel {
   const values: ConfidenceLevel[] = [confidence.patientName, confidence.procedureDate, confidence.insuranceProvider, confidence.description, confidence.procedureValue];
   const numericMap: Record<ConfidenceLevel, number> = { high: 3, medium: 2, low: 1 };
@@ -55,7 +50,13 @@ function getOverallConfidence(confidence: ConfidenceData): ConfidenceLevel {
 }
 
 function ConfidenceIndicator({ level }: { level: ConfidenceLevel }) {
-  const config = confidenceConfig[level];
+  const { t } = useTranslation();
+  const configs: Record<ConfidenceLevel, { dotClass: string; text: string }> = {
+    high: { dotClass: "bg-green-500", text: t("confirm.highConfidence") },
+    medium: { dotClass: "bg-amber-500", text: t("confirm.mediumConfidence") },
+    low: { dotClass: "bg-red-500", text: t("confirm.lowConfidence") },
+  };
+  const config = configs[level];
   return (
     <span className="inline-flex items-center gap-1 ml-1.5">
       <span className={`inline-block w-2 h-2 rounded-full ${config.dotClass}`} />
@@ -65,8 +66,14 @@ function ConfidenceIndicator({ level }: { level: ConfidenceLevel }) {
 }
 
 function ConfidenceBanner({ confidence }: { confidence: ConfidenceData }) {
+  const { t } = useTranslation();
   const overall = getOverallConfidence(confidence);
-  const config = confidenceConfig[overall];
+  const configs: Record<ConfidenceLevel, { bannerClass: string; bannerText: string }> = {
+    high: { bannerClass: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800", bannerText: t("confirm.highConfidenceBanner") },
+    medium: { bannerClass: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800", bannerText: t("confirm.mediumConfidenceBanner") },
+    low: { bannerClass: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800", bannerText: t("confirm.lowConfidenceBanner") },
+  };
+  const config = configs[overall];
   return (
     <div className={`mb-4 px-3 py-2 rounded-xl border text-xs font-semibold text-center ${config.bannerClass}`} data-testid="confidence-banner">
       {config.bannerText}
@@ -75,6 +82,7 @@ function ConfidenceBanner({ confidence }: { confidence: ConfidenceData }) {
 }
 
 export default function ConfirmEntry() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const search = useSearch();
   const { toast } = useToast();
@@ -84,7 +92,7 @@ export default function ConfirmEntry() {
 
   const params = new URLSearchParams(search);
   const entryMethod = params.get("method") || "manual";
-  const sourceLabel = entryMethod === "photo" ? "Foto" : entryMethod === "audio" ? "Áudio" : "Manual";
+  const sourceLabel = entryMethod === "photo" ? t("common.photo") : entryMethod === "audio" ? t("common.audio") : t("common.manual");
   const SourceIcon = entryMethod === "photo" ? Camera : entryMethod === "audio" ? Mic : PenLine;
 
   useEffect(() => {
@@ -162,7 +170,7 @@ export default function ConfirmEntry() {
     const validIndices: number[] = [];
     entries.forEach((e, i) => { if (e.patientName && e.procedureDate && e.insuranceProvider && e.description) validIndices.push(i); });
     if (validIndices.length === 0) {
-      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos de pelo menos um lançamento.", variant: "destructive" });
+      toast({ title: t("confirm.requiredFields"), description: t("confirm.requiredFieldsDesc"), variant: "destructive" });
       return;
     }
 
@@ -183,7 +191,7 @@ export default function ConfirmEntry() {
         });
         const data = await res.json();
         if (!res.ok) {
-          toast({ title: "Erro ao salvar", description: data.message, variant: "destructive" });
+          toast({ title: t("confirm.saveError"), description: data.message, variant: "destructive" });
           return;
         }
       } else {
@@ -201,17 +209,17 @@ export default function ConfirmEntry() {
         });
         const data = await res.json();
         if (!res.ok) {
-          toast({ title: "Erro ao salvar", description: data.message, variant: "destructive" });
+          toast({ title: t("confirm.saveError"), description: data.message, variant: "destructive" });
           return;
         }
       }
       toast({
-        title: validIndices.length > 1 ? `${validIndices.length} lançamentos salvos!` : "Lançamento salvo!",
-        description: "Os dados foram registrados com sucesso.",
+        title: validIndices.length > 1 ? t("confirm.savedBatch", { count: validIndices.length }) : t("confirm.savedSingle"),
+        description: t("confirm.savedDesc"),
       });
       setLocation("/dashboard");
     } catch {
-      toast({ title: "Erro de conexão", description: "Não foi possível salvar.", variant: "destructive" });
+      toast({ title: t("common.connectionError"), description: t("confirm.saveConnectionError"), variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -229,7 +237,7 @@ export default function ConfirmEntry() {
           <div className="flex items-center gap-3 text-white">
             {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
               <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
             ); })()}
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
@@ -243,17 +251,17 @@ export default function ConfirmEntry() {
             data-testid="button-back"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao Dashboard
+            {t("common.backToDashboard")}
           </button>
           <h2 className="text-2xl font-extrabold">
-            {entryMethod === "manual" ? "Novo Lançamento Manual" : "Confirmar Lançamentos"}
+            {entryMethod === "manual" ? t("confirm.manualTitle") : t("confirm.title")}
           </h2>
           <p className="text-white/80 mt-1 text-sm">
             {entryMethod === "manual"
-              ? "Preencha os dados do procedimento"
+              ? t("confirm.manualSubtitle")
               : isBatch
-                ? `${entries.length} registros encontrados — revise e confirme`
-                : "Revise os dados extraídos pela IA e confirme"}
+                ? t("confirm.batchSubtitle", { count: entries.length })
+                : t("confirm.singleSubtitle")}
           </p>
         </div>
 
@@ -267,10 +275,10 @@ export default function ConfirmEntry() {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">
-                      {isBatch ? `Paciente ${index + 1} de ${entries.length}` : entryMethod === "manual" ? "Lançamento Manual" : "Dados extraídos"}
+                      {isBatch ? t("confirm.patientOf", { current: index + 1, total: entries.length }) : entryMethod === "manual" ? t("confirm.manualEntry") : t("confirm.extractedData")}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <SourceIcon className="w-3 h-3" /> Via {sourceLabel}
+                      <SourceIcon className="w-3 h-3" /> {t("confirm.via", { source: sourceLabel })}
                     </p>
                   </div>
                 </div>
@@ -292,11 +300,11 @@ export default function ConfirmEntry() {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
-                    <User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente
+                    <User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}
                     {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.patientName} />}
                   </Label>
                   <Input value={entry.patientName} onChange={(e) => updateEntry(index, "patientName", e.target.value)}
-                    placeholder="Nome completo"
+                    placeholder={t("confirm.patientPlaceholder")}
                     className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                     data-testid={`input-patient-name-${index}`} />
                 </div>
@@ -304,7 +312,7 @@ export default function ConfirmEntry() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
-                      <Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data
+                      <Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}
                       {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.procedureDate} />}
                     </Label>
                     <Input type="date" value={entry.procedureDate} onChange={(e) => updateEntry(index, "procedureDate", e.target.value)}
@@ -313,11 +321,11 @@ export default function ConfirmEntry() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
-                      <Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio
+                      <Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}
                       {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.insuranceProvider} />}
                     </Label>
                     <Input value={entry.insuranceProvider} onChange={(e) => updateEntry(index, "insuranceProvider", e.target.value)}
-                      placeholder="Ex: Particular"
+                      placeholder={t("confirm.insurancePlaceholder")}
                       className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-insurance-${index}`} />
                   </div>
@@ -326,17 +334,17 @@ export default function ConfirmEntry() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
-                      <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
+                      <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}
                       {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.description} />}
                     </Label>
                     <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
-                      placeholder="Ex: Consulta, Retorno, Sleeve"
+                      placeholder={t("confirm.procedurePlaceholder")}
                       className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-description-${index}`} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
-                      <DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)
+                      <DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}
                       {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.procedureValue} />}
                     </Label>
                     <Input type="number" step="0.01" min="0" value={entry.procedureValue} onChange={(e) => updateEntry(index, "procedureValue", e.target.value)}
@@ -357,7 +365,7 @@ export default function ConfirmEntry() {
             data-testid="button-add-entry"
           >
             <Plus className="w-4 h-4" />
-            Adicionar mais um lançamento
+            {t("confirm.addMore")}
           </button>
         </div>
 
@@ -365,7 +373,7 @@ export default function ConfirmEntry() {
           <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl bg-[#8855f6]/5 dark:bg-[#8855f6]/10 border border-[#8855f6]/10 dark:border-[#8855f6]/20" data-testid="learning-indicator">
             <Brain className="w-4 h-4 text-[#8855f6] flex-shrink-0" />
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Suas correções ensinam a IA — futuras extrações serão mais precisas com base no seu histórico.
+              {t("confirm.learningHint")}
             </p>
           </div>
         )}
@@ -374,16 +382,16 @@ export default function ConfirmEntry() {
           <Button variant="outline" onClick={() => setLocation("/dashboard")}
             className="flex-1 h-12 rounded-full font-bold border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             data-testid="button-cancel">
-            Cancelar
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={isSaving}
             className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
             data-testid="button-save-entry">
             {isSaving
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("common.saving")}</>
               : entries.length > 1
-                ? `Salvar ${entries.length} Lançamentos`
-                : "Salvar Lançamento"}
+                ? t("confirm.saveBatch", { count: entries.length })
+                : t("confirm.saveSingle")}
           </Button>
         </div>
       </div>

@@ -2,13 +2,22 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import {
   User, Settings, LogOut, ClipboardList, CheckCheck,
-  ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2
+  ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2, Globe
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getToken, getUser, clearAuth, updateUserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+
+const LANGUAGE_OPTIONS = [
+  { code: "pt-BR", label: "Português (BR)", flag: "🇧🇷" },
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+];
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -38,11 +47,11 @@ export default function Profile() {
     if (!token) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" });
+      toast({ title: t("profile.invalidFile"), description: t("profile.selectImage"), variant: "destructive" });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 5MB.", variant: "destructive" });
+      toast({ title: t("profile.fileTooLarge"), description: t("profile.maxSize"), variant: "destructive" });
       return;
     }
 
@@ -69,12 +78,12 @@ export default function Profile() {
       if (updateRes.ok) {
         setProfilePhotoUrl(photoUrl);
         updateUserData({ profilePhotoUrl: photoUrl });
-        toast({ title: "Foto atualizada!", description: "Sua foto de perfil foi salva." });
+        toast({ title: t("profile.photoUpdated"), description: t("profile.photoUpdatedDesc") });
       } else {
-        toast({ title: "Erro", description: updateData.message, variant: "destructive" });
+        toast({ title: t("common.error"), description: updateData.message, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha ao enviar a foto.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("profile.uploadError"), variant: "destructive" });
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -93,17 +102,24 @@ export default function Profile() {
       if (res.ok) {
         setProfilePhotoUrl(null);
         updateUserData({ profilePhotoUrl: null });
-        toast({ title: "Foto removida", description: "Sua foto de perfil foi removida." });
+        toast({ title: t("profile.photoRemoved"), description: t("profile.photoRemovedDesc") });
       }
     } catch {
-      toast({ title: "Erro", description: "Falha ao remover a foto.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("profile.removeError"), variant: "destructive" });
     }
   };
 
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    localStorage.setItem("recebmed_language", langCode);
+  };
+
+  const currentLang = LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0]) && l.code === i18n.language) || LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0])) || LANGUAGE_OPTIONS[1];
+
   const links = [
-    { label: "Configurações", icon: Settings, path: "/settings", color: "text-[#8855f6]" },
-    { label: "Relatórios da Clínica", icon: ClipboardList, path: "/clinic-reports", color: "text-blue-600" },
-    { label: "Conciliação PDF", icon: CheckCheck, path: "/reconciliation", color: "text-green-600" },
+    { label: t("profile.settings"), icon: Settings, path: "/settings", color: "text-[#8855f6]" },
+    { label: t("profile.clinicReports"), icon: ClipboardList, path: "/clinic-reports", color: "text-blue-600" },
+    { label: t("profile.pdfReconciliation"), icon: CheckCheck, path: "/reconciliation", color: "text-green-600" },
   ];
 
   return (
@@ -115,7 +131,7 @@ export default function Profile() {
           <div className="flex items-center gap-3 text-white">
             <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-header">
               {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
               )}
@@ -125,8 +141,8 @@ export default function Profile() {
         </header>
 
         <div className="pt-2 pb-8 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">Perfil</h2>
-          <p className="text-white/80 mt-1 text-sm">Gerencie sua conta e preferências</p>
+          <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("profile.title")}</h2>
+          <p className="text-white/80 mt-1 text-sm">{t("profile.subtitle")}</p>
         </div>
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} data-testid="input-profile-photo" />
@@ -139,7 +155,7 @@ export default function Profile() {
                 data-testid="avatar-user"
               >
                 {profilePhotoUrl ? (
-                  <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+                  <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
                 ) : (
                   initials
                 )}
@@ -162,7 +178,7 @@ export default function Profile() {
                   className="text-xs text-red-400 hover:text-red-500 mt-1 flex items-center gap-1 transition-colors"
                   data-testid="button-remove-photo"
                 >
-                  <Trash2 className="w-3 h-3" /> Remover foto
+                  <Trash2 className="w-3 h-3" /> {t("profile.removePhoto")}
                 </button>
               )}
             </div>
@@ -179,8 +195,8 @@ export default function Profile() {
                 {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </div>
               <div>
-                <p className="font-semibold text-slate-700 dark:text-slate-300">Modo Escuro</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{theme === "dark" ? "Ativado" : "Desativado"}</p>
+                <p className="font-semibold text-slate-700 dark:text-slate-300">{t("profile.darkMode")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{theme === "dark" ? t("profile.darkModeOn") : t("profile.darkModeOff")}</p>
               </div>
             </div>
             <button
@@ -193,13 +209,42 @@ export default function Profile() {
           </div>
         </div>
 
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-blue-500 dark:text-blue-400">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-700 dark:text-slate-300">{t("profile.language")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("profile.languageDesc")}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {LANGUAGE_OPTIONS.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  currentLang.code === lang.code
+                    ? "bg-[#8855f6] text-white shadow-md shadow-[#8855f6]/20"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
+                data-testid={`button-lang-${lang.code}`}
+              >
+                <span className="text-lg">{lang.flag}</span>
+                <span className="truncate">{lang.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-6">
           {links.map((link, i) => (
             <button
               key={link.path}
               onClick={() => setLocation(link.path)}
               className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left ${i < links.length - 1 ? "border-b border-slate-50 dark:border-slate-800" : ""}`}
-              data-testid={`link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+              data-testid={`link-${link.path.slice(1)}`}
             >
               <div className={`size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${link.color}`}>
                 <link.icon className="w-5 h-5" />
@@ -216,7 +261,7 @@ export default function Profile() {
           data-testid="button-logout"
         >
           <LogOut className="w-5 h-5" />
-          Sair da Conta
+          {t("profile.logout")}
         </button>
       </div>
     </div>
