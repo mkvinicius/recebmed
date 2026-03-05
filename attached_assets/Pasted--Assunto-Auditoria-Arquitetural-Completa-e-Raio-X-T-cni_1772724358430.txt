@@ -1,0 +1,42 @@
+**Assunto:** Auditoria Arquitetural Completa e Raio-X Técnico do Projeto Medfin.
+
+**Sua Tarefa:**
+Aja como um Arquiteto de Soluções Sênior ou um CTO. Sua missão é realizar uma auditoria técnica profunda em toda a base de código do projeto Medfin e me fornecer um relatório completo, um verdadeiro "raio-x" da arquitetura e das tecnologias empregadas.
+
+O objetivo é que, ao final do seu relatório, eu tenha uma compreensão completa de *como* o sistema foi construído, e não apenas *o que* ele faz.
+
+**Estrutura do Relatório (siga esta ordem):**
+
+**1. Visão Geral da Arquitetura (High-Level):**
+*   Descreva o padrão de arquitetura geral. É um Monolito Full-Stack? Uma aplicação com Frontend e Backend desacoplados (BFF - Backend for Frontend)? Microsserviços?
+*   Como o Frontend e o Backend se comunicam? (API REST, GraphQL, etc.).
+
+**2. Análise do Frontend (`client/`):**
+*   **Framework e Linguagem:** Qual a versão do React? Está usando TypeScript ou JavaScript?
+*   **Gerenciamento de Estado:** Qual biblioteca está sendo usada para gerenciar o estado global da aplicação? (Context API, Redux, Zustand, etc.).
+*   **Estilização e Design System:** Confirme o uso do Tailwind CSS. Existe uma biblioteca de componentes UI por baixo (como Radix, Headless UI) ou os componentes são puros? Como os ícones são gerenciados?
+*   **Requisições de API:** Qual biblioteca está sendo usada para fazer as chamadas para o backend? (Axios, Fetch API nativa, React Query, SWR?).
+*   **Roteamento:** Qual biblioteca gerencia as rotas da aplicação? (React Router, etc.).
+*   **Validação de Formulários:** Qual biblioteca está sendo usada para validar os formulários de login, registro e lançamento? (React Hook Form, Formik, Zod, etc.).
+
+**3. Análise do Backend (`server/`):**
+*   **Framework e Linguagem:** Qual o framework Node.js utilizado? (Express.js, Fastify, NestJS?). Qual a versão do Node.js?
+*   **Banco de Dados e ORM:**
+    *   Qual banco de dados está configurado? (Confirme que é o PostgreSQL do Replit).
+    *   Qual ORM (Object-Relational Mapper) ou Query Builder está sendo usado para comunicar com o banco? (Prisma, Drizzle, TypeORM, Knex.js, etc.).
+    *   Onde está definido o esquema do banco de dados (as tabelas e seus relacionamentos)?
+*   **Autenticação e Segurança:**
+    *   Como as sessões dos usuários são gerenciadas? (JWT - JSON Web Tokens, sessões baseadas em cookies, etc.).
+    *   Como as senhas são armazenadas no banco de dados? (Confirme o uso de uma biblioteca de hashing como `bcrypt`).
+*   **Gerenciamento de Dependências:** Liste as 5 dependências mais importantes do `package.json` do backend e explique brevemente a função de cada uma.
+
+**4. Análise da Camada de Inteligência Artificial:**
+*   **Integrações de IA:** Quais APIs de IA externas estão sendo consumidas? (OpenAI, Google AI, etc.). Especifique os modelos (ex: GPT-4o, GPT-5-mini, Claude 3.5).
+*   **Orquestração:** Onde no código reside a lógica que chama essas APIs? (Confirme se está em `server/reconciliation.ts` ou em outros arquivos).
+*   **Processamento de Mídia:** Quais bibliotecas são usadas para manipular os arquivos de mídia antes de enviá-los para a IA? (ex: `pdf-parse` para PDFs, alguma biblioteca para áudio?).
+
+**5. Diagrama de Fluxo de Dados:**
+*   Para a funcionalidade mais complexa (a Conciliação de PDF), descreva o fluxo de dados passo a passo em uma lista numerada, desde o clique do usuário no frontend até a atualização dos dados no banco e a exibição do resultado na tela.
+
+**Formato da Resposta:**
+Organize sua resposta usando exatamente os 5 cabeçalhos acima. Seja detalhado, técnico e cite nomes de arquivos, bibliotecas e funções sempre que possível para embasar sua análise.
