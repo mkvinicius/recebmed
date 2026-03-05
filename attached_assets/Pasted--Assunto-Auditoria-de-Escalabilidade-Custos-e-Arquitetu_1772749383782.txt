@@ -1,0 +1,26 @@
+**Assunto:** Auditoria de Escalabilidade, Custos e Arquitetura de Produção do RecebMed.
+
+**Contexto:**
+O RecebMed está se provando um produto robusto e com imenso potencial de mercado. Precisamos agora planejar o crescimento de 10 para 1.000 (ou mais) usuários. Isso exige uma análise crítica da plataforma Replit em termos de escalabilidade, custos de IA e arquitetura de produção.
+
+**Sua Tarefa:**
+Aja como o Arquiteto Chefe (Chief Architect) do Replit. Sua missão é me fornecer um plano estratégico detalhado que responda às minhas preocupações sobre escalar o RecebMed na sua plataforma.
+
+**Estrutura do Relatório (siga esta ordem):**
+
+**1. Modelo de Custos de IA (Replit vs. Chave Própria):**
+*   **Modelo Atual:** Explique como o Replit me cobra pelo uso das APIs da OpenAI (GPT-5-mini, etc.). É por token? É através de um sistema de créditos da plataforma?
+*   **Análise Comparativa:** Seja honesto. Qual é o trade-off entre usar a integração nativa de IA do Replit versus eu configurar e usar minha própria chave de API da OpenAI diretamente no backend? A conveniência do Replit tem um custo (markup) embutido? Se sim, qual a ordem de grandeza desse custo?
+*   **Recomendação Estratégica:** Para um SaaS que fará milhões de chamadas de IA por mês, qual abordagem você recomenda para otimizar os custos a longo prazo?
+
+**2. Plano de Escalabilidade da Aplicação (De 100 a 10.000 Usuários):**
+*   **Arquitetura de Hospedagem:** O plano atual do Replit (ex: "Pro Plan") é suficiente para rodar um SaaS com 1.000 usuários simultâneos? Descreva a arquitetura de deployment do Replit. Cada "Repl" roda em um contêiner isolado? Como funciona o auto-scaling?
+*   **Banco de Dados:** O "Replit PostgreSQL" gerenciado é projetado para aguentar a carga de milhares de usuários concorrentes? Quais são os limites (armazenamento, conexões simultâneas)? Em que ponto eu precisaria migrar para um banco de dados externo (como AWS RDS ou Neon)?
+*   **Gargalos de Performance:** Com base na nossa arquitetura (processamento de mídia, chamadas de IA, conciliação em lote), quais são os gargalos de performance mais prováveis quando escalarmos? (Ex: tempo de resposta do upload de PDF, processamento de áudio, etc.). Como a arquitetura do Replit ajuda a mitigar esses gargalos? (Ex: processamento assíncrono, workers em background).
+
+**3. Estratégia de Multi-Região e Internacionalização:**
+*   **Latência Global:** Onde os "Repls" são hospedados geograficamente? Se meu SaaS crescer para a Europa e EUA, como o Replit lida com a latência para usuários internacionais? É possível fazer deploy da mesma aplicação em múltiplas regiões?
+*   **Suporte à Internacionalização (i18n):** O relatório de arquitetura anterior não mencionou bibliotecas de i18n. Qual seria a sua recomendação para implementar a multi-linguagem (Português, Inglês, Espanhol, Francês) no nosso frontend React de forma eficiente? (Ex: `i18next`, `react-intl`).
+
+**Formato da Resposta:**
+Seja direto, estratégico e transparente. Use uma linguagem que um fundador de startup entenderia, mas com a profundidade técnica que um engenheiro respeitaria. O objetivo é me dar a confiança (ou os alertas necessários) para decidir se o Replit é a plataforma certa para o sucesso a longo prazo do RecebMed.
