@@ -170,7 +170,7 @@ export default function Reports() {
           </Button>
         </header>
 
-        <div className="pt-2 pb-6 text-white">
+        <div className="pt-2 pb-8 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
@@ -182,21 +182,24 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          {PERIOD_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => setPeriod(opt.value)}
-              className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                period === opt.value
-                  ? "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30"
-                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-              }`}
-              data-testid={`filter-period-${opt.value}`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-6">
+          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Período</p>
+          <div className="flex flex-wrap gap-2">
+            {PERIOD_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setPeriod(opt.value)}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  period === opt.value
+                    ? "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
+                data-testid={`filter-period-${opt.value}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
