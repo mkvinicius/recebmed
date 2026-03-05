@@ -14,6 +14,10 @@ import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
 import Reconciliation from "@/pages/Reconciliation";
 import EntryDetail from "@/pages/EntryDetail";
+import Entries from "@/pages/Entries";
+import Capture from "@/pages/Capture";
+import Profile from "@/pages/Profile";
+import AppLayout from "@/components/AppLayout";
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -31,13 +35,36 @@ function Router() {
       </Route>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/dashboard" component={Dashboard} />
       <Route path="/confirm-entry" component={ConfirmEntry} />
-      <Route path="/clinic-reports" component={ClinicReports} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/reconciliation" component={Reconciliation} />
-      <Route path="/entry/:id" component={EntryDetail} />
+
+      <Route path="/dashboard">
+        <AppLayout><Dashboard /></AppLayout>
+      </Route>
+      <Route path="/entries">
+        <AppLayout><Entries /></AppLayout>
+      </Route>
+      <Route path="/capture">
+        <AppLayout><Capture /></AppLayout>
+      </Route>
+      <Route path="/reports">
+        <AppLayout><Reports /></AppLayout>
+      </Route>
+      <Route path="/profile">
+        <AppLayout><Profile /></AppLayout>
+      </Route>
+      <Route path="/clinic-reports">
+        <AppLayout><ClinicReports /></AppLayout>
+      </Route>
+      <Route path="/settings">
+        <AppLayout><Settings /></AppLayout>
+      </Route>
+      <Route path="/reconciliation">
+        <AppLayout><Reconciliation /></AppLayout>
+      </Route>
+      <Route path="/entry/:id">
+        <AppLayout><EntryDetail /></AppLayout>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

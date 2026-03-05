@@ -1,17 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
-  Stethoscope, Bell, Clock, CreditCard, AlertTriangle,
-  FileText, AlertCircle, Loader2, CheckCircle2, X, Trash2, Save,
-  User, Calendar, Building2, DollarSign, CheckCheck, Camera, Mic, PenLine,
-  ChevronRight
+  Search, FileText, Clock, CheckCircle2, AlertCircle,
+  Camera, Mic, PenLine, Loader2, X, Trash2, Save,
+  User, Calendar, Building2, DollarSign
 } from "lucide-react";
-import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import ProjectionsPanel from "@/components/ProjectionsPanel";
 
 interface DoctorEntry {
   id: string;
@@ -22,15 +20,6 @@ interface DoctorEntry {
   procedureValue: string | null;
   entryMethod: string;
   status: string;
-  createdAt: string;
-}
-
-interface NotificationItem {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  read: boolean;
   createdAt: string;
 }
 
@@ -50,37 +39,35 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 };
 
-export default function Dashboard() {
+export default function Entries() {
   const [, setLocation] = useLocation();
-  const [userName, setUserName] = useState("");
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [insuranceFilter, setInsuranceFilter] = useState("all");
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [editForm, setEditForm] = useState({ patientName: "", procedureDate: "", insuranceProvider: "", description: "", status: "", procedureValue: "" });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
+  const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
+  const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const token = getToken();
     if (!token) { setLocation("/login"); return; }
-    const user = getUser();
-    if (user) setUserName(user.name);
     fetchEntries(token);
-    fetchNotifications(token);
   }, [setLocation]);
 
   useEffect(() => {
-    if (!showNotifications) return;
+    if (!quickStatusEntry) return;
     const handler = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false);
+      if (quickStatusRef.current && !quickStatusRef.current.contains(e.target as Node)) setQuickStatusEntry(null);
     };
     setTimeout(() => document.addEventListener("mousedown", handler), 0);
     return () => document.removeEventListener("mousedown", handler);
-  }, [showNotifications]);
+  }, [quickStatusEntry]);
 
   const fetchEntries = async (token: string) => {
     try {
@@ -90,27 +77,6 @@ export default function Dashboard() {
       if (res.ok) setEntries(data.entries || []);
     } catch { }
     finally { setLoadingEntries(false); }
-  };
-
-  const fetchNotifications = async (token: string) => {
-    try {
-      const res = await fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
-      }
-    } catch { }
-  };
-
-  const markAllRead = async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      await fetch("/api/notifications/read-all", { method: "PUT", headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch { }
   };
 
   const openEditModal = (entry: DoctorEntry) => {
@@ -151,122 +117,124 @@ export default function Dashboard() {
     } catch { toast({ title: "Erro", description: "Falha ao excluir.", variant: "destructive" }); }
   };
 
-  const pendingCount = entries.filter(e => e.status === "pending").length;
-  const reconciledCount = entries.filter(e => e.status === "reconciled").length;
-  const divergentCount = entries.filter(e => e.status === "divergent").length;
-  const totalValue = entries.reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
-  const recentEntries = entries.slice(0, 5);
+  const handleQuickStatusChange = async (entryId: string, newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQuickStatusEntry(null);
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/entries/${entryId}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: newStatus }) });
+      const data = await res.json();
+      if (res.ok) { setEntries(prev => prev.map(e => e.id === entryId ? { ...e, ...data.entry } : e)); toast({ title: "Status atualizado!", description: `Marcado como ${{ pending: "Pendente", reconciled: "Conferido", divergent: "Divergente" }[newStatus]}.` }); }
+      else toast({ title: "Erro", description: data.message || "Falha.", variant: "destructive" });
+    } catch { toast({ title: "Erro", description: "Falha ao atualizar status.", variant: "destructive" }); }
+  };
 
+  const filteredEntries = entries.filter(e => {
+    if (statusFilter !== "all" && e.status !== statusFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!e.patientName.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q) && !e.insuranceProvider.toLowerCase().includes(q)) return false;
+    }
+    if (insuranceFilter !== "all" && e.insuranceProvider !== insuranceFilter) return false;
+    if (dateFilter !== "all") {
+      const d = new Date(e.procedureDate || e.createdAt);
+      const now = new Date();
+      if (dateFilter === "today" && d.toDateString() !== now.toDateString()) return false;
+      if (dateFilter === "week") { const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7); if (d < weekAgo) return false; }
+      if (dateFilter === "month") { const monthAgo = new Date(now); monthAgo.setMonth(monthAgo.getMonth() - 1); if (d < monthAgo) return false; }
+    }
+    return true;
+  });
+
+  const uniqueInsurances = [...new Set(entries.map(e => e.insuranceProvider).filter(Boolean))];
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
-  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 text-green-600" : s === "divergent" ? "bg-red-50 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
+  const methodLabel = (m: string) => m === "photo" ? "Foto" : m === "audio" ? "Áudio" : "Manual";
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
+  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 text-green-600" : s === "divergent" ? "bg-red-50 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            <div className="size-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md"><Stethoscope className="w-5 h-5" /></div>
-            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative" ref={notifRef}>
-              <button onClick={() => setShowNotifications(!showNotifications)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md relative" data-testid="button-notifications">
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && <span className="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center" data-testid="badge-unread">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-              </button>
-              {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
-                    <h4 className="font-bold text-sm text-slate-800">Notificações</h4>
-                    {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />Marcar todas</button>}
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center"><Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" /><p className="text-sm text-slate-400">Nenhuma notificação</p></div>
-                    ) : notifications.slice(0, 15).map(n => (
-                      <div key={n.id} className={`px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors ${n.read ? "" : "bg-[#8855f6]/5"}`} onClick={async () => { if (!n.read) { const token = getToken(); if (!token) return; try { await fetch(`/api/notifications/${n.id}/read`, { method: "PUT", headers: { Authorization: `Bearer ${token}` } }); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnreadCount(prev => Math.max(0, prev - 1)); } catch {} } }}>
-                        <p className="text-sm font-semibold text-slate-700">{n.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-slate-400 mt-1">{formatDate(n.createdAt)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+    <div className="min-h-screen bg-[#f6f5f8] text-slate-900">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <h2 className="text-2xl font-extrabold text-slate-900 mb-6" data-testid="text-page-title">Lançamentos</h2>
 
-        <div className="pt-2 pb-6 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-greeting">Olá, {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
-          <p className="text-white/80 text-sm mt-1">Resumo financeiro do seu consultório</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" data-testid="stats-grid">
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{pendingCount}</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar paciente, procedimento..." className="pl-10 h-10 rounded-xl border-slate-200 text-sm" data-testid="input-search" />
             </div>
-            <p className="text-slate-500 text-xs font-semibold">Pendentes</p>
-            <p className="text-xl font-extrabold text-slate-900" data-testid="stat-pending">{pendingCount}</p>
+            <div className="flex flex-wrap gap-2">
+              {[{ v: "all", l: "Todos" }, { v: "pending", l: "Pendentes" }, { v: "reconciled", l: "Conferidos" }, { v: "divergent", l: "Divergentes" }].map(f => (
+                <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === f.v ? "bg-[#8855f6] text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
+              ))}
+            </div>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="p-2 bg-green-50 text-green-600 rounded-xl"><CreditCard className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">{reconciledCount}</span>
-            </div>
-            <p className="text-slate-500 text-xs font-semibold">Conferidos</p>
-            <p className="text-xl font-extrabold text-slate-900" data-testid="stat-reconciled">{reconciledCount}</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="p-2 bg-red-50 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">{divergentCount}</span>
-            </div>
-            <p className="text-slate-500 text-xs font-semibold">Divergentes</p>
-            <p className="text-xl font-extrabold text-slate-900" data-testid="stat-divergent">{divergentCount}</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
-            </div>
-            <p className="text-slate-500 text-xs font-semibold">Total</p>
-            <p className="text-xl font-extrabold text-slate-900" data-testid="stat-total-value">{formatCurrency(totalValue) || "R$ 0,00"}</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[{ v: "all", l: "Todas as datas" }, { v: "today", l: "Hoje" }, { v: "week", l: "Esta semana" }, { v: "month", l: "Este mês" }].map(f => (
+              <button key={f.v} onClick={() => setDateFilter(f.v)} className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dateFilter === f.v ? "bg-slate-800 text-white" : "bg-slate-50 text-slate-500 hover:bg-slate-100"}`} data-testid={`filter-date-${f.v}`}>{f.l}</button>
+            ))}
+            {uniqueInsurances.length > 1 && (
+              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-600 border-0 cursor-pointer" data-testid="filter-insurance">
+                <option value="all">Todos os convênios</option>
+                {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
+              </select>
+            )}
           </div>
         </div>
-
-        <ProjectionsPanel />
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
-          <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800">Últimos Lançamentos</h3>
-            <button onClick={() => setLocation("/entries")} className="text-xs text-[#8855f6] font-bold flex items-center gap-1 hover:underline" data-testid="link-view-all">
-              Ver todos <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <span className="font-bold text-slate-800">Todos os Lançamentos</span>
+            <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
+              {filteredEntries.length === entries.length ? `${entries.length} registros` : `${filteredEntries.length} de ${entries.length}`}
+            </span>
           </div>
           <div className="divide-y divide-slate-50">
             {loadingEntries ? (
-              <div className="px-6 py-10 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
-            ) : recentEntries.length === 0 ? (
-              <div className="px-6 py-10 text-center">
-                <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500 text-sm font-medium">Nenhum lançamento ainda</p>
-                <p className="text-xs text-slate-400 mt-1">Use a aba Captura para criar seu primeiro</p>
+              <div className="px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+            ) : filteredEntries.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium">{entries.length === 0 ? "Nenhum lançamento ainda" : "Nenhum resultado para os filtros"}</p>
               </div>
             ) : (
-              recentEntries.map(entry => (
-                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`entry-row-${entry.id}`}>
-                  <div className={`size-9 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm text-slate-800 truncate">{entry.description} - {entry.patientName}</p>
-                    <p className="text-xs text-slate-400">
-                      {formatDate(entry.createdAt)} • {entry.insuranceProvider}
-                    </p>
+              filteredEntries.map(entry => (
+                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className={`size-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-slate-800 truncate">{entry.description} - {entry.patientName}</p>
+                        {entry.procedureValue && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
+                      </div>
+                      <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
+                        {formatDate(entry.createdAt)} • {entry.insuranceProvider}
+                        <span className="inline-flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
+                      </p>
+                    </div>
                   </div>
-                  {entry.procedureValue && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
+                  <div className="relative flex-shrink-0 ml-2" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
+                    <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 text-green-600 hover:bg-green-100" : entry.status === "divergent" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-amber-50 text-amber-600 hover:bg-amber-100"}`}
+                      data-testid={`quick-status-${entry.id}`}>
+                      {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
+                    </button>
+                    {quickStatusEntry === entry.id && (
+                      <div className="absolute right-0 bottom-full mb-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+                        <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alterar status</p>
+                        {[
+                          { value: "pending", label: "Pendente", icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
+                          { value: "reconciled", label: "Conferido", icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
+                          { value: "divergent", label: "Divergente", icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
+                        ].filter(s => s.value !== entry.status).map(s => (
+                          <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
+                            {s.icon} {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             )}

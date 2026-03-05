@@ -15,8 +15,9 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 
 ```
 client/src/
-  pages/             - Login, Register, Dashboard, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail
+  pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail
   components/ui/     - shadcn/ui components
+  components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
   components/ProjectionsPanel.tsx - Financial projections panel (30/60/90 days)
   components/ObjectUploader.tsx   - Uppy-based file upload component
   hooks/use-upload.ts             - Upload hook for presigned URL flow
@@ -86,18 +87,30 @@ shared/
 - `PUT /api/notifications/:id/read` - Mark single notification as read
 - `PUT /api/notifications/read-all` - Mark all notifications as read
 
+## Navigation
+
+Bottom tab bar (AppLayout) with 5 tabs on authenticated pages:
+- **Início** (/dashboard) - Widget home: stats grid, projections panel, recent 5 entries, notifications
+- **Lançamentos** (/entries) - Full entries list with filters (search, status, date, insurance), edit modal, quick status change
+- **Captura** (/capture) - Elevated center button. Three capture cards: Photo, Audio, Manual
+- **Relatórios** (/reports) - Financial charts and reports
+- **Perfil** (/profile) - User info, quick links (Settings, Clinic Reports, Reconciliation), logout
+
+Pages without tab bar: Login, Register, ConfirmEntry
+
 ## Pages
 
 - **Login/Register**: Authentication flow
-- **Dashboard**: Main hub with entry capture (photo/audio/manual), stats grid (pending/reconciled/divergent/total value), filters/search, notifications bell dropdown, navigation links, entry list with quick status change, edit modal
+- **Dashboard (Início)**: Clean widget home with greeting, stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
+- **Entries (Lançamentos)**: Full entries list with search, status/date/insurance filters, edit modal, quick status change
+- **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing
+- **Profile (Perfil)**: User info, links to Settings/ClinicReports/Reconciliation, logout
 - **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field)
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
 - **Reports**: Financial charts with recharts (bar chart by month, pie chart by insurance), summary cards, period filters
-- **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries (Levenshtein name matching + date proximity). Results shown in three tabs: Conciliados/Divergentes/Pendentes
-- **EntryDetail**: Detailed view of individual entry with image evidence display (if sourceUrl exists)
-- **ProjectionsPanel**: Dashboard component showing projected receivables for 30/60/90 day windows
-- **Tutorial**: 4-step balloon tutorial with localStorage persistence, help button to re-open
+- **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries
+- **EntryDetail**: Detailed view of individual entry with image evidence display
 
 ## Design System
 
@@ -112,7 +125,7 @@ shared/
 
 ## Entry Flow
 
-1. Dashboard: User clicks Photo/Audio/Manual button
+1. Capture tab: User clicks Photo/Audio/Manual card
 2. Photo: File picker -> base64 -> POST /api/entries/photo -> AI extracts data (including procedureValue) -> ConfirmEntry page
 3. Audio: MediaRecorder -> WAV conversion -> base64 -> POST /api/entries/audio -> AI transcribes + extracts -> ConfirmEntry page
 4. Manual: Direct navigation to ConfirmEntry with empty form
