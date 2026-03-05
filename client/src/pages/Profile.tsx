@@ -58,8 +58,7 @@ export default function Profile() {
 
       await fetch(urlData.uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
 
-      const photoPath = urlData.objectPath;
-      const photoUrl = `/objects/${photoPath}`;
+      const photoUrl = urlData.objectPath;
 
       const updateRes = await fetch("/api/auth/profile-photo", {
         method: "PUT",
