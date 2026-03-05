@@ -1,0 +1,46 @@
+**Assunto:** Continuidade do Desenvolvimento Medfin - Implementação do Épico de Melhorias v1.2.
+
+**Contexto:**
+A auditoria arquitetural confirmou que a base do sistema é robusta e segue as melhores práticas. Agora, vamos construir sobre essa fundação para implementar as próximas funcionalidades cruciais. A consistência com o design system premium existente é mandatória.
+
+**Sua Tarefa:**
+Implemente as seguintes funcionalidades em ordem de prioridade.
+
+---
+
+### **Prioridade 1: Anexar a "Prova do Crime" (Evidências)**
+
+**Objetivo:** Anexar o arquivo de mídia original (foto ou áudio) a cada lançamento para permitir uma auditoria visual/auditiva fácil.
+
+*   **Ações de Backend:**
+    1.  Modifique os endpoints de lançamento (`POST /api/entries/photo` e `POST /api/entries/audio`) para, primeiro, fazer o upload do arquivo de mídia recebido para o serviço de armazenamento de objetos configurado (Google Cloud Storage).
+    2.  Ao salvar o novo registro na tabela `doctor_entries`, certifique-se de que o campo `sourceUrl` seja preenchido com a URL pública do arquivo que foi salvo.
+
+*   **Ações de Frontend:**
+    1.  Crie a "Tela de Detalhes do Lançamento", uma nova página/rota dinâmica (ex: `/entry/:id`).
+    2.  Na lista de lançamentos do Dashboard, transforme cada item em um link que navega para sua respectiva página de detalhes (ex: `/entry/123-abc`).
+    3.  Na página de detalhes, busque todas as informações do lançamento e exiba-as de forma clara. **Crucialmente, adicione um componente que renderize a evidência:**
+        *   Se o método de entrada for 'photo', exiba a imagem a partir da `sourceUrl`.
+        *   Se o método de entrada for 'audio', exiba um player de áudio HTML5 simples com a `sourceUrl` como `src`.
+
+---
+
+### **Prioridade 2: Implementar a Inteligência Financeira (Projeções)**
+
+**Objetivo:** Dar ao médico uma visão clara e proativa de seus recebimentos futuros no Dashboard.
+
+*   **Ações de Backend:**
+    1.  Crie um novo endpoint, `GET /api/financials/projections`.
+    2.  A lógica deste endpoint deve buscar na tabela `clinic_reports` todos os registros que correspondem a lançamentos com status `'reconciled'` ou `'divergent'`.
+    3.  Some os valores (`reportedValue`) desses registros e agrupe-os por data de pagamento estimada (considere `procedureDate` + 30 dias, `procedureDate` + 60 dias, e `procedureDate` + 90 dias).
+    4.  Retorne um objeto JSON com as projeções: `{ "next30Days": X, "next60Days": Y, "next90Days": Z }`.
+
+*   **Ações de Frontend:**
+    1.  Crie um novo componente React chamado `ProjectionsPanel.tsx`.
+    2.  Adicione este componente em um local de destaque no Dashboard (`Dashboard.tsx`).
+    3.  O componente deve buscar os dados do endpoint `/api/financials/projections` e exibir os valores em cards individuais, visualmente atraentes e fáceis de entender ("A receber em 30 dias", "A receber em 60 dias", etc.), seguindo o design system.
+
+---
+
+**Resumo do Entregável:**
+Ao final desta fase, o sistema deverá permitir que o médico audite cada lançamento visualizando sua imagem ou ouvindo seu áudio original e terá um painel no dashboard que oferece projeções financeiras inteligentes, transformando-o em uma ferramenta proativa de gestão.
