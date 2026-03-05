@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, CheckCircle2, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope } from "lucide-react";
-import { getToken, clearAuth } from "@/lib/auth";
+import { getToken, getUser, clearAuth } from "@/lib/auth";
 
 interface EntryData {
   id: string;
@@ -72,16 +72,20 @@ export default function EntryDetail() {
   if (error || !entry) {
     return (
       <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
-        <div className="hero-gradient h-48 w-full absolute top-0 left-0 z-0" />
+        <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <header className="flex items-center gap-3 py-6">
-            <button onClick={() => setLocation("/dashboard")} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md" data-testid="button-back">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2 text-white">
-              <Stethoscope className="w-5 h-5" />
-              <h1 className="text-xl font-bold">Medfin</h1>
+          <header className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-3 text-white">
+              {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
+                <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+                  {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+                </div>
+              ); })()}
+              <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
             </div>
+            <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </button>
           </header>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 text-center mt-8">
             <AlertCircle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
@@ -94,17 +98,25 @@ export default function EntryDetail() {
 
   return (
     <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
-      <div className="hero-gradient h-48 w-full absolute top-0 left-0 z-0" />
+      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <header className="flex items-center gap-3 py-6">
-          <button onClick={() => setLocation("/dashboard")} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md" data-testid="button-back">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2 text-white">
-            <Stethoscope className="w-5 h-5" />
-            <h1 className="text-xl font-bold">Detalhes do Lançamento</h1>
+        <header className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-3 text-white">
+            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
+              <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+                {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+              </div>
+            ); })()}
+            <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>
+          <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </button>
         </header>
+
+        <div className="pt-2 pb-8 text-white">
+          <h2 className="text-2xl font-extrabold">Detalhes do Lançamento</h2>
+        </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mt-4">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">

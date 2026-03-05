@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   Stethoscope, ArrowLeft, User, Lock, Loader2, Eye, EyeOff, Save,
 } from "lucide-react";
-import { getToken, getUser, saveAuth, clearAuth } from "@/lib/auth";
+import { getToken, getUser, saveAuth, clearAuth, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
@@ -99,18 +99,20 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
-      <div className="hero-gradient h-48 w-full absolute top-0 left-0 z-0" />
+      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            <div className="size-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
-              <Stethoscope className="w-5 h-5" />
-            </div>
+            {(() => { const u = getUser(); const photoUrl = u?.profilePhotoUrl; const ini = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
+              <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+                {photoUrl ? <img src={photoUrl} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{ini}</span>}
+              </div>
+            ); })()}
             <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>
           <button
-            onClick={() => setLocation("/dashboard")}
+            onClick={() => setLocation("/profile")}
             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md text-sm font-semibold"
             data-testid="button-back-dashboard"
           >
@@ -119,7 +121,7 @@ export default function Settings() {
           </button>
         </header>
 
-        <div className="pt-2 pb-6 text-white">
+        <div className="pt-2 pb-8 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">Configurações</h2>
           <p className="text-white/80 text-sm mt-1">Gerencie seu perfil e segurança</p>
         </div>

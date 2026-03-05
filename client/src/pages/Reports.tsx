@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
-import { getToken, clearAuth } from "@/lib/auth";
+import { getToken, getUser, clearAuth } from "@/lib/auth";
 
 interface DoctorEntry {
   id: string;
@@ -155,9 +155,11 @@ export default function Reports() {
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            <div className="size-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
-              <Stethoscope className="w-5 h-5" />
-            </div>
+            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
+              <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+                {p ? <img src={p} alt="Perfil" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
+              </div>
+            ); })()}
             <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>
           <Button
