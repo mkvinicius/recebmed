@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, Bell, Clock, CreditCard, AlertTriangle,
+  Bell, Clock, CreditCard, AlertTriangle,
   FileText, AlertCircle, Loader2, CheckCircle2, X, Trash2, Save,
   User, Calendar, Building2, DollarSign, CheckCheck, Camera, Mic, PenLine,
   ChevronRight, Search
@@ -201,7 +201,9 @@ export default function Dashboard() {
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            <div className="size-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md"><Stethoscope className="w-5 h-5" /></div>
+            <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg" data-testid="avatar-profile">
+              <span className="text-sm font-bold text-white tracking-wide">{userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"}</span>
+            </div>
             <h1 className="text-xl font-bold tracking-tight">Medfin</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -234,8 +236,9 @@ export default function Dashboard() {
         </header>
 
         <div className="pt-2 pb-4 text-white">
-          <h2 className="text-2xl font-extrabold" data-testid="text-greeting">Olá, {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
-          <p className="text-white/80 text-sm mt-1">Resumo financeiro do seu consultório</p>
+          <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? "Bom dia" : new Date().getHours() < 18 ? "Boa tarde" : "Boa noite"},</p>
+          <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">Dr. {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
+          <p className="text-white/60 text-sm mt-1">Resumo financeiro do seu consultório</p>
         </div>
 
         <div className="relative mb-5" ref={searchRef}>
