@@ -17,6 +17,7 @@ import EntryDetail from "@/pages/EntryDetail";
 import Entries from "@/pages/Entries";
 import Capture from "@/pages/Capture";
 import Profile from "@/pages/Profile";
+import Import from "@/pages/Import";
 import AppLayout from "@/components/AppLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -64,6 +65,9 @@ function Router() {
       </Route>
       <Route path="/entry/:id">
         <AppLayout><EntryDetail /></AppLayout>
+      </Route>
+      <Route path="/import">
+        <AppLayout><Import /></AppLayout>
       </Route>
 
       <Route component={NotFound} />

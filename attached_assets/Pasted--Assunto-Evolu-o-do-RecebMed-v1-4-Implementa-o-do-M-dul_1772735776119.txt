@@ -1,0 +1,52 @@
+**Assunto:** Evolução do RecebMed v1.4 - Implementação do Módulo de Importação Histórica.
+
+**Contexto:**
+O core do sistema está funcional para operações do dia a dia. Para aumentar o valor e facilitar a adoção por novos usuários, vamos criar uma funcionalidade que permita aos médicos importar e auditar seus dados financeiros de anos anteriores.
+
+**Sua Tarefa:**
+Projetar e implementar a arquitetura para o "Módulo de Importação Histórica".
+
+---
+
+### **Prioridade 1: Criar a Página de Importação e o Template CSV**
+
+*   **Frontend:**
+    1.  Crie uma nova página/rota, como `/import` ou `/history`, chamada "Auditoria Retroativa".
+    2.  Nesta página, adicione um componente que ofereça um link para download. Este link deve apontar para um arquivo CSV estático localizado na pasta `public/` do projeto.
+    3.  **Crie o arquivo `public/template_recebmed.csv`**. O cabeçalho deste arquivo deve conter as colunas essenciais para um lançamento: `data_procedimento (dd/mm/aaaa)`, `nome_paciente`, `convenio`, `descricao_procedimento`, `valor (opcional)`.
+
+---
+
+### **Prioridade 2: Implementar o Upload e Processamento de Lançamentos (CSV)**
+
+*   **Frontend:**
+    1.  Na página `/import`, adicione um componente de upload de arquivo que aceite arquivos CSV e Excel (`.csv`, `.xls`, `.xlsx`).
+    2.  O componente deve permitir que o médico selecione o ano a que os dados se referem (ex: um dropdown com "2024", "2023", etc.).
+
+*   **Backend:**
+    1.  Crie um novo endpoint, `POST /api/import/doctor-entries`.
+    2.  A lógica deste endpoint deve:
+        a. Receber o arquivo de planilha.
+        b. Usar uma biblioteca de parsing (como `papaparse` para CSV ou `xlsx` para Excel) para converter o arquivo em um array de objetos JSON.
+        c. Para cada objeto/linha da planilha, validar se os campos correspondem ao template.
+        d. Salvar cada linha como um novo registro na tabela `doctor_entries`, garantindo que a data e o ano estejam corretos.
+    3.  Retorne uma mensagem de sucesso (ex: "257 lançamentos de 2023 importados com sucesso.").
+
+---
+
+### **Prioridade 3: Adaptar o Upload de PDF para o Contexto Histórico**
+
+*   **Frontend:**
+    1.  Na página `/import`, adicione uma segunda área de upload, específica para os "Relatórios das Clínicas (PDFs)".
+    2.  Esta área deve permitir o upload de **múltiplos arquivos PDF de uma só vez**.
+    3.  Assim como no upload de CSV, deve haver um seletor para o ano correspondente.
+
+*   **Backend:**
+    1.  Modifique o endpoint existente `POST /api/reconciliation/upload-pdf` (ou crie um novo, como `POST /api/import/clinic-reports`) para aceitar um array de arquivos.
+    2.  A lógica deve iterar sobre cada PDF, executar a extração de dados com a IA e salvar na tabela `clinic_reports`.
+    3.  **Crucial:** Ao final do processamento de todos os PDFs, o "Agente Orquestrador" (`runReconciliation`) deve ser acionado para realizar a conferência massiva de todo o ano importado.
+
+---
+
+**Resumo do Entregável:**
+Ao final, o RecebMed terá uma nova seção de "Auditoria Retroativa" onde o médico pode baixar um template de planilha, subir seus dados históricos de lançamentos e, em seguida, subir os relatórios das clínicas para aquele mesmo período, recebendo uma análise completa de conciliação de anos passados.

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, ArrowLeft, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -202,6 +202,48 @@ export default function Reports() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <button
+            onClick={() => setLocation("/reconciliation")}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] hover:border-[#8855f6]/40 transition-all text-left"
+            data-testid="link-reconciliation"
+          >
+            <div className="size-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Stethoscope className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Conciliação</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Conferir PDFs</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setLocation("/clinic-reports")}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] hover:border-[#8855f6]/40 transition-all text-left"
+            data-testid="link-clinic-reports"
+          >
+            <div className="size-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Relatórios Clínica</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Dados extraídos</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setLocation("/import")}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] hover:border-[#8855f6]/40 transition-all text-left"
+            data-testid="link-import"
+          >
+            <div className="size-10 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FileUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Auditoria Retroativa</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Importar dados históricos</p>
+            </div>
+          </button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-lg mx-auto flex items-center justify-around px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {tabs.map((tab) => {
             const isActive = location === tab.path
-              || (tab.path === "/reports" && (location === "/reconciliation" || location === "/clinic-reports"))
+              || (tab.path === "/reports" && (location === "/reconciliation" || location === "/clinic-reports" || location === "/import"))
               || (tab.path === "/profile" && (location === "/settings"))
               || (tab.path === "/entries" && location.startsWith("/entry/"));
             const isCapture = tab.path === "/capture";

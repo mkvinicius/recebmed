@@ -46,6 +46,7 @@
     "@tanstack/react-query": "^5.60.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/papaparse": "^5.5.2",
     "@types/pdf-parse": "^1.1.5",
     "@uppy/aws-s3": "^5.1.0",
     "@uppy/core": "^5.2.0",
@@ -74,6 +75,7 @@
     "openai": "^6.25.0",
     "p-limit": "^7.3.0",
     "p-retry": "^7.1.1",
+    "papaparse": "^5.5.3",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-parse": "^2.4.5",
@@ -93,6 +95,7 @@
     "vite": "^3.2.11",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.5.4"
   },

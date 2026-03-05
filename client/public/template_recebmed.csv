@@ -1,0 +1,4 @@
+data_procedimento (dd/mm/aaaa),nome_paciente,convenio,descricao_procedimento,valor (opcional)
+01/03/2024,Maria Silva,Unimed,Consulta de rotina,150.00
+15/03/2024,João Santos,Amil,Retorno cardiologia,
+22/03/2024,Ana Oliveira,SulAmérica,Ecocardiograma,350.00

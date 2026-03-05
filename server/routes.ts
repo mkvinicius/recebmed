@@ -8,6 +8,8 @@ import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from 
 import { extractPdfData, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
 
@@ -642,6 +644,221 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Projections error:", error);
       return res.status(500).json({ message: "Erro ao calcular projeções" });
+    }
+  });
+
+  // ── Historical Import ──
+
+  function parseDateBR(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const trimmed = dateStr.trim();
+    const brMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (brMatch) {
+      const [, day, month, year] = brMatch;
+      const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(d.getTime())) return d;
+    }
+    const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (isoMatch) {
+      const d = new Date(trimmed);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
+  function normalizeSpreadsheetRows(buffer: Buffer, fileName: string): Array<Record<string, string>> {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+
+    if (ext === "csv") {
+      const text = buffer.toString("utf-8");
+      const result = Papa.parse(text, { header: true, skipEmptyLines: true, transformHeader: (h: string) => h.trim() });
+      return result.data as Array<Record<string, string>>;
+    }
+
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) return [];
+    const sheet = workbook.Sheets[sheetName];
+    return XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: "" });
+  }
+
+  function parseExcelDate(val: any): Date | null {
+    if (!val) return null;
+    if (val instanceof Date && !isNaN(val.getTime())) return val;
+    if (typeof val === "number") {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + val * 86400000);
+      if (!isNaN(d.getTime())) return d;
+    }
+    if (typeof val === "string") return parseDateBR(val.trim());
+    return null;
+  }
+
+  function mapRowToEntry(row: Record<string, any>, year: number): { patientName: string; procedureDate: Date; insuranceProvider: string; description: string; procedureValue: string | null } | null {
+    const keys = Object.keys(row);
+    const findKey = (patterns: string[], exclude?: string[]) => keys.find(k => {
+      const lower = k.toLowerCase();
+      const matches = patterns.some(p => lower.includes(p));
+      if (!matches) return false;
+      if (exclude) return !exclude.some(e => lower.includes(e));
+      return true;
+    }) || null;
+
+    const dateKey = findKey(["data_procedimento", "data_", "date"], ["descricao"]) || findKey(["data"], ["descricao"]);
+    const nameKey = findKey(["nome_paciente", "paciente", "nome", "patient"]);
+    const insuranceKey = findKey(["convenio", "convênio", "plano", "insurance"]);
+    const descKey = findKey(["descricao", "descrição", "description"]);
+    const valueKey = findKey(["valor", "value", "preco", "preço"], ["nome", "paciente", "data"]);
+
+    const patientName = nameKey ? String(row[nameKey] || "").trim() : "";
+    const insuranceProvider = insuranceKey ? String(row[insuranceKey] || "").trim() : "";
+    const description = descKey ? String(row[descKey] || "").trim() : "";
+    const rawValue = valueKey ? String(row[valueKey] || "").trim().replace(",", ".") : "";
+
+    if (!patientName) return null;
+
+    const dateVal = dateKey ? row[dateKey] : null;
+    let procedureDate = parseExcelDate(dateVal);
+    if (!procedureDate) return null;
+
+    if (year && procedureDate.getFullYear() !== year) {
+      procedureDate.setFullYear(year);
+    }
+
+    return {
+      patientName,
+      procedureDate,
+      insuranceProvider: insuranceProvider || "Não informado",
+      description: description || "Procedimento importado",
+      procedureValue: rawValue && !isNaN(parseFloat(rawValue)) ? parseFloat(rawValue).toFixed(2) : null,
+    };
+  }
+
+  app.post("/api/import/doctor-entries", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { file, fileName, year } = req.body;
+      if (!file || !fileName) {
+        return res.status(400).json({ message: "Arquivo não enviado" });
+      }
+      const targetYear = year ? parseInt(year) : new Date().getFullYear() - 1;
+      const buffer = Buffer.from(file, "base64");
+      const rows = normalizeSpreadsheetRows(buffer, fileName);
+
+      if (rows.length === 0) {
+        return res.status(400).json({ message: "Nenhum dado encontrado na planilha. Verifique se o formato está correto." });
+      }
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const row of rows) {
+        const mapped = mapRowToEntry(row, targetYear);
+        if (!mapped) { skipped++; continue; }
+
+        await storage.createDoctorEntry({
+          doctorId: userId,
+          patientName: mapped.patientName,
+          procedureDate: mapped.procedureDate,
+          insuranceProvider: mapped.insuranceProvider,
+          description: mapped.description,
+          procedureValue: mapped.procedureValue,
+          entryMethod: "manual",
+          sourceUrl: null,
+          status: "pending",
+        });
+        imported++;
+      }
+
+      if (imported > 0) {
+        await storage.createNotification({
+          doctorId: userId,
+          type: "import",
+          title: "Importação histórica",
+          message: `${imported} lançamentos de ${targetYear} importados via planilha`,
+          read: false,
+        });
+      }
+
+      return res.json({ success: true, imported, skipped, year: targetYear, totalRows: rows.length });
+    } catch (error) {
+      console.error("Import doctor entries error:", error);
+      return res.status(500).json({ message: "Erro ao processar planilha" });
+    }
+  });
+
+  app.post("/api/import/clinic-reports", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { pdfs, year } = req.body;
+      if (!pdfs || !Array.isArray(pdfs) || pdfs.length === 0) {
+        return res.status(400).json({ message: "Nenhum PDF enviado" });
+      }
+      if (pdfs.length > 20) {
+        return res.status(400).json({ message: "Máximo de 20 PDFs por vez" });
+      }
+
+      let totalExtracted = 0;
+      let pdfErrors = 0;
+      const failedPdfs: string[] = [];
+
+      for (const pdfItem of pdfs) {
+        const base64Data = (pdfItem.data || pdfItem).replace(/^data:[^;]+;base64,/, "");
+        const pdfBuffer = Buffer.from(base64Data, "base64");
+
+        try {
+          const extractedData = await extractPdfData(pdfBuffer);
+          for (const item of extractedData) {
+            let procDate = new Date(item.procedureDate);
+            if (year && procDate.getFullYear() !== parseInt(year)) {
+              procDate.setFullYear(parseInt(year));
+            }
+            await storage.createClinicReport({
+              doctorId: userId,
+              patientName: item.patientName,
+              procedureDate: procDate,
+              reportedValue: item.reportedValue || "0.00",
+              description: item.description || null,
+              sourcePdfUrl: null,
+            });
+            totalExtracted++;
+          }
+        } catch (err) {
+          pdfErrors++;
+          failedPdfs.push(pdfItem.name || `PDF ${pdfErrors}`);
+          console.error(`Error processing PDF ${pdfItem.name || "unknown"}:`, err);
+        }
+      }
+
+      if (totalExtracted === 0 && pdfErrors === pdfs.length) {
+        return res.status(400).json({ message: "Não foi possível extrair dados de nenhum PDF. Verifique se os arquivos estão corretos." });
+      }
+
+      const reconciliationResult = await runReconciliation(userId);
+
+      await storage.createNotification({
+        doctorId: userId,
+        type: "import",
+        title: "Importação de PDFs",
+        message: `${totalExtracted} registros extraídos de ${pdfs.length - pdfErrors}/${pdfs.length} PDF(s) e conciliação executada`,
+        read: false,
+      });
+
+      return res.json({
+        success: true,
+        extractedCount: totalExtracted,
+        pdfCount: pdfs.length,
+        pdfErrors,
+        failedPdfs,
+        reconciliation: {
+          reconciled: reconciliationResult.reconciled.length,
+          divergent: reconciliationResult.divergent.length,
+          pending: reconciliationResult.pending.length,
+        },
+      });
+    } catch (error) {
+      console.error("Import clinic reports error:", error);
+      return res.status(500).json({ message: "Erro ao processar PDFs" });
     }
   });
 

@@ -16,7 +16,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 
 ```
 client/src/
-  pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail
+  pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import
   components/ui/     - shadcn/ui components
   components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
   components/ProjectionsPanel.tsx - Financial projections panel (30/60/90 days)
@@ -29,7 +29,7 @@ client/src/
 
 server/
   index.ts           - Express entry point (50mb body limit)
-  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + object storage)
+  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
   openai.ts          - OpenAI client + image/audio extraction functions
   reconciliation.ts  - PDF extraction (pdf-parse + OpenAI) + reconciliation engine (Levenshtein matching)
   storage.ts         - Database storage interface (Drizzle)
@@ -80,6 +80,10 @@ shared/
 - `POST /api/reconciliation/upload-pdf` - Upload PDF, extract data with AI, auto-reconcile entries
 - `GET /api/reconciliation/results` - Get entries grouped by reconciliation status
 
+### Historical Import
+- `POST /api/import/doctor-entries` - Import entries from CSV/Excel spreadsheet (papaparse + xlsx)
+- `POST /api/import/clinic-reports` - Import multiple PDFs for bulk clinic reports + auto reconciliation
+
 ### Financial Projections
 - `GET /api/financials/projections` - Calculate projected receivables (30/60/90 days)
 
@@ -119,6 +123,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - **Reports**: Financial charts with recharts (bar chart by month, pie chart by insurance), summary cards, period filters
 - **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries
 - **EntryDetail**: Detailed view of individual entry with image evidence display
+- **Import (Auditoria Retroativa)**: Historical data import — CSV/Excel template download, spreadsheet upload with year selector, multi-PDF upload for clinic reports with bulk reconciliation
 
 ## Design System
 
@@ -155,6 +160,8 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - bcryptjs, jsonwebtoken (auth)
 - openai (AI integrations - uses AI_INTEGRATIONS_OPENAI_API_KEY + AI_INTEGRATIONS_OPENAI_BASE_URL)
 - pdf-parse (PDF text extraction for reconciliation)
+- papaparse (CSV parsing for historical import)
+- xlsx (Excel file parsing for historical import)
 - @google-cloud/storage, google-auth-library (object storage via Replit sidecar)
 - drizzle-orm, drizzle-zod, pg (database)
 - next-themes (dark mode)
