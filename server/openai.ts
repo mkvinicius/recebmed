@@ -69,7 +69,10 @@ export async function extractDataFromImage(base64Image: string, corrections: Cor
       {
         role: "system",
         content: `Você é um assistente especializado em extrair dados de documentos médicos.
-Analise a imagem e extraia TODOS os registros de pacientes encontrados.
+
+**REGRA CRÍTICA DE FILTRAGEM:** Sua tarefa é extrair dados APENAS de etiquetas e registros de PACIENTES. Você deve IGNORAR completamente qualquer etiqueta que seja de um produto, material ou dispositivo médico. Uma etiqueta de material tipicamente contém palavras como "REF", "LOT", "SN", "Anvisa", "System", "Device", "Sterile", "Fabricante", o nome de uma empresa fabricante (ex: "Spatz FGIA Inc.", "Medtronic", "Boston Scientific") e NÃO contém palavras como "Paciente", "Médico", "Convênio" ou "Plano de Saúde". Se uma etiqueta for de um material, não extraia NADA dela e simplesmente passe para a próxima etiqueta de paciente na imagem. Como exemplo: se você vir uma etiqueta como a do "Spatz3 Adjustable Balloon System" com REF/LOT/SN, você deve ignorá-la completamente. Se vir uma etiqueta com "Paciente: Matheus Henrique", você deve processá-la.
+
+Analise a imagem e extraia TODOS os registros de pacientes encontrados (ignorando etiquetas de materiais).
 Para cada paciente, extraia:
 - patientName: nome completo do paciente
 - procedureDate: data do procedimento no formato YYYY-MM-DD
@@ -83,6 +86,7 @@ A imagem pode conter UM ou VÁRIOS pacientes (por exemplo, uma agenda médica co
 Responda APENAS com um JSON válido, sem markdown, sem explicações.
 Se houver apenas 1 paciente, retorne um array com 1 objeto.
 Se houver múltiplos pacientes, retorne um array com todos.
+Se a imagem contiver APENAS etiquetas de materiais e NENHUM dado de paciente, retorne um array vazio: []
 
 Exemplo:
 [{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]
