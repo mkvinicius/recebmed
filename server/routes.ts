@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
 import { extractPdfData, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 
 const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
 
@@ -168,6 +169,8 @@ export async function registerRoutes(
     return diffs;
   }
 
+  const mediaStorage = new ObjectStorageService();
+
   app.post("/api/entries/photo", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { image } = req.body;
@@ -177,8 +180,11 @@ export async function registerRoutes(
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
       const base64 = image.replace(/^data:image\/\w+;base64,/, "");
-      const extractedData = await extractDataFromImage(base64, corrections);
-      return res.json({ success: true, extractedData });
+      const [extractedData, sourceUrl] = await Promise.all([
+        extractDataFromImage(base64, corrections),
+        mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(err => { console.error("Media upload error:", err); return null; }),
+      ]);
+      return res.json({ success: true, extractedData, sourceUrl });
     } catch (error) {
       console.error("Photo entry error:", error);
       return res.status(500).json({ message: "Erro ao processar imagem" });
@@ -200,8 +206,11 @@ export async function registerRoutes(
         images.map(async (image: string, index: number) => {
           try {
             const base64 = image.replace(/^data:image\/\w+;base64,/, "");
-            const entries = await extractDataFromImage(base64, corrections);
-            return entries.map(e => ({ ...e, _sourceImage: index + 1 }));
+            const [entries, sourceUrl] = await Promise.all([
+              extractDataFromImage(base64, corrections),
+              mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(() => null),
+            ]);
+            return entries.map(e => ({ ...e, _sourceImage: index + 1, sourceUrl }));
           } catch (err) {
             console.error(`Error processing image ${index + 1}:`, err);
             return [];
@@ -225,8 +234,11 @@ export async function registerRoutes(
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
       const base64 = audio.replace(/^data:[^;]+;base64,/, "");
-      const extractedData = await extractDataFromAudio(base64, corrections);
-      return res.json({ success: true, extractedData });
+      const [extractedData, sourceUrl] = await Promise.all([
+        extractDataFromAudio(base64, corrections),
+        mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "audio/wav").catch(err => { console.error("Media upload error:", err); return null; }),
+      ]);
+      return res.json({ success: true, extractedData, sourceUrl });
     } catch (error) {
       console.error("Audio entry error:", error);
       return res.status(500).json({ message: "Erro ao processar áudio" });

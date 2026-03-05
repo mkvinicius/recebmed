@@ -193,15 +193,25 @@ export default function EntryDetail() {
             {entry.sourceUrl && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-semibold">
-                  <Camera className="w-4 h-4 text-[#8855f6]" /> Imagem de Origem
+                  {entry.entryMethod === "audio" ? (
+                    <><Mic className="w-4 h-4 text-[#8855f6]" /> Áudio de Origem</>
+                  ) : (
+                    <><Camera className="w-4 h-4 text-[#8855f6]" /> Imagem de Origem</>
+                  )}
                 </div>
                 <div className="border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 p-2">
-                  <img
-                    src={entry.sourceUrl}
-                    alt="Imagem do documento"
-                    className="w-full rounded-lg object-contain max-h-96"
-                    data-testid="img-source"
-                  />
+                  {entry.entryMethod === "audio" ? (
+                    <audio controls className="w-full" data-testid="audio-source">
+                      <source src={entry.sourceUrl} />
+                    </audio>
+                  ) : (
+                    <img
+                      src={entry.sourceUrl}
+                      alt="Imagem do documento"
+                      className="w-full rounded-lg object-contain max-h-96"
+                      data-testid="img-source"
+                    />
+                  )}
                 </div>
               </div>
             )}

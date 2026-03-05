@@ -36,6 +36,7 @@ interface EntryData {
   procedureValue: string;
   confidence?: ConfidenceData;
   _originalData?: OriginalData;
+  sourceUrl?: string;
 }
 
 const confidenceConfig: Record<ConfidenceLevel, { dotClass: string; text: string; bannerClass: string; bannerText: string }> = {
@@ -79,6 +80,7 @@ export default function ConfirmEntry() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [entries, setEntries] = useState<EntryData[]>([]);
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
 
   const params = new URLSearchParams(search);
   const entryMethod = params.get("method") || "manual";
@@ -97,7 +99,9 @@ export default function ConfirmEntry() {
     const storedData = sessionStorage.getItem("recebmed_extracted");
     if (storedData) {
       try {
-        const data = JSON.parse(storedData);
+        const raw = JSON.parse(storedData);
+        const data = raw.entries || (Array.isArray(raw) ? raw : [raw]);
+        if (raw.sourceUrl) setSourceUrl(raw.sourceUrl);
         const parseEntry = (d: any): EntryData => {
           const entry: EntryData = {
             patientName: d.patientName || "",
@@ -114,6 +118,7 @@ export default function ConfirmEntry() {
             } : undefined,
           };
           entry._originalData = { patientName: entry.patientName, procedureDate: entry.procedureDate, insuranceProvider: entry.insuranceProvider, description: entry.description, procedureValue: entry.procedureValue };
+          if (d.sourceUrl) entry.sourceUrl = d.sourceUrl;
           return entry;
         };
         if (Array.isArray(data)) {
@@ -164,11 +169,13 @@ export default function ConfirmEntry() {
     setIsSaving(true);
     try {
       const isAiMethod = entryMethod !== "manual";
+      const entrySourceUrl = sourceUrl || entries[0]?.sourceUrl || null;
       if (validIndices.length === 1) {
         const idx = validIndices[0];
         const e = entries[idx];
         const body: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue, entryMethod };
         if (isAiMethod && e._originalData) body._originalData = e._originalData;
+        if (entrySourceUrl) body.sourceUrl = e.sourceUrl || entrySourceUrl;
         const res = await fetch("/api/entries", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -184,6 +191,7 @@ export default function ConfirmEntry() {
           const e = entries[idx];
           const item: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue };
           if (isAiMethod && e._originalData) item._originalData = e._originalData;
+          if (e.sourceUrl || entrySourceUrl) item.sourceUrl = e.sourceUrl || entrySourceUrl;
           return item;
         });
         const res = await fetch("/api/entries/batch", {

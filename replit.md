@@ -9,6 +9,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken) + bcryptjs for password hashing
 - **AI**: OpenAI via Replit AI Integrations (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT)
+- **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
 
 ## Project Structure
