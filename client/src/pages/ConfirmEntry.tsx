@@ -140,7 +140,7 @@ export default function ConfirmEntry() {
   const isBatch = entries.length > 1;
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,17 +176,17 @@ export default function ConfirmEntry() {
 
         <div className="space-y-4 mb-8">
           {entries.map((entry, index) => (
-            <div key={index} className="glass-card rounded-2xl p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div key={index} className="glass-card dark:glass-card-dark rounded-2xl p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl ${entryMethod === "manual" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
+                  <div className={`p-2 rounded-xl ${entryMethod === "manual" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600" : "bg-green-50 dark:bg-green-900/30 text-green-600"}`}>
                     {entryMethod === "manual" ? <PenLine className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800 text-sm">
+                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                       {isBatch ? `Paciente ${index + 1} de ${entries.length}` : entryMethod === "manual" ? "Lançamento Manual" : "Dados extraídos"}
                     </p>
-                    <p className="text-xs text-slate-400 flex items-center gap-1">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
                       <SourceIcon className="w-3 h-3" /> Via {sourceLabel}
                     </p>
                   </div>
@@ -194,7 +194,7 @@ export default function ConfirmEntry() {
                 {entries.length > 1 && (
                   <button
                     onClick={() => removeEntry(index)}
-                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors"
                     data-testid={`button-remove-entry-${index}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -204,52 +204,52 @@ export default function ConfirmEntry() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                  <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                     <User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente
                   </Label>
                   <Input value={entry.patientName} onChange={(e) => updateEntry(index, "patientName", e.target.value)}
                     placeholder="Nome completo"
-                    className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                    className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                     data-testid={`input-patient-name-${index}`} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data
                     </Label>
                     <Input type="date" value={entry.procedureDate} onChange={(e) => updateEntry(index, "procedureDate", e.target.value)}
-                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-procedure-date-${index}`} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio
                     </Label>
                     <Input value={entry.insuranceProvider} onChange={(e) => updateEntry(index, "insuranceProvider", e.target.value)}
                       placeholder="Ex: Particular"
-                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-insurance-${index}`} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento
                     </Label>
                     <Input value={entry.description} onChange={(e) => updateEntry(index, "description", e.target.value)}
                       placeholder="Ex: Consulta, Retorno, Sleeve"
-                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-description-${index}`} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                    <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
                       <DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)
                     </Label>
                     <Input type="number" step="0.01" min="0" value={entry.procedureValue} onChange={(e) => updateEntry(index, "procedureValue", e.target.value)}
                       placeholder="0.00"
-                      className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium"
+                      className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
                       data-testid={`input-value-${index}`} />
                   </div>
                 </div>
@@ -261,7 +261,7 @@ export default function ConfirmEntry() {
         <div className="mb-4">
           <button
             onClick={addEntry}
-            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 hover:text-[#8855f6] hover:border-[#8855f6]/30 transition-colors font-semibold text-sm"
+            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-[#8855f6] hover:border-[#8855f6]/30 transition-colors font-semibold text-sm"
             data-testid="button-add-entry"
           >
             <Plus className="w-4 h-4" />
@@ -271,7 +271,7 @@ export default function ConfirmEntry() {
 
         <div className="flex gap-4 pb-12">
           <Button variant="outline" onClick={() => setLocation("/dashboard")}
-            className="flex-1 h-12 rounded-full font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+            className="flex-1 h-12 rounded-full font-bold border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             data-testid="button-cancel">
             Cancelar
           </Button>

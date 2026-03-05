@@ -27,7 +27,7 @@ export default function ProjectionsPanel() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 flex items-center justify-center">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 mb-8 flex items-center justify-center">
         <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
       </div>
     );
@@ -45,7 +45,7 @@ export default function ProjectionsPanel() {
     <div className="mb-8" data-testid="projections-panel">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-5 h-5 text-[#8855f6]" />
-        <h3 className="font-bold text-lg text-slate-800">Projeções Financeiras</h3>
+        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Projeções Financeiras</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {cards.map((card, i) => (
@@ -63,16 +63,16 @@ export default function ProjectionsPanel() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-4 mt-3">
-        <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
-          <p className="text-xs text-slate-500 font-semibold">Conferido</p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Conferido</p>
           <p className="text-sm font-bold text-green-600" data-testid="projection-total-reconciled">{formatCurrency(data.totals.reconciled)}</p>
         </div>
-        <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
-          <p className="text-xs text-slate-500 font-semibold">Divergente</p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Divergente</p>
           <p className="text-sm font-bold text-red-500" data-testid="projection-total-divergent">{formatCurrency(data.totals.divergent)}</p>
         </div>
-        <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
-          <p className="text-xs text-slate-500 font-semibold">Total</p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Total</p>
           <p className="text-sm font-bold text-[#8855f6]" data-testid="projection-total">{formatCurrency(data.totals.total)}</p>
         </div>
       </div>

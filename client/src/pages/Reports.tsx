@@ -142,14 +142,14 @@ export default function Reports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f6f5f8] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -190,7 +190,7 @@ export default function Reports() {
               className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
                 period === opt.value
                   ? "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
               data-testid={`filter-period-${opt.value}`}
             >
@@ -200,53 +200,53 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100" data-testid="card-total-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-total-value">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 uppercase">Total Faturado</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Total Faturado</span>
             </div>
-            <p className="text-xl font-extrabold text-slate-900" data-testid="value-total">{formatCurrency(totalValue)}</p>
-            <p className="text-xs text-slate-400 mt-1">{filteredEntries.length} lançamentos</p>
+            <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100" data-testid="value-total">{formatCurrency(totalValue)}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.length} lançamentos</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100" data-testid="card-reconciled-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-reconciled-value">
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-green-50 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 uppercase">Conferido</span>
+              <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Conferido</span>
             </div>
             <p className="text-xl font-extrabold text-green-600" data-testid="value-reconciled">{formatCurrency(reconciledValue)}</p>
-            <p className="text-xs text-slate-400 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} lançamentos</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100" data-testid="card-pending-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-pending-value">
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 uppercase">Pendente</span>
+              <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Pendente</span>
             </div>
             <p className="text-xl font-extrabold text-amber-600" data-testid="value-pending">{formatCurrency(pendingValue)}</p>
-            <p className="text-xs text-slate-400 mt-1">{filteredEntries.filter(e => e.status === "pending").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "pending").length} lançamentos</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100" data-testid="card-divergent-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="card-divergent-value">
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-red-50 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 uppercase">Divergente</span>
+              <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Divergente</span>
             </div>
             <p className="text-xl font-extrabold text-red-600" data-testid="value-divergent">{formatCurrency(divergentValue)}</p>
-            <p className="text-xs text-slate-400 mt-1">{filteredEntries.filter(e => e.status === "divergent").length} lançamentos</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "divergent").length} lançamentos</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100" data-testid="chart-monthly">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="chart-monthly">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-[#8855f6]" />
-              <h3 className="font-bold text-slate-800">Faturamento por Mês</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Faturamento por Mês</h3>
             </div>
             {monthlyData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:[&>line]:stroke-slate-700" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#94a3b8" }} />
                   <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
@@ -257,16 +257,16 @@ export default function Reports() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-[280px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
                 Sem dados para o período selecionado
               </div>
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100" data-testid="chart-insurance">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700" data-testid="chart-insurance">
             <div className="flex items-center gap-2 mb-4">
               <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
-              <h3 className="font-bold text-slate-800">Distribuição por Convênio</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Distribuição por Convênio</h3>
             </div>
             {insuranceData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -293,32 +293,32 @@ export default function Reports() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-[280px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
                 Sem dados para o período selecionado
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12" data-testid="table-top-insurers">
-          <div className="px-6 py-5 border-b border-slate-100">
-            <h3 className="font-bold text-lg text-slate-800">Top Convênios por Valor</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-12" data-testid="table-top-insurers">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Top Convênios por Valor</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">#</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Convênio</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Valor Total</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Lançamentos</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">% do Total</th>
+                <tr className="border-b border-slate-100 dark:border-slate-700">
+                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">#</th>
+                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Convênio</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Valor Total</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Lançamentos</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">% do Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {topInsurers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400 text-sm">
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                       Sem dados para o período selecionado
                     </td>
                   </tr>
@@ -327,16 +327,16 @@ export default function Reports() {
                     const count = filteredEntries.filter(e => (e.insuranceProvider || "Sem convênio") === ins.name).length;
                     const pct = totalValue > 0 ? ((ins.value / totalValue) * 100).toFixed(1) : "0.0";
                     return (
-                      <tr key={ins.name} className="hover:bg-slate-50 transition-colors" data-testid={`row-insurer-${i}`}>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-400">{i + 1}</td>
+                      <tr key={ins.name} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-testid={`row-insurer-${i}`}>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-400 dark:text-slate-500">{i + 1}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                            <span className="font-bold text-slate-800 text-sm">{ins.name}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-slate-800 text-sm">{formatCurrency(ins.value)}</td>
-                        <td className="px-6 py-4 text-right text-sm text-slate-500">{count}</td>
+                        <td className="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-200 text-sm">{formatCurrency(ins.value)}</td>
+                        <td className="px-6 py-4 text-right text-sm text-slate-500 dark:text-slate-400">{count}</td>
                         <td className="px-6 py-4 text-right">
                           <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2.5 py-1 rounded-full">{pct}%</span>
                         </td>

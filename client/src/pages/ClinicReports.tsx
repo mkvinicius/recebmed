@@ -120,7 +120,7 @@ export default function ClinicReports() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-48 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,14 +145,14 @@ export default function ClinicReports() {
           <p className="text-white/80 text-sm mt-1">Gerencie os relatórios recebidos das clínicas e convênios</p>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 shadow-2xl mb-6">
+        <div className="glass-card dark:glass-card-dark rounded-2xl p-6 shadow-2xl mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Adicionar Relatório</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Adicionar Relatório</h3>
             <Button
               onClick={() => setShowForm(!showForm)}
               className={`flex items-center gap-2 px-4 py-2 h-auto rounded-full font-bold transition-all ${
                 showForm
-                  ? "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
                   : "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]"
               }`}
               data-testid="button-toggle-form"
@@ -163,10 +163,10 @@ export default function ClinicReports() {
           </div>
 
           {showForm && (
-            <form onSubmit={handleSubmit} className="space-y-4 border-t border-slate-100 pt-4">
+            <form onSubmit={handleSubmit} className="space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="patientName" className="text-sm font-semibold text-slate-600 mb-1.5 block">
+                  <Label htmlFor="patientName" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
                     Nome do Paciente *
                   </Label>
                   <Input
@@ -174,12 +174,12 @@ export default function ClinicReports() {
                     value={form.patientName}
                     onChange={e => setForm(f => ({ ...f, patientName: e.target.value }))}
                     placeholder="Nome completo do paciente"
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-patient-name"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="procedureDate" className="text-sm font-semibold text-slate-600 mb-1.5 block">
+                  <Label htmlFor="procedureDate" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
                     Data do Procedimento *
                   </Label>
                   <Input
@@ -187,12 +187,12 @@ export default function ClinicReports() {
                     type="date"
                     value={form.procedureDate}
                     onChange={e => setForm(f => ({ ...f, procedureDate: e.target.value }))}
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-procedure-date"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="reportedValue" className="text-sm font-semibold text-slate-600 mb-1.5 block">
+                  <Label htmlFor="reportedValue" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
                     Valor Reportado (R$) *
                   </Label>
                   <Input
@@ -203,12 +203,12 @@ export default function ClinicReports() {
                     value={form.reportedValue}
                     onChange={e => setForm(f => ({ ...f, reportedValue: e.target.value }))}
                     placeholder="0,00"
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-reported-value"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="description" className="text-sm font-semibold text-slate-600 mb-1.5 block">
+                  <Label htmlFor="description" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
                     Descrição / Notas
                   </Label>
                   <Input
@@ -216,7 +216,7 @@ export default function ClinicReports() {
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     placeholder="Observações opcionais"
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     data-testid="input-description"
                   />
                 </div>
@@ -236,29 +236,29 @@ export default function ClinicReports() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
-          <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-lg text-slate-800">Relatórios Cadastrados</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-12">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Relatórios Cadastrados</h3>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-report-count">
               {reports.length} {reports.length === 1 ? "relatório" : "relatórios"}
             </span>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-50 dark:divide-slate-800">
             {loading ? (
               <div className="px-6 py-12 flex justify-center">
                 <Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" />
               </div>
             ) : reports.length === 0 ? (
               <div className="px-6 py-12 text-center">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500 font-medium">Nenhum relatório cadastrado</p>
-                <p className="text-sm text-slate-400 mt-1">Clique em "Novo Relatório" para adicionar</p>
+                <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhum relatório cadastrado</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Clique em "Novo Relatório" para adicionar</p>
               </div>
             ) : (
               reports.map((report) => (
                 <div
                   key={report.id}
-                  className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                  className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   data-testid={`report-row-${report.id}`}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -266,11 +266,11 @@ export default function ClinicReports() {
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-800 truncate flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <p className="font-bold text-slate-800 dark:text-slate-200 truncate flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                         {report.patientName}
                       </p>
-                      <p className="text-xs text-slate-400 flex items-center gap-3 flex-wrap mt-0.5">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-3 flex-wrap mt-0.5">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {formatDate(report.procedureDate)}
@@ -280,7 +280,7 @@ export default function ClinicReports() {
                           {formatCurrency(report.reportedValue)}
                         </span>
                         {report.description && (
-                          <span className="text-slate-400 truncate max-w-[200px]">
+                          <span className="text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
                             {report.description}
                           </span>
                         )}
@@ -290,7 +290,7 @@ export default function ClinicReports() {
                   <button
                     onClick={() => handleDelete(report.id)}
                     disabled={deletingId === report.id}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0 ml-2"
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0 ml-2"
                     data-testid={`button-delete-report-${report.id}`}
                     title="Excluir relatório"
                   >

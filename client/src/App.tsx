@@ -18,6 +18,7 @@ import Entries from "@/pages/Entries";
 import Capture from "@/pages/Capture";
 import Profile from "@/pages/Profile";
 import AppLayout from "@/components/AppLayout";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -72,12 +73,14 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

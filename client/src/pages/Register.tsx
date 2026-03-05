@@ -41,7 +41,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen relative flex flex-col items-center justify-center p-4 dark:bg-[#0d0a14]">
       <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0" />
 
       <div className="relative z-10 w-full max-w-md">
@@ -52,27 +52,27 @@ export default function Register() {
           <h1 className="text-3xl font-extrabold text-white tracking-tight">Medfin</h1>
         </div>
 
-        <div className="glass-card rounded-2xl p-8 shadow-2xl">
+        <div className="glass-card dark:glass-card-dark rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-800">Criar uma conta</h2>
-            <p className="text-slate-500 mt-2 text-sm">Preencha seus dados para começar a usar o Medfin</p>
+            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Criar uma conta</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Preencha seus dados para começar a usar o Medfin</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="font-semibold text-slate-700">Nome completo</Label>
+              <Label htmlFor="name" className="font-semibold text-slate-700 dark:text-slate-300">Nome completo</Label>
               <Input
                 id="name"
                 placeholder="Dr. João Silva"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 placeholder:text-slate-400"
+                className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 data-testid="input-register-name"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="font-semibold text-slate-700">Email</Label>
+              <Label htmlFor="email" className="font-semibold text-slate-700 dark:text-slate-300">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -80,12 +80,12 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 placeholder:text-slate-400"
+                className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 data-testid="input-register-email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="font-semibold text-slate-700">Senha</Label>
+              <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,7 +94,7 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="h-12 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800"
+                className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100"
                 data-testid="input-register-password"
               />
             </div>
@@ -108,7 +108,7 @@ export default function Register() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-6">
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
             Já tem uma conta?{" "}
             <Link href="/login" className="font-bold text-[#8855f6] hover:underline">Faça login</Link>
           </p>

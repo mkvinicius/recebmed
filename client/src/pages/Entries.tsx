@@ -151,14 +151,14 @@ export default function Entries() {
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const methodLabel = (m: string) => m === "photo" ? "Foto" : m === "audio" ? "Áudio" : "Manual";
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
-  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 text-green-600" : s === "divergent" ? "bg-red-50 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
+  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <h2 className="text-2xl font-extrabold text-slate-900 mb-6" data-testid="text-page-title">Lançamentos</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6" data-testid="text-page-title">Lançamentos</h2>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -166,16 +166,16 @@ export default function Entries() {
             </div>
             <div className="flex flex-wrap gap-2">
               {[{ v: "all", l: "Todos" }, { v: "pending", l: "Pendentes" }, { v: "reconciled", l: "Conferidos" }, { v: "divergent", l: "Divergentes" }].map(f => (
-                <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === f.v ? "bg-[#8855f6] text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
+                <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === f.v ? "bg-[#8855f6] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
               ))}
             </div>
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             {[{ v: "all", l: "Todas as datas" }, { v: "today", l: "Hoje" }, { v: "week", l: "Esta semana" }, { v: "month", l: "Este mês" }].map(f => (
-              <button key={f.v} onClick={() => setDateFilter(f.v)} className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dateFilter === f.v ? "bg-slate-800 text-white" : "bg-slate-50 text-slate-500 hover:bg-slate-100"}`} data-testid={`filter-date-${f.v}`}>{f.l}</button>
+              <button key={f.v} onClick={() => setDateFilter(f.v)} className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dateFilter === f.v ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900" : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"}`} data-testid={`filter-date-${f.v}`}>{f.l}</button>
             ))}
             {uniqueInsurances.length > 1 && (
-              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-600 border-0 cursor-pointer" data-testid="filter-insurance">
+              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance">
                 <option value="all">Todos os convênios</option>
                 {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
               </select>
@@ -183,52 +183,52 @@ export default function Entries() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
-          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <span className="font-bold text-slate-800">Todos os Lançamentos</span>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+            <span className="font-bold text-slate-800 dark:text-slate-200">Todos os Lançamentos</span>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
               {filteredEntries.length === entries.length ? `${entries.length} registros` : `${filteredEntries.length} de ${entries.length}`}
             </span>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-50 dark:divide-slate-800">
             {loadingEntries ? (
               <div className="px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
             ) : filteredEntries.length === 0 ? (
               <div className="px-6 py-12 text-center">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500 font-medium">{entries.length === 0 ? "Nenhum lançamento ainda" : "Nenhum resultado para os filtros"}</p>
+                <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-500 dark:text-slate-400 font-medium">{entries.length === 0 ? "Nenhum lançamento ainda" : "Nenhum resultado para os filtros"}</p>
               </div>
             ) : (
               filteredEntries.map(entry => (
-                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100" data-testid={`entry-row-${entry.id}`}>
+                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer active:bg-slate-100 dark:active:bg-slate-700" data-testid={`entry-row-${entry.id}`}>
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={`size-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-slate-800 truncate">{entry.description} - {entry.patientName}</p>
-                        {entry.procedureValue && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
+                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{entry.description} - {entry.patientName}</p>
+                        {entry.procedureValue && <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex-shrink-0" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
                       </div>
                       <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
                         {formatDate(entry.createdAt)} • {entry.insuranceProvider}
-                        <span className="inline-flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
+                        <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
                       </p>
                     </div>
                   </div>
                   <div className="relative flex-shrink-0 ml-2" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
                     <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 text-green-600 hover:bg-green-100" : entry.status === "divergent" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-amber-50 text-amber-600 hover:bg-amber-100"}`}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" : entry.status === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"}`}
                       data-testid={`quick-status-${entry.id}`}>
                       {entry.status === "reconciled" ? "Conferido" : entry.status === "divergent" ? "Divergente" : "Pendente"}
                     </button>
                     {quickStatusEntry === entry.id && (
-                      <div className="absolute right-0 bottom-full mb-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+                      <div className="absolute right-0 bottom-full mb-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
                         <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alterar status</p>
                         {[
                           { value: "pending", label: "Pendente", icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
                           { value: "reconciled", label: "Conferido", icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
                           { value: "divergent", label: "Divergente", icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
                         ].filter(s => s.value !== entry.status).map(s => (
-                          <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
+                          <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
                             {s.icon} {s.label}
                           </button>
                         ))}
@@ -244,41 +244,41 @@ export default function Entries() {
 
       {editingEntry && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>
-          <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-800">Editar Lançamento</h3>
-              <button onClick={() => setEditingEntry(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors" data-testid="button-close-edit"><X className="w-5 h-5 text-slate-400" /></button>
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">Editar Lançamento</h3>
+              <button onClick={() => setEditingEntry(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit"><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <div className="px-6 py-6 space-y-5">
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
-                <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-patient-name" />
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> Paciente</Label>
+                <Input value={editForm.patientName} onChange={e => setEditForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-patient-name" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
-                <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-procedure-date" />
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> Data</Label>
+                <Input type="date" value={editForm.procedureDate} onChange={e => setEditForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-procedure-date" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
-                <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-insurance" />
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> Convênio</Label>
+                <Input value={editForm.insuranceProvider} onChange={e => setEditForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-insurance" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
-                <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-description" />
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> Procedimento</Label>
+                <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-description" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
-                <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white border-slate-200 focus-visible:ring-[#8855f6]/30 text-slate-800 font-medium" data-testid="edit-value" />
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> Valor (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={editForm.procedureValue} onChange={e => setEditForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-200 font-medium" data-testid="edit-value" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-semibold text-slate-700 text-sm">Status da Conferência</Label>
+                <Label className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Status da Conferência</Label>
                 <div className="flex gap-2">
                   {[
                     { value: "pending", label: "Pendente", color: "border-amber-300 bg-amber-50 text-amber-700" },
                     { value: "reconciled", label: "Conferido", color: "border-green-300 bg-green-50 text-green-700" },
                     { value: "divergent", label: "Divergente", color: "border-red-300 bg-red-50 text-red-700" },
                   ].map(s => (
-                    <button key={s.value} onClick={() => setEditForm(f => ({ ...f, status: s.value }))} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${editForm.status === s.value ? s.color : "border-slate-200 bg-white text-slate-400"}`} data-testid={`edit-status-${s.value}`}>{s.label}</button>
+                    <button key={s.value} onClick={() => setEditForm(f => ({ ...f, status: s.value }))} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${editForm.status === s.value ? s.color : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-400"}`} data-testid={`edit-status-${s.value}`}>{s.label}</button>
                   ))}
                 </div>
               </div>

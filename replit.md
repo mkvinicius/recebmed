@@ -63,6 +63,7 @@ shared/
 - `POST /api/entries` - Save a doctor entry to database
 - `POST /api/entries/batch` - Save multiple entries at once
 - `GET /api/entries` - List all entries for authenticated doctor
+- `GET /api/entries/search?q=` - Server-side search across patientName, description, insuranceProvider (ILIKE, min 2 chars, max 20 results)
 - `PUT /api/entries/:id` - Update an entry (with ownership check)
 - `DELETE /api/entries/:id` - Delete an entry (with ownership check)
 
@@ -101,10 +102,10 @@ Pages without tab bar: Login, Register, ConfirmEntry
 ## Pages
 
 - **Login/Register**: Authentication flow
-- **Dashboard (Início)**: Clean widget home with greeting, stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
+- **Dashboard (Início)**: Clean widget home with greeting, smart search bar (debounced, server-side via /api/entries/search), stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
 - **Entries (Lançamentos)**: Full entries list with search, status/date/insurance filters, edit modal, quick status change
 - **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing
-- **Profile (Perfil)**: User info, links to Settings/ClinicReports/Reconciliation, logout
+- **Profile (Perfil)**: User info, dark mode toggle, links to Settings/ClinicReports/Reconciliation, logout
 - **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field)
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
@@ -117,9 +118,11 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - Font: Manrope (400-800 weights)
 - Primary color: #8855f6 (purple)
 - Hero gradient: linear-gradient(135deg, #8855f6 -> #64499c)
-- Background: #f6f5f8 (light warm gray)
-- Glass card effect: rgba(255,255,255,0.7) + backdrop-blur(12px)
-- Cards: White bg, rounded-2xl, shadow-sm, border-slate-100
+- Light mode: Background #f6f5f8, white cards, slate borders
+- Dark mode: Background #0d0a14, slate-900 cards, slate-700 borders (toggle in Profile page)
+- Theme: next-themes with ThemeProvider (attribute="class", defaultTheme="light")
+- Glass card: .glass-card (light) / .glass-card-dark (dark mode)
+- Cards: rounded-2xl, shadow-sm
 - Buttons: rounded-full, shadow-lg with primary/30 shadow
 - All UI text in pt-BR (Brazilian Portuguese)
 
@@ -145,6 +148,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - pdf-parse (PDF text extraction for reconciliation)
 - @google-cloud/storage, google-auth-library (object storage via Replit sidecar)
 - drizzle-orm, drizzle-zod, pg (database)
+- next-themes (dark mode)
 - wouter (routing), @tanstack/react-query (data fetching)
 - lucide-react (icons), recharts (charts)
 - @uppy/core, @uppy/dashboard, @uppy/react, @uppy/aws-s3 (file uploads)

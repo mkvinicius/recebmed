@@ -5,7 +5,7 @@ import {
   type Notification, type InsertNotification, notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, inArray, or } from "drizzle-orm";
+import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -36,6 +36,7 @@ export interface IStorage {
   getRecentClinicReports(doctorId: string, since: Date): Promise<ClinicReport[]>;
   batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void>;
   getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]>;
+  searchDoctorEntries(doctorId: string, query: string): Promise<DoctorEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -147,6 +148,20 @@ export class DatabaseStorage implements IStorage {
 
   async getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]> {
     return db.select().from(doctorEntries).where(and(eq(doctorEntries.doctorId, doctorId), or(eq(doctorEntries.status, "reconciled"), eq(doctorEntries.status, "divergent")))).orderBy(desc(doctorEntries.procedureDate));
+  }
+
+  async searchDoctorEntries(doctorId: string, query: string): Promise<DoctorEntry[]> {
+    const pattern = `%${query}%`;
+    return db.select().from(doctorEntries).where(
+      and(
+        eq(doctorEntries.doctorId, doctorId),
+        or(
+          ilike(doctorEntries.patientName, pattern),
+          ilike(doctorEntries.description, pattern),
+          ilike(doctorEntries.insuranceProvider, pattern)
+        )
+      )
+    ).orderBy(desc(doctorEntries.createdAt)).limit(20);
   }
 }
 

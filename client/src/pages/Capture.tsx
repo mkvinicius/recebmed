@@ -99,10 +99,10 @@ export default function Capture() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
       <div className="max-w-lg mx-auto px-4 sm:px-6 pt-6">
-        <h2 className="text-2xl font-extrabold text-slate-900 mb-2" data-testid="text-page-title">Novo Lançamento</h2>
-        <p className="text-slate-500 text-sm mb-8">Escolha como deseja registrar o procedimento</p>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" data-testid="text-page-title">Novo Lançamento</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Escolha como deseja registrar o procedimento</p>
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
 

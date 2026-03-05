@@ -118,15 +118,15 @@ export default function Reconciliation() {
   }, []);
 
   const tabs = [
-    { key: "reconciled" as const, label: "Conciliados", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", border: "border-green-200", count: results?.reconciled?.length || 0 },
-    { key: "divergent" as const, label: "Divergentes", icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", count: results?.divergent?.length || 0 },
-    { key: "pending" as const, label: "Pendentes", icon: Clock, color: "text-red-500", bg: "bg-red-50", border: "border-red-200", count: results?.pending?.length || 0 },
+    { key: "reconciled" as const, label: "Conciliados", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30", border: "border-green-200 dark:border-green-800", count: results?.reconciled?.length || 0 },
+    { key: "divergent" as const, label: "Divergentes", icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800", count: results?.divergent?.length || 0 },
+    { key: "pending" as const, label: "Pendentes", icon: Clock, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30", border: "border-red-200 dark:border-red-800", count: results?.pending?.length || 0 },
   ];
 
   const activeEntries = results ? results[activeTab] || [] : [];
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
@@ -145,7 +145,7 @@ export default function Reconciliation() {
         </div>
 
         <div
-          className={`bg-white rounded-2xl shadow-sm border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 scale-[1.02]" : "border-slate-200 hover:border-[#8855f6]/40"}`}
+          className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
           onClick={() => !isProcessing && fileInputRef.current?.click()}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -163,9 +163,9 @@ export default function Reconciliation() {
           {isProcessing ? (
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-12 h-12 text-[#8855f6] animate-spin" />
-              <p className="text-lg font-bold text-slate-700" data-testid="text-processing">Processando PDF...</p>
-              <p className="text-sm text-slate-500">Extraindo dados e conciliando lançamentos</p>
-              {fileName && <p className="text-xs text-slate-400 mt-1">{fileName}</p>}
+              <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">Processando PDF...</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Extraindo dados e conciliando lançamentos</p>
+              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{fileName}</p>}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
@@ -173,10 +173,10 @@ export default function Reconciliation() {
                 <Upload className="w-8 h-8 text-[#8855f6]" />
               </div>
               <div>
-                <p className="text-lg font-bold text-slate-700" data-testid="text-upload-prompt">Arraste o PDF aqui ou clique para selecionar</p>
-                <p className="text-sm text-slate-500 mt-1">Suporta relatórios de clínicas em formato PDF</p>
+                <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-upload-prompt">Arraste o PDF aqui ou clique para selecionar</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Suporta relatórios de clínicas em formato PDF</p>
               </div>
-              {fileName && <p className="text-xs text-slate-400 mt-2">Último arquivo: {fileName}</p>}
+              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">Último arquivo: {fileName}</p>}
               <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-pdf">
                 <FileText className="w-4 h-4 mr-2" /> Selecionar PDF
               </Button>
@@ -191,61 +191,61 @@ export default function Reconciliation() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border transition-all ${activeTab === tab.key ? `${tab.bg} ${tab.border} shadow-sm` : "bg-white border-slate-200 hover:border-slate-300"}`}
+                  className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border transition-all ${activeTab === tab.key ? `${tab.bg} ${tab.border} shadow-sm` : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"}`}
                   data-testid={`tab-${tab.key}`}
                 >
-                  <tab.icon className={`w-6 h-6 ${activeTab === tab.key ? tab.color : "text-slate-400"}`} />
-                  <span className={`text-2xl font-extrabold ${activeTab === tab.key ? tab.color : "text-slate-700"}`} data-testid={`count-${tab.key}`}>{tab.count}</span>
-                  <span className={`text-xs font-semibold ${activeTab === tab.key ? tab.color : "text-slate-500"}`}>{tab.label}</span>
+                  <tab.icon className={`w-6 h-6 ${activeTab === tab.key ? tab.color : "text-slate-400 dark:text-slate-500"}`} />
+                  <span className={`text-2xl font-extrabold ${activeTab === tab.key ? tab.color : "text-slate-700 dark:text-slate-300"}`} data-testid={`count-${tab.key}`}>{tab.count}</span>
+                  <span className={`text-xs font-semibold ${activeTab === tab.key ? tab.color : "text-slate-500 dark:text-slate-400"}`}>{tab.label}</span>
                 </button>
               ))}
             </div>
 
             <div className="space-y-3" data-testid={`list-${activeTab}`}>
               {activeEntries.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-                  <p className="text-slate-400 text-sm" data-testid="text-empty">Nenhum lançamento nesta categoria</p>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+                  <p className="text-slate-400 dark:text-slate-500 text-sm" data-testid="text-empty">Nenhum lançamento nesta categoria</p>
                 </div>
               ) : (
                 activeEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className={`bg-white rounded-2xl shadow-sm border transition-all ${activeTab === "divergent" ? "border-amber-200 hover:border-amber-300 cursor-pointer" : "border-slate-200"}`}
+                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border transition-all ${activeTab === "divergent" ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 cursor-pointer" : "border-slate-200 dark:border-slate-700"}`}
                     onClick={() => activeTab === "divergent" && setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
                     data-testid={`entry-card-${entry.id}`}
                   >
                     <div className="p-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-slate-800 truncate" data-testid={`text-patient-${entry.id}`}>{entry.patientName}</p>
+                          <p className="font-bold text-slate-800 dark:text-slate-200 truncate" data-testid={`text-patient-${entry.id}`}>{entry.patientName}</p>
                           {activeTab === "divergent" && (
                             expandedEntry === entry.id ? <ChevronUp className="w-4 h-4 text-amber-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-amber-500 shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+                        <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
                           <span data-testid={`text-date-${entry.id}`}>{formatDate(entry.procedureDate)}</span>
-                          <span className="text-slate-300">•</span>
-                          <span className="font-semibold text-slate-700" data-testid={`text-value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>
+                          <span className="text-slate-300 dark:text-slate-600">•</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300" data-testid={`text-value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${activeTab === "reconciled" ? "bg-green-50 text-green-600" : activeTab === "divergent" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${activeTab === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : activeTab === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
                         {activeTab === "reconciled" ? "Conciliado" : activeTab === "divergent" ? "Divergente" : "Pendente"}
                       </div>
                     </div>
                     {activeTab === "divergent" && expandedEntry === entry.id && (
-                      <div className="px-4 pb-4 border-t border-amber-100 pt-3" data-testid={`detail-${entry.id}`}>
+                      <div className="px-4 pb-4 border-t border-amber-100 dark:border-amber-800 pt-3" data-testid={`detail-${entry.id}`}>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
-                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Convênio</p>
-                            <p className="font-medium text-slate-700">{entry.insuranceProvider}</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Convênio</p>
+                            <p className="font-medium text-slate-700 dark:text-slate-300">{entry.insuranceProvider}</p>
                           </div>
                           <div>
-                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Valor</p>
-                            <p className="font-medium text-slate-700">{formatCurrency(entry.procedureValue)}</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Valor</p>
+                            <p className="font-medium text-slate-700 dark:text-slate-300">{formatCurrency(entry.procedureValue)}</p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Descrição</p>
-                            <p className="font-medium text-slate-700">{entry.description}</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Descrição</p>
+                            <p className="font-medium text-slate-700 dark:text-slate-300">{entry.description}</p>
                           </div>
                         </div>
                         <p className="mt-3 text-xs text-amber-600 font-semibold">⚠ O valor informado difere do relatório da clínica. Verifique os dados.</p>
@@ -259,10 +259,10 @@ export default function Reconciliation() {
         )}
 
         {!results && !isProcessing && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center mb-8">
-            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium" data-testid="text-no-results">Envie um PDF para iniciar a conciliação</p>
-            <p className="text-sm text-slate-400 mt-1">Os resultados serão exibidos aqui após o processamento</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center mb-8">
+            <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-no-results">Envie um PDF para iniciar a conciliação</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Os resultados serão exibidos aqui após o processamento</p>
             <button onClick={loadResults} className="mt-4 text-sm text-[#8855f6] font-semibold hover:underline" data-testid="button-load-previous">
               Carregar resultados anteriores
             </button>

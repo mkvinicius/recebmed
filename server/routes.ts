@@ -250,6 +250,21 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/entries/search", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const q = (req.query.q as string || "").trim();
+      if (!q || q.length < 2) {
+        return res.json({ entries: [] });
+      }
+      const entries = await storage.searchDoctorEntries(userId, q);
+      return res.json({ entries, query: q });
+    } catch (error) {
+      console.error("Search entries error:", error);
+      return res.status(500).json({ message: "Erro ao buscar lançamentos" });
+    }
+  });
+
   app.get("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;

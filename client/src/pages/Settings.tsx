@@ -98,7 +98,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] text-slate-900 relative">
+    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-48 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,27 +124,27 @@ export default function Settings() {
           <p className="text-white/80 text-sm mt-1">Gerencie seu perfil e segurança</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
               <User className="w-5 h-5 text-[#8855f6]" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-800" data-testid="text-profile-section">Perfil</h3>
-              <p className="text-sm text-slate-500">Atualize suas informações pessoais</p>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-profile-section">Perfil</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Atualize suas informações pessoais</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-sm font-semibold text-slate-700">Nome completo</Label>
+              <Label htmlFor="name" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nome completo</Label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome completo"
-                className="mt-1.5 rounded-xl border-slate-200 focus:border-[#8855f6] focus:ring-[#8855f6]"
+                className="mt-1.5 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6]"
                 data-testid="input-profile-name"
               />
             </div>
@@ -160,20 +160,20 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-12">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mb-12">
           <div className="flex items-center gap-3 mb-6">
             <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
               <Lock className="w-5 h-5 text-[#8855f6]" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-800" data-testid="text-password-section">Alterar Senha</h3>
-              <p className="text-sm text-slate-500">Mantenha sua conta segura</p>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-password-section">Alterar Senha</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Mantenha sua conta segura</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="currentPassword" className="text-sm font-semibold text-slate-700">Senha atual</Label>
+              <Label htmlFor="currentPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Senha atual</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="currentPassword"
@@ -181,13 +181,13 @@ export default function Settings() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Digite sua senha atual"
-                  className="rounded-xl border-slate-200 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
+                  className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   data-testid="button-toggle-current-password"
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -196,7 +196,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <Label htmlFor="newPassword" className="text-sm font-semibold text-slate-700">Nova senha</Label>
+              <Label htmlFor="newPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nova senha</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="newPassword"
@@ -204,13 +204,13 @@ export default function Settings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Mínimo de 6 caracteres"
-                  className="rounded-xl border-slate-200 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
+                  className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   data-testid="button-toggle-new-password"
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -219,7 +219,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700">Confirmar nova senha</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Confirmar nova senha</Label>
               <div className="relative mt-1.5">
                 <Input
                   id="confirmPassword"
@@ -227,13 +227,13 @@ export default function Settings() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a nova senha"
-                  className="rounded-xl border-slate-200 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
+                  className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-[#8855f6] focus:ring-[#8855f6] pr-10"
                   data-testid="input-confirm-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   data-testid="button-toggle-confirm-password"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
