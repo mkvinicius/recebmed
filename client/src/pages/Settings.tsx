@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   Stethoscope, ArrowLeft, User, Lock, Loader2, Eye, EyeOff, Save,
 } from "lucide-react";
-import { getToken, getUser, saveAuth, clearAuth, type UserData } from "@/lib/auth";
+import { getToken, getUser, saveAuth, updateUserData, clearAuth, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -49,7 +49,7 @@ export default function Settings() {
       });
       const data = await res.json();
       if (res.ok) {
-        saveAuth(token, data.user);
+        updateUserData(data.user);
         toast({ title: t("common.success"), description: t("settings.profileUpdated") });
       } else {
         toast({ title: t("common.error"), description: data.message || t("settings.profileUpdateError"), variant: "destructive" });

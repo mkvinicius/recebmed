@@ -112,7 +112,7 @@ export async function registerRoutes(
       }
       const updated = await storage.updateUserName(userId, name.trim());
       if (!updated) return res.status(404).json({ message: "Usuário não encontrado" });
-      return res.json({ user: { id: updated.id, name: updated.name, email: updated.email } });
+      return res.json({ user: { id: updated.id, name: updated.name, email: updated.email, profilePhotoUrl: updated.profilePhotoUrl } });
     } catch (error) {
       console.error("Update profile error:", error);
       return res.status(500).json({ message: "Erro ao atualizar perfil" });
