@@ -9,11 +9,60 @@ import { getToken, getUser, clearAuth, updateUserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
+function FlagBR() {
+  return (
+    <svg viewBox="0 0 640 480" className="w-5 h-4 rounded-sm flex-shrink-0">
+      <rect width="640" height="480" fill="#009b3a" />
+      <polygon points="320,48 608,240 320,432 32,240" fill="#fedf00" />
+      <circle cx="320" cy="240" r="100" fill="#002776" />
+      <path d="M196,240 Q320,180 444,240 Q320,220 196,240Z" fill="white" />
+    </svg>
+  );
+}
+function FlagUS() {
+  return (
+    <svg viewBox="0 0 640 480" className="w-5 h-4 rounded-sm flex-shrink-0">
+      <rect width="640" height="480" fill="#bd3d44" />
+      <rect y="37" width="640" height="37" fill="white" />
+      <rect y="111" width="640" height="37" fill="white" />
+      <rect y="185" width="640" height="37" fill="white" />
+      <rect y="259" width="640" height="37" fill="white" />
+      <rect y="333" width="640" height="37" fill="white" />
+      <rect y="407" width="640" height="37" fill="white" />
+      <rect width="260" height="259" fill="#002868" />
+    </svg>
+  );
+}
+function FlagES() {
+  return (
+    <svg viewBox="0 0 640 480" className="w-5 h-4 rounded-sm flex-shrink-0">
+      <rect width="640" height="480" fill="#c60b1e" />
+      <rect y="120" width="640" height="240" fill="#ffc400" />
+    </svg>
+  );
+}
+function FlagFR() {
+  return (
+    <svg viewBox="0 0 640 480" className="w-5 h-4 rounded-sm flex-shrink-0">
+      <rect width="213" height="480" fill="#002395" />
+      <rect x="213" width="214" height="480" fill="white" />
+      <rect x="427" width="213" height="480" fill="#ed2939" />
+    </svg>
+  );
+}
+
+const FLAG_COMPONENTS: Record<string, () => JSX.Element> = {
+  "pt-BR": FlagBR,
+  "en": FlagUS,
+  "es": FlagES,
+  "fr": FlagFR,
+};
+
 const LANGUAGE_OPTIONS = [
-  { code: "pt-BR", label: "Português (BR)", flag: "🇧🇷" },
-  { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "pt-BR", label: "Português (BR)" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
 ];
 
 export default function Profile() {
@@ -231,7 +280,7 @@ export default function Profile() {
                 }`}
                 data-testid={`button-lang-${lang.code}`}
               >
-                <span className="text-lg">{lang.flag}</span>
+                {(() => { const Flag = FLAG_COMPONENTS[lang.code]; return Flag ? <Flag /> : null; })()}
                 <span className="truncate">{lang.label}</span>
               </button>
             ))}
