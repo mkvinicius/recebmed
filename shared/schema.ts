@@ -24,6 +24,7 @@ export const doctorEntries = pgTable("doctor_entries", {
   procedureValue: numeric("procedure_value", { precision: 12, scale: 2 }),
   entryMethod: entryMethodEnum("entry_method").notNull().default("manual"),
   sourceUrl: text("source_url"),
+  imageHash: varchar("image_hash", { length: 64 }),
   status: entryStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

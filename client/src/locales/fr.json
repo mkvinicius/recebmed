@@ -157,7 +157,15 @@
     "audioProcessError": "Échec du traitement audio.",
     "micError": "Impossible d'accéder au microphone.",
     "recordingToast": "Enregistrement...",
-    "recordingToastDesc": "Dictez les données de la procédure. Cliquez à nouveau pour arrêter."
+    "recordingToastDesc": "Dictez les données de la procédure. Cliquez à nouveau pour arrêter.",
+    "duplicateImageTitle": "Image en double détectée",
+    "duplicateImageDesc": "Cette image a déjà été envoyée. Une entrée existe déjà pour :",
+    "duplicateBatchTitle": "Images en double",
+    "duplicateBatchDesc": "{{count}} image(s) déjà envoyée(s) ont été ignorée(s).",
+    "duplicateDataTitle": "Doublon potentiel détecté",
+    "duplicateDataDesc": "Une entrée avec les mêmes données (patient, date et procédure) existe déjà :",
+    "duplicateContinue": "Continuer quand même",
+    "duplicateCancel": "Annuler"
   },
   "confirm": {
     "title": "Confirmer les Entrées",

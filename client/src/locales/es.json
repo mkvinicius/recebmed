@@ -157,7 +157,15 @@
     "audioProcessError": "Error al procesar el audio.",
     "micError": "No se pudo acceder al micrófono.",
     "recordingToast": "Grabando...",
-    "recordingToastDesc": "Dicte los datos del procedimiento. Haga clic de nuevo para detener."
+    "recordingToastDesc": "Dicte los datos del procedimiento. Haga clic de nuevo para detener.",
+    "duplicateImageTitle": "Imagen duplicada detectada",
+    "duplicateImageDesc": "Esta imagen ya fue subida anteriormente. Ya existe un registro para:",
+    "duplicateBatchTitle": "Imágenes duplicadas",
+    "duplicateBatchDesc": "{{count}} imagen(es) ya fueron subidas anteriormente y fueron omitidas.",
+    "duplicateDataTitle": "Posible duplicado detectado",
+    "duplicateDataDesc": "Ya existe un registro con los mismos datos (paciente, fecha y procedimiento):",
+    "duplicateContinue": "Continuar de todos modos",
+    "duplicateCancel": "Cancelar"
   },
   "confirm": {
     "title": "Confirmar Registros",

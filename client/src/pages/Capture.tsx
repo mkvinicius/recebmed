@@ -1,10 +1,26 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope } from "lucide-react";
+import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X } from "lucide-react";
 import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 import { useTranslation } from "react-i18next";
+import { getLocale } from "@/lib/i18n";
+
+interface DuplicateEntry {
+  id: string;
+  patientName: string;
+  procedureDate: string;
+  description: string;
+  procedureValue: string | null;
+  createdAt: string;
+}
+
+interface DuplicateWarning {
+  type: string;
+  existingEntries?: DuplicateEntry[];
+  duplicates?: Array<{ imageIndex: number; existingEntries: DuplicateEntry[] }>;
+}
 
 export default function Capture() {
   const { t } = useTranslation();
@@ -18,10 +34,15 @@ export default function Capture() {
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
+  const [duplicateWarning, setDuplicateWarning] = useState<DuplicateWarning | null>(null);
+  const pendingImageRef = useRef<string | null>(null);
+  const pendingImagesRef = useRef<string[] | null>(null);
+
   const user = getUser();
   const profilePhotoUrl = user?.profilePhotoUrl || null;
   const userName = user?.name || "";
   const initials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
+  const locale = getLocale();
 
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -32,46 +53,120 @@ export default function Capture() {
     });
   };
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
+  const processPhoto = async (base64: string, skipDuplicateCheck: boolean) => {
+    const token = getToken();
+    if (!token) return;
+    setProcessingPhoto(true);
+    setPhotoProgress(t("capture.processingImage"));
+    try {
+      const res = await fetch("/api/entries/photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ image: base64, skipDuplicateCheck }),
+      });
+      const data = await res.json();
+      if (data.success && data.duplicateWarning) {
+        pendingImageRef.current = base64;
+        setDuplicateWarning(data.duplicateWarning);
+        setProcessingPhoto(false);
+        setPhotoProgress("");
+        return;
+      }
+      if (data.success && data.extractedData) {
+        const payload = { entries: data.extractedData, sourceUrl: data.sourceUrl || null, imageHash: data.imageHash || null };
+        sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
+        setLocation("/confirm-entry?method=photo");
+      } else {
+        toast({ title: t("common.error"), description: t("capture.imageError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally {
+      setProcessingPhoto(false);
+      setPhotoProgress("");
+    }
+  };
+
+  const processBatchPhotos = async (images: string[], skipDuplicateCheck: boolean) => {
+    const token = getToken();
+    if (!token) return;
+    setProcessingPhoto(true);
+    setPhotoProgress(t("capture.processingImages", { count: images.length }));
+    try {
+      const res = await fetch("/api/entries/photos-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ images, skipDuplicateCheck }),
+      });
+      const data = await res.json();
+      if (data.success && data.duplicateWarning) {
+        pendingImagesRef.current = images;
+        setDuplicateWarning(data.duplicateWarning);
+        setProcessingPhoto(false);
+        setPhotoProgress("");
+        return;
+      }
+      if (data.success && data.extractedData && data.extractedData.length > 0) {
+        const payload = { entries: data.extractedData, sourceUrl: null };
+        sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
+        if (data.skippedDuplicates) {
+          toast({ title: t("capture.duplicateBatchTitle"), description: t("capture.duplicateBatchDesc", { count: data.skippedDuplicates }) });
+        } else {
+          toast({ title: t("capture.recordsFound", { count: data.totalEntries }), description: t("capture.extractedFrom", { count: data.totalImages }) });
+        }
+        setLocation("/confirm-entry?method=photo");
+      } else {
+        toast({ title: t("common.error"), description: t("capture.imagesError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally {
+      setProcessingPhoto(false);
+      setPhotoProgress("");
+    }
+  };
+
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    setProcessingPhoto(true);
-    const token = getToken();
-    if (!token) { setProcessingPhoto(false); return; }
-
-    try {
-      if (files.length === 1) {
-        setPhotoProgress(t("capture.processingImage"));
-        const base64 = await readFileAsDataURL(files[0]);
-        const res = await fetch("/api/entries/photo", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ image: base64 }) });
-        const data = await res.json();
-        if (data.success && data.extractedData) {
-          const payload = { entries: data.extractedData, sourceUrl: data.sourceUrl || null };
-          sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
-          setLocation("/confirm-entry?method=photo");
-        }
-        else toast({ title: t("common.error"), description: t("capture.imageError"), variant: "destructive" });
-      } else {
-        setPhotoProgress(t("capture.readingImages", { count: files.length }));
-        const images: string[] = [];
-        for (let i = 0; i < files.length; i++) {
-          images.push(await readFileAsDataURL(files[i]));
-        }
-        setPhotoProgress(t("capture.processingImages", { count: files.length }));
-        const res = await fetch("/api/entries/photos-batch", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ images }) });
-        const data = await res.json();
-        if (data.success && data.extractedData && data.extractedData.length > 0) {
-          const payload = { entries: data.extractedData, sourceUrl: null };
-          sessionStorage.setItem("recebmed_extracted", JSON.stringify(payload));
-          toast({ title: t("capture.recordsFound", { count: data.totalEntries }), description: t("capture.extractedFrom", { count: data.totalImages }) });
-          setLocation("/confirm-entry?method=photo");
-        } else {
-          toast({ title: t("common.error"), description: t("capture.imagesError"), variant: "destructive" });
-        }
+    if (files.length === 1) {
+      const base64 = await readFileAsDataURL(files[0]);
+      await processPhoto(base64, false);
+    } else {
+      setProcessingPhoto(true);
+      setPhotoProgress(t("capture.readingImages", { count: files.length }));
+      const images: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        images.push(await readFileAsDataURL(files[i]));
       }
-    } catch { toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" }); }
-    finally { setProcessingPhoto(false); setPhotoProgress(""); }
+      await processBatchPhotos(images, false);
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDuplicateContinue = async () => {
+    setDuplicateWarning(null);
+    if (pendingImageRef.current) {
+      const img = pendingImageRef.current;
+      pendingImageRef.current = null;
+      await processPhoto(img, true);
+    } else if (pendingImagesRef.current) {
+      const imgs = pendingImagesRef.current;
+      pendingImagesRef.current = null;
+      await processBatchPhotos(imgs, true);
+    }
+  };
+
+  const handleDuplicateCancel = () => {
+    setDuplicateWarning(null);
+    pendingImageRef.current = null;
+    pendingImagesRef.current = null;
   };
 
   const handleAudioToggle = async () => {
@@ -139,6 +234,8 @@ export default function Capture() {
     },
   ];
 
+  const duplicateEntries = duplicateWarning?.existingEntries || duplicateWarning?.duplicates?.flatMap(d => d.existingEntries) || [];
+
   return (
     <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
@@ -191,6 +288,63 @@ export default function Capture() {
           ))}
         </div>
       </div>
+
+      {duplicateWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 relative" data-testid="modal-duplicate-warning">
+            <button onClick={handleDuplicateCancel} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="button-close-duplicate">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {duplicateWarning.type === "exact_image" || duplicateWarning.type === "exact_image_batch"
+                  ? t("capture.duplicateImageTitle")
+                  : t("capture.duplicateDataTitle")}
+              </h3>
+            </div>
+
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              {duplicateWarning.type === "exact_image" || duplicateWarning.type === "exact_image_batch"
+                ? t("capture.duplicateImageDesc")
+                : t("capture.duplicateDataDesc")}
+            </p>
+
+            {duplicateEntries.length > 0 && (
+              <div className="space-y-2 mb-6 max-h-40 overflow-y-auto">
+                {duplicateEntries.map((entry, i) => (
+                  <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm" data-testid={`duplicate-entry-${i}`}>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{entry.patientName}</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {entry.description} — {formatDate(entry.procedureDate)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDuplicateCancel}
+                className="flex-1 px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                data-testid="button-duplicate-cancel"
+              >
+                {t("capture.duplicateCancel")}
+              </button>
+              <button
+                onClick={handleDuplicateContinue}
+                className="flex-1 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-lg transition-colors"
+                data-testid="button-duplicate-continue"
+              >
+                {t("capture.duplicateContinue")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

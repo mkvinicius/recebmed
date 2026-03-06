@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Stethoscope, ArrowLeft, Check, Loader2, User, Calendar,
-  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign, Brain
+  Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign, Brain, AlertTriangle, X
 } from "lucide-react";
+import { getLocale } from "@/lib/i18n";
 import { getToken, getUser } from "@/lib/auth";
 
 type ConfidenceLevel = "high" | "medium" | "low";
@@ -38,6 +39,7 @@ interface EntryData {
   confidence?: ConfidenceData;
   _originalData?: OriginalData;
   sourceUrl?: string;
+  _imageHash?: string;
 }
 
 function getOverallConfidence(confidence: ConfidenceData): ConfidenceLevel {
@@ -89,6 +91,9 @@ export default function ConfirmEntry() {
   const [isSaving, setIsSaving] = useState(false);
   const [entries, setEntries] = useState<EntryData[]>([]);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+  const [imageHash, setImageHash] = useState<string | null>(null);
+  const [skipDuplicateCheck, setSkipDuplicateCheck] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
 
   const params = new URLSearchParams(search);
   const entryMethod = params.get("method") || "manual";
@@ -110,6 +115,7 @@ export default function ConfirmEntry() {
         const raw = JSON.parse(storedData);
         const data = raw.entries || (Array.isArray(raw) ? raw : [raw]);
         if (raw.sourceUrl) setSourceUrl(raw.sourceUrl);
+        if (raw.imageHash) setImageHash(raw.imageHash);
         const parseEntry = (d: any): EntryData => {
           const entry: EntryData = {
             patientName: d.patientName || "",
@@ -127,6 +133,7 @@ export default function ConfirmEntry() {
           };
           entry._originalData = { patientName: entry.patientName, procedureDate: entry.procedureDate, insuranceProvider: entry.insuranceProvider, description: entry.description, procedureValue: entry.procedureValue };
           if (d.sourceUrl) entry.sourceUrl = d.sourceUrl;
+          if (d._imageHash) entry._imageHash = d._imageHash;
           return entry;
         };
         if (Array.isArray(data)) {
@@ -163,9 +170,10 @@ export default function ConfirmEntry() {
     }]);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (forceSkipDuplicate = false) => {
     const token = getToken();
     if (!token) return;
+    const shouldSkip = forceSkipDuplicate || skipDuplicateCheck;
 
     const validIndices: number[] = [];
     entries.forEach((e, i) => { if (e.patientName && e.procedureDate && e.insuranceProvider && e.description) validIndices.push(i); });
@@ -181,15 +189,21 @@ export default function ConfirmEntry() {
       if (validIndices.length === 1) {
         const idx = validIndices[0];
         const e = entries[idx];
-        const body: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue, entryMethod };
+        const body: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue, entryMethod, skipDuplicateCheck: shouldSkip };
         if (isAiMethod && e._originalData) body._originalData = e._originalData;
         if (entrySourceUrl) body.sourceUrl = e.sourceUrl || entrySourceUrl;
+        if (imageHash) body._imageHash = imageHash;
         const res = await fetch("/api/entries", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(body),
         });
         const data = await res.json();
+        if (res.status === 409 && data.duplicateWarning) {
+          setDuplicateWarning(data.duplicateWarning);
+          setIsSaving(false);
+          return;
+        }
         if (!res.ok) {
           toast({ title: t("confirm.saveError"), description: data.message, variant: "destructive" });
           return;
@@ -200,6 +214,8 @@ export default function ConfirmEntry() {
           const item: any = { patientName: e.patientName, procedureDate: e.procedureDate, insuranceProvider: e.insuranceProvider, description: e.description, procedureValue: e.procedureValue };
           if (isAiMethod && e._originalData) item._originalData = e._originalData;
           if (e.sourceUrl || entrySourceUrl) item.sourceUrl = e.sourceUrl || entrySourceUrl;
+          if (e._imageHash) item._imageHash = e._imageHash;
+          else if (imageHash) item._imageHash = imageHash;
           return item;
         });
         const res = await fetch("/api/entries/batch", {
@@ -395,6 +411,58 @@ export default function ConfirmEntry() {
           </Button>
         </div>
       </div>
+
+      {duplicateWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 relative" data-testid="modal-duplicate-data-warning">
+            <button onClick={() => setDuplicateWarning(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="button-close-data-duplicate">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t("capture.duplicateDataTitle")}</h3>
+            </div>
+
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t("capture.duplicateDataDesc")}</p>
+
+            {duplicateWarning.existingEntries && (
+              <div className="space-y-2 mb-6 max-h-40 overflow-y-auto">
+                {duplicateWarning.existingEntries.map((entry: any, i: number) => (
+                  <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm" data-testid={`data-duplicate-entry-${i}`}>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{entry.patientName}</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {entry.description} — {new Date(entry.procedureDate).toLocaleDateString(getLocale(), { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDuplicateWarning(null)}
+                className="flex-1 px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                data-testid="button-data-duplicate-cancel"
+              >
+                {t("capture.duplicateCancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setDuplicateWarning(null);
+                  handleSave(true);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-lg transition-colors"
+                data-testid="button-data-duplicate-continue"
+              >
+                {t("capture.duplicateContinue")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -43,6 +43,9 @@ export interface IStorage {
   createAiCorrection(correction: InsertAiCorrection): Promise<AiCorrection>;
   createAiCorrections(corrections: InsertAiCorrection[]): Promise<AiCorrection[]>;
   getRecentAiCorrections(doctorId: string, limit?: number): Promise<AiCorrection[]>;
+
+  findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
+  findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -187,6 +190,29 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentAiCorrections(doctorId: string, limit: number = 30): Promise<AiCorrection[]> {
     return db.select().from(aiCorrections).where(eq(aiCorrections.doctorId, doctorId)).orderBy(desc(aiCorrections.createdAt)).limit(limit);
+  }
+
+  async findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]> {
+    return db.select().from(doctorEntries).where(
+      and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.imageHash, hash))
+    ).orderBy(desc(doctorEntries.createdAt)).limit(5);
+  }
+
+  async findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]> {
+    const dayStart = new Date(procedureDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(procedureDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    return db.select().from(doctorEntries).where(
+      and(
+        eq(doctorEntries.doctorId, doctorId),
+        ilike(doctorEntries.patientName, patientName),
+        gte(doctorEntries.procedureDate, dayStart),
+        sql`${doctorEntries.procedureDate} <= ${dayEnd}`,
+        ilike(doctorEntries.description, description)
+      )
+    ).orderBy(desc(doctorEntries.createdAt)).limit(5);
   }
 }
 

@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
+import { createHash } from "crypto";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
@@ -10,6 +11,10 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+
+function computeImageHash(base64: string): string {
+  return createHash("sha256").update(base64).digest("hex");
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
 
@@ -175,18 +180,40 @@ export async function registerRoutes(
 
   app.post("/api/entries/photo", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const { image } = req.body;
+      const { image, skipDuplicateCheck } = req.body;
       if (!image) {
         return res.status(400).json({ message: "Imagem não enviada" });
       }
       const userId = (req as any).userId;
-      const corrections = await getCorrectionHints(userId);
       const base64 = image.replace(/^data:image\/\w+;base64,/, "");
+      const imageHash = computeImageHash(base64);
+
+      if (!skipDuplicateCheck) {
+        const hashDuplicates = await storage.findByImageHash(userId, imageHash);
+        if (hashDuplicates.length > 0) {
+          return res.json({
+            success: true,
+            duplicateWarning: {
+              type: "exact_image",
+              existingEntries: hashDuplicates.map(e => ({
+                id: e.id,
+                patientName: e.patientName,
+                procedureDate: e.procedureDate,
+                description: e.description,
+                procedureValue: e.procedureValue,
+                createdAt: e.createdAt,
+              })),
+            },
+          });
+        }
+      }
+
+      const corrections = await getCorrectionHints(userId);
       const [extractedData, sourceUrl] = await Promise.all([
         extractDataFromImage(base64, corrections),
         mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(err => { console.error("Media upload error:", err); return null; }),
       ]);
-      return res.json({ success: true, extractedData, sourceUrl });
+      return res.json({ success: true, extractedData, sourceUrl, imageHash });
     } catch (error) {
       console.error("Photo entry error:", error);
       return res.status(500).json({ message: "Erro ao processar imagem" });
@@ -195,7 +222,7 @@ export async function registerRoutes(
 
   app.post("/api/entries/photos-batch", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const { images } = req.body;
+      const { images, skipDuplicateCheck } = req.body;
       if (!images || !Array.isArray(images) || images.length === 0) {
         return res.status(400).json({ message: "Nenhuma imagem enviada" });
       }
@@ -204,15 +231,41 @@ export async function registerRoutes(
       }
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
+
+      const duplicateHashes: Array<{ imageIndex: number; existingEntries: any[] }> = [];
+      const imagesToProcess: Array<{ base64: string; index: number; hash: string }> = [];
+
+      for (let i = 0; i < images.length; i++) {
+        const base64 = images[i].replace(/^data:image\/\w+;base64,/, "");
+        const hash = computeImageHash(base64);
+        if (!skipDuplicateCheck) {
+          const hashDups = await storage.findByImageHash(userId, hash);
+          if (hashDups.length > 0) {
+            duplicateHashes.push({
+              imageIndex: i,
+              existingEntries: hashDups.map(e => ({
+                id: e.id, patientName: e.patientName, procedureDate: e.procedureDate,
+                description: e.description, procedureValue: e.procedureValue, createdAt: e.createdAt,
+              })),
+            });
+            continue;
+          }
+        }
+        imagesToProcess.push({ base64, index: i, hash });
+      }
+
+      if (duplicateHashes.length > 0 && imagesToProcess.length === 0) {
+        return res.json({ success: true, duplicateWarning: { type: "exact_image_batch", duplicates: duplicateHashes } });
+      }
+
       const results = await Promise.all(
-        images.map(async (image: string, index: number) => {
+        imagesToProcess.map(async ({ base64, index, hash }) => {
           try {
-            const base64 = image.replace(/^data:image\/\w+;base64,/, "");
             const [entries, sourceUrl] = await Promise.all([
               extractDataFromImage(base64, corrections),
               mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(() => null),
             ]);
-            return entries.map(e => ({ ...e, _sourceImage: index + 1, sourceUrl }));
+            return entries.map(e => ({ ...e, _sourceImage: index + 1, sourceUrl, _imageHash: hash }));
           } catch (err) {
             console.error(`Error processing image ${index + 1}:`, err);
             return [];
@@ -220,7 +273,10 @@ export async function registerRoutes(
         })
       );
       const allEntries = results.flat();
-      return res.json({ success: true, extractedData: allEntries, totalImages: images.length, totalEntries: allEntries.length });
+      return res.json({
+        success: true, extractedData: allEntries, totalImages: images.length, totalEntries: allEntries.length,
+        ...(duplicateHashes.length > 0 ? { skippedDuplicates: duplicateHashes.length } : {}),
+      });
     } catch (error) {
       console.error("Batch photo error:", error);
       return res.status(500).json({ message: "Erro ao processar imagens em lote" });
@@ -252,10 +308,26 @@ export async function registerRoutes(
   app.post("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue, _originalData } = req.body;
+      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck } = req.body;
 
       if (!patientName || !procedureDate || !insuranceProvider || !description) {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+      }
+
+      if (!skipDuplicateCheck) {
+        const dataDups = await storage.findDuplicatesByData(userId, patientName, new Date(procedureDate), description);
+        if (dataDups.length > 0) {
+          return res.status(409).json({
+            message: "duplicate_data",
+            duplicateWarning: {
+              type: "similar_data",
+              existingEntries: dataDups.map(e => ({
+                id: e.id, patientName: e.patientName, procedureDate: e.procedureDate,
+                description: e.description, procedureValue: e.procedureValue, createdAt: e.createdAt,
+              })),
+            },
+          });
+        }
       }
 
       const entry = await storage.createDoctorEntry({
@@ -267,6 +339,7 @@ export async function registerRoutes(
         procedureValue: procedureValue || null,
         entryMethod: entryMethod || "manual",
         sourceUrl: req.body.sourceUrl || null,
+        imageHash: _imageHash || null,
         status: "pending",
       });
 
@@ -302,6 +375,7 @@ export async function registerRoutes(
       }
 
       const savedEntries = [];
+      const skippedDuplicates: any[] = [];
       const allDiffs: Array<{ doctorId: string; field: string; originalValue: string; correctedValue: string; entryMethod: string }> = [];
       for (const item of entriesData) {
         if (!item.patientName || !item.procedureDate || !item.insuranceProvider || !item.description) {
@@ -316,6 +390,7 @@ export async function registerRoutes(
           procedureValue: item.procedureValue || null,
           entryMethod: entryMethod || "manual",
           sourceUrl: item.sourceUrl || null,
+          imageHash: item._imageHash || null,
           status: "pending",
         });
         savedEntries.push(entry);

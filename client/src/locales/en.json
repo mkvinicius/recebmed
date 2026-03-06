@@ -157,7 +157,15 @@
     "audioProcessError": "Failed to process audio.",
     "micError": "Could not access the microphone.",
     "recordingToast": "Recording...",
-    "recordingToastDesc": "Dictate the procedure data. Click again to stop."
+    "recordingToastDesc": "Dictate the procedure data. Click again to stop.",
+    "duplicateImageTitle": "Duplicate image detected",
+    "duplicateImageDesc": "This image has already been uploaded. An entry already exists for:",
+    "duplicateBatchTitle": "Duplicate images",
+    "duplicateBatchDesc": "{{count}} image(s) were already uploaded and were skipped.",
+    "duplicateDataTitle": "Possible duplicate detected",
+    "duplicateDataDesc": "An entry with the same data (patient, date and procedure) already exists:",
+    "duplicateContinue": "Continue anyway",
+    "duplicateCancel": "Cancel"
   },
   "confirm": {
     "title": "Confirm Entries",
