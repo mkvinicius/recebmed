@@ -103,6 +103,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.1), 0 1px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .glass-card-dark {
@@ -110,6 +111,25 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.4), 0 1px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.card-float {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card-float:active {
+  transform: scale(0.98);
+}
+
+:is(.dark) .card-float {
+  background: rgb(15 23 42);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.3), 0 1px 3px -1px rgba(0, 0, 0, 0.2);
 }
 
 @layer base {

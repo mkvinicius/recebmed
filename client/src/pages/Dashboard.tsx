@@ -307,7 +307,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" data-testid="stats-grid">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl"><Clock className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">{pendingCount}</span>
@@ -315,7 +315,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.pendingLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-pending">{pendingCount}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl"><CreditCard className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">{reconciledCount}</span>
@@ -323,7 +323,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.reconciledLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-reconciled">{reconciledCount}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{divergentCount}</span>
@@ -331,7 +331,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.divergentLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-divergent">{divergentCount}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)]">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
             </div>
@@ -342,33 +342,32 @@ export default function Dashboard() {
 
         <ProjectionsPanel />
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-6">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-3 px-1">
             <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("dashboard.recentEntries")}</h3>
             <button onClick={() => setLocation("/entries")} className="text-xs text-[#8855f6] font-bold flex items-center gap-1 hover:underline" data-testid="link-view-all">
               {t("dashboard.viewAll")} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="divide-y divide-slate-50 dark:divide-slate-800">
+          <div className="space-y-3">
             {loadingEntries ? (
-              <div className="px-6 py-10 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+              <div className="card-float px-6 py-10 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
             ) : recentEntries.length === 0 ? (
-              <div className="px-6 py-10 text-center">
+              <div className="card-float px-6 py-10 text-center">
                 <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t("dashboard.noEntries")}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("dashboard.noEntriesHint")}</p>
               </div>
             ) : (
               recentEntries.map(entry => (
-                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer" data-testid={`entry-row-${entry.id}`}>
-                  <div className={`size-9 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                <div key={entry.id} onClick={() => openEditModal(entry)} className="card-float px-4 py-4 flex items-center gap-3.5 cursor-pointer" data-testid={`entry-row-${entry.id}`}>
+                  <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{entry.description} - {entry.patientName}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      {formatDate(entry.createdAt)} • {entry.insuranceProvider}
-                    </p>
+                    <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{entry.description}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.patientName} • {entry.insuranceProvider}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(entry.createdAt)}</p>
                   </div>
-                  {entry.procedureValue && <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
+                  {entry.procedureValue && <span className="text-sm font-bold text-green-600 dark:text-green-400 flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
                 </div>
               ))
             )}

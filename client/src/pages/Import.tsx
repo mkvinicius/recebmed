@@ -165,7 +165,7 @@ export default function Import() {
           <p className="text-white/80 mt-1 text-sm">{t("import.subtitle")}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="size-10 bg-[#8855f6]/10 rounded-xl flex items-center justify-center">
               <Download className="w-5 h-5 text-[#8855f6]" />
@@ -191,7 +191,7 @@ export default function Import() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="size-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -268,7 +268,7 @@ export default function Import() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-8">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="size-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
               <Files className="w-5 h-5 text-blue-600 dark:text-blue-400" />

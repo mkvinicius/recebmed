@@ -155,7 +155,7 @@ export default function Reconciliation() {
         </div>
 
         <div
-          className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
+          className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
           onClick={() => !isProcessing && fileInputRef.current?.click()}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -213,14 +213,14 @@ export default function Reconciliation() {
 
             <div className="space-y-3" data-testid={`list-${activeTab}`}>
               {activeEntries.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-8 text-center">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-8 text-center">
                   <p className="text-slate-400 dark:text-slate-500 text-sm" data-testid="text-empty">{t("reconciliation.noEntriesInCategory")}</p>
                 </div>
               ) : (
                 activeEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] border transition-all ${activeTab === "divergent" ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 cursor-pointer" : "border-slate-100/70 dark:border-slate-700/50"}`}
+                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border transition-all ${activeTab === "divergent" ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 cursor-pointer" : "border-slate-100/70 dark:border-slate-700/50"}`}
                     onClick={() => activeTab === "divergent" && setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
                     data-testid={`entry-card-${entry.id}`}
                   >
@@ -269,7 +269,7 @@ export default function Reconciliation() {
         )}
 
         {!results && !isProcessing && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-8 text-center mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-8 text-center mb-8">
             <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-no-results">{t("reconciliation.sendPDF")}</p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.resultsAfterProcessing")}</p>

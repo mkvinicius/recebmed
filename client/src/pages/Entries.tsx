@@ -191,7 +191,7 @@ export default function Entries() {
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] p-4 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -216,57 +216,60 @@ export default function Entries() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-6">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-3 px-1">
             <span className="font-bold text-slate-800 dark:text-slate-200">{t("entries.allEntries")}</span>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
               {filteredEntries.length === entries.length ? t("entries.recordCount", { count: entries.length }) : t("entries.filteredCount", { filtered: filteredEntries.length, total: entries.length })}
             </span>
           </div>
-          <div className="divide-y divide-slate-50 dark:divide-slate-800">
+          <div className="space-y-3">
             {loadingEntries ? (
-              <div className="px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+              <div className="card-float px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
             ) : filteredEntries.length === 0 ? (
-              <div className="px-6 py-12 text-center">
+              <div className="card-float px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                 <p className="text-slate-500 dark:text-slate-400 font-medium">{entries.length === 0 ? t("entries.noEntries") : t("entries.noFilterResults")}</p>
               </div>
             ) : (
               filteredEntries.map(entry => (
-                <div key={entry.id} onClick={() => openEditModal(entry)} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer active:bg-slate-100 dark:active:bg-slate-700" data-testid={`entry-row-${entry.id}`}>
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className={`size-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                <div key={entry.id} onClick={() => openEditModal(entry)} className="card-float px-4 py-4 flex items-center justify-between cursor-pointer" data-testid={`entry-row-${entry.id}`}>
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{entry.description} - {entry.patientName}</p>
-                        {entry.procedureValue && <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex-shrink-0" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
+                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-[15px]">{entry.description}</p>
                       </div>
-                      <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
-                        {formatDate(entry.createdAt)} • {entry.insuranceProvider}
-                        <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
-                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.patientName} • {entry.insuranceProvider}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.createdAt)}</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="relative flex-shrink-0 ml-2" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
-                    <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" : entry.status === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"}`}
-                      data-testid={`quick-status-${entry.id}`}>
-                      {statusLabelMap[entry.status] || t("common.pending")}
-                    </button>
-                    {quickStatusEntry === entry.id && (
-                      <div className="absolute right-0 bottom-full mb-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
-                        <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("entries.changeStatus")}</p>
-                        {[
-                          { value: "pending", label: t("common.pending"), icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
-                          { value: "reconciled", label: t("common.reconciled"), icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
-                          { value: "divergent", label: t("common.divergent"), icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
-                        ].filter(s => s.value !== entry.status).map(s => (
-                          <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
-                            {s.icon} {s.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
+                    {entry.procedureValue && <span className="text-sm font-bold text-green-600 dark:text-green-400" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
+                    <div className="relative" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
+                      <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" : entry.status === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"}`}
+                        data-testid={`quick-status-${entry.id}`}>
+                        {statusLabelMap[entry.status] || t("common.pending")}
+                      </button>
+                      {quickStatusEntry === entry.id && (
+                        <div className="absolute right-0 bottom-full mb-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1 z-30 min-w-[160px] animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+                          <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("entries.changeStatus")}</p>
+                          {[
+                            { value: "pending", label: t("common.pending"), icon: <Clock className="w-3.5 h-3.5" />, color: "text-amber-600" },
+                            { value: "reconciled", label: t("common.reconciled"), icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "text-green-600" },
+                            { value: "divergent", label: t("common.divergent"), icon: <AlertCircle className="w-3.5 h-3.5" />, color: "text-red-500" },
+                          ].filter(s => s.value !== entry.status).map(s => (
+                            <button key={s.value} onClick={e => handleQuickStatusChange(entry.id, s.value, e)} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${s.color}`} data-testid={`quick-set-${s.value}-${entry.id}`}>
+                              {s.icon} {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

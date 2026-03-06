@@ -244,20 +244,20 @@ export default function ClinicReports() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mb-12">
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-3 px-1">
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("clinicReports.registeredReports")}</h3>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-report-count">
               {reports.length === 1 ? t("clinicReports.reportCount", { count: reports.length }) : t("clinicReports.reportCountPlural", { count: reports.length })}
             </span>
           </div>
-          <div className="divide-y divide-slate-50 dark:divide-slate-800">
+          <div className="space-y-3">
             {loading ? (
-              <div className="px-6 py-12 flex justify-center">
+              <div className="card-float px-6 py-12 flex justify-center">
                 <Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" />
               </div>
             ) : reports.length === 0 ? (
-              <div className="px-6 py-12 text-center">
+              <div className="card-float px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                 <p className="text-slate-500 dark:text-slate-400 font-medium">{t("clinicReports.noReports")}</p>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("clinicReports.noReportsHint")}</p>
@@ -266,48 +266,46 @@ export default function ClinicReports() {
               reports.map((report) => (
                 <div
                   key={report.id}
-                  className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="card-float px-4 py-4 flex items-center justify-between"
                   data-testid={`report-row-${report.id}`}
                 >
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="size-10 rounded-full flex items-center justify-center bg-[#8855f6]/10 text-[#8855f6] shrink-0">
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    <div className="size-11 rounded-2xl flex items-center justify-center bg-[#8855f6]/10 text-[#8855f6] shrink-0">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-800 dark:text-slate-200 truncate flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <p className="font-bold text-[15px] text-slate-800 dark:text-slate-200 truncate">
                         {report.patientName}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-3 flex-wrap mt-0.5">
-                        <span className="inline-flex items-center gap-1">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {report.description || t("clinicReports.noDescription")}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                           <Calendar className="w-3 h-3" />
                           {formatDate(report.procedureDate)}
                         </span>
-                        <span className="inline-flex items-center gap-1 font-semibold text-green-600">
-                          <DollarSign className="w-3 h-3" />
-                          {formatCurrency(report.reportedValue)}
-                        </span>
-                        {report.description && (
-                          <span className="text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
-                            {report.description}
-                          </span>
-                        )}
-                      </p>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(report.id)}
-                    disabled={deletingId === report.id}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0 ml-2"
-                    data-testid={`button-delete-report-${report.id}`}
-                    title={t("common.delete")}
-                  >
-                    {deletingId === report.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </button>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {formatCurrency(report.reportedValue)}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(report.id)}
+                      disabled={deletingId === report.id}
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      data-testid={`button-delete-report-${report.id}`}
+                      title={t("common.delete")}
+                    >
+                      {deletingId === report.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))
             )}

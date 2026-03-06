@@ -92,7 +92,7 @@ export default function EntryDetail() {
               <ArrowLeft className="w-4 h-4" /> {t("common.back")}
             </button>
           </header>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] text-center mt-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] text-center mt-8">
             <AlertCircle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-error">{error || t("entryDetail.notFound")}</p>
           </div>
@@ -123,7 +123,7 @@ export default function EntryDetail() {
           <h2 className="text-2xl font-extrabold">{t("entryDetail.title")}</h2>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden mt-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] overflow-hidden mt-4">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`size-10 rounded-full flex items-center justify-center ${statusStyle(entry.status)}`}>
