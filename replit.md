@@ -8,7 +8,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken) + bcryptjs for password hashing
-- **AI**: OpenAI via Replit AI Integrations (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT)
+- **AI**: OpenAI direct API (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT)
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
 
@@ -173,8 +173,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 ## Environment Variables
 
 - `JWT_SECRET` - JWT signing secret
-- `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI API key (Replit AI Integrations)
-- `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI base URL
+- `OPENAI_API_KEY` - OpenAI API key (direct, https://api.openai.com/v1)
 - `DEFAULT_OBJECT_STORAGE_BUCKET_ID` - Replit object storage bucket ID
 - `PUBLIC_OBJECT_SEARCH_PATHS` - Public asset search paths
 - `PRIVATE_OBJECT_DIR` - Private object storage directory
