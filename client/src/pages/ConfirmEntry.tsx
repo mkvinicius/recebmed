@@ -262,7 +262,7 @@ export default function ConfirmEntry() {
 
         <div className="pt-2 pb-8 text-white">
           <button
-            onClick={() => setLocation("/dashboard")}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium mb-4 transition-colors"
             data-testid="button-back"
           >

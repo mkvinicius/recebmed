@@ -88,7 +88,7 @@ export default function EntryDetail() {
               ); })()}
               <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
             </div>
-            <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
+            <button onClick={() => window.history.back()} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
               <ArrowLeft className="w-4 h-4" /> {t("common.back")}
             </button>
           </header>
@@ -114,7 +114,7 @@ export default function EntryDetail() {
             ); })()}
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
-          <button onClick={() => setLocation("/entries")} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
+          <button onClick={() => window.history.back()} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" /> {t("common.back")}
           </button>
         </header>

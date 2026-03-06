@@ -169,7 +169,7 @@ export default function Reports() {
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <Button
-            onClick={() => setLocation("/dashboard")}
+            onClick={() => window.history.back()}
             variant="ghost"
             className="text-white hover:bg-white/20 rounded-full font-bold gap-2"
             data-testid="button-back-dashboard"

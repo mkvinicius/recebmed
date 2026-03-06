@@ -114,7 +114,7 @@ export default function Settings() {
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
           <button
-            onClick={() => setLocation("/profile")}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md text-sm font-semibold"
             data-testid="button-back-dashboard"
           >
