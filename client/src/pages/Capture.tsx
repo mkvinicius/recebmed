@@ -243,7 +243,7 @@ export default function Capture() {
       <div className="relative z-10 max-w-lg mx-auto px-4 sm:px-6">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            <div className="size-11 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+            <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
               {profilePhotoUrl ? (
                 <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
               ) : (
