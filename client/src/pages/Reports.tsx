@@ -3,14 +3,14 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
-  Stethoscope, ArrowLeft, DollarSign, CheckCircle2, Clock,
+  Stethoscope, DollarSign, CheckCircle2, Clock,
   AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
-import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getToken, clearAuth } from "@/lib/auth";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
 interface DoctorEntry {
@@ -148,36 +148,14 @@ export default function Reports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
-              <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
-              </div>
-            ); })()}
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-          <Button
-            onClick={() => window.history.back()}
-            variant="ghost"
-            className="text-white hover:bg-white/20 rounded-full font-bold gap-2"
-            data-testid="button-back-dashboard"
-          >
-            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
-          </Button>
-        </header>
-
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-2 pb-8 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
@@ -401,7 +379,6 @@ export default function Reports() {
             </table>
           </div>
         </div>
-      </div>
     </div>
   );
 }

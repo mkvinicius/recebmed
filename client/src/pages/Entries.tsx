@@ -9,7 +9,7 @@ import {
   Camera, Mic, PenLine, Loader2, X, Trash2, Save,
   User, Calendar, Building2, DollarSign
 } from "lucide-react";
-import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
@@ -164,28 +164,8 @@ export default function Entries() {
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
   const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
 
-  const user = getUser();
-  const profilePhotoUrl = user?.profilePhotoUrl || null;
-  const userInitials = user?.name ? user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
-
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-              {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-white tracking-wide">{userInitials}</span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-        </header>
-
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-2 pb-8 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("entries.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
@@ -276,7 +256,6 @@ export default function Entries() {
             )}
           </div>
         </div>
-      </div>
 
       {editingEntry && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>

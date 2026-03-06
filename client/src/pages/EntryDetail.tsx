@@ -68,7 +68,7 @@ export default function EntryDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" data-testid="loading-spinner" />
       </div>
     );
@@ -76,49 +76,17 @@ export default function EntryDetail() {
 
   if (error || !entry) {
     return (
-      <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
-        <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <header className="flex items-center justify-between py-6">
-            <div className="flex items-center gap-3 text-white">
-              {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
-                <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                  {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
-                </div>
-              ); })()}
-              <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-            </div>
-            <button onClick={() => window.history.back()} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
-              <ArrowLeft className="w-4 h-4" /> {t("common.back")}
-            </button>
-          </header>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] text-center mt-8">
             <AlertCircle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-error">{error || t("entryDetail.notFound")}</p>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
-              <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
-              </div>
-            ); })()}
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-          <button onClick={() => window.history.back()} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md" data-testid="button-back">
-            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
-          </button>
-        </header>
-
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="pt-2 pb-8 text-white">
           <h2 className="text-2xl font-extrabold">{t("entryDetail.title")}</h2>
         </div>
@@ -222,7 +190,6 @@ export default function EntryDetail() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

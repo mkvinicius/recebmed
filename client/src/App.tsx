@@ -30,6 +30,26 @@ function RouteRedirect({ to }: { to: string }) {
   return null;
 }
 
+function AppRoutes() {
+  return (
+    <AppLayout>
+      <Switch>
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/entries" component={Entries} />
+        <Route path="/capture" component={Capture} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/clinic-reports" component={ClinicReports} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/reconciliation" component={Reconciliation} />
+        <Route path="/entry/:id" component={EntryDetail} />
+        <Route path="/import" component={Import} />
+        <Route component={NotFound} />
+      </Switch>
+    </AppLayout>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -39,39 +59,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/confirm-entry" component={ConfirmEntry} />
-
-      <Route path="/dashboard">
-        <AppLayout><Dashboard /></AppLayout>
-      </Route>
-      <Route path="/entries">
-        <AppLayout><Entries /></AppLayout>
-      </Route>
-      <Route path="/capture">
-        <AppLayout><Capture /></AppLayout>
-      </Route>
-      <Route path="/reports">
-        <AppLayout><Reports /></AppLayout>
-      </Route>
-      <Route path="/profile">
-        <AppLayout><Profile /></AppLayout>
-      </Route>
-      <Route path="/clinic-reports">
-        <AppLayout><ClinicReports /></AppLayout>
-      </Route>
-      <Route path="/settings">
-        <AppLayout><Settings /></AppLayout>
-      </Route>
-      <Route path="/reconciliation">
-        <AppLayout><Reconciliation /></AppLayout>
-      </Route>
-      <Route path="/entry/:id">
-        <AppLayout><EntryDetail /></AppLayout>
-      </Route>
-      <Route path="/import">
-        <AppLayout><Import /></AppLayout>
-      </Route>
-
-      <Route component={NotFound} />
+      <Route component={AppRoutes} />
     </Switch>
   );
 }

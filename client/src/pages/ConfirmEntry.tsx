@@ -247,7 +247,6 @@ export default function ConfirmEntry() {
   return (
     <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
       <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
@@ -259,7 +258,6 @@ export default function ConfirmEntry() {
             <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
           </div>
         </header>
-
         <div className="pt-2 pb-8 text-white">
           <button
             onClick={() => window.history.back()}

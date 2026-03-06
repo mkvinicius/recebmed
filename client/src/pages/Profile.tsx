@@ -172,23 +172,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-
-      <div className="relative z-10 max-w-lg mx-auto px-4 sm:px-6">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-header">
-              {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-white tracking-wide">{initials}</span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-        </header>
-
+    <div className="max-w-lg mx-auto px-4 sm:px-6">
         <div className="pt-2 pb-8 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("profile.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("profile.subtitle")}</p>
@@ -312,7 +296,6 @@ export default function Profile() {
           <LogOut className="w-5 h-5" />
           {t("profile.logout")}
         </button>
-      </div>
     </div>
   );
 }

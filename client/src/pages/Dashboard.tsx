@@ -56,8 +56,10 @@ export default function Dashboard() {
     return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
   };
   const [, setLocation] = useLocation();
-  const [userName, setUserName] = useState("");
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const initialUser = getUser();
+  const userName = initialUser?.name || "";
+  const profilePhotoUrl = initialUser?.profilePhotoUrl || null;
+  const userInitials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
@@ -78,11 +80,6 @@ export default function Dashboard() {
   useEffect(() => {
     const token = getToken();
     if (!token) { setLocation("/login"); return; }
-    const user = getUser();
-    if (user) {
-      setUserName(user.name);
-      setProfilePhotoUrl(user.profilePhotoUrl || null);
-    }
     fetchEntries(token);
     fetchNotifications(token);
   }, [setLocation]);
@@ -204,20 +201,8 @@ export default function Dashboard() {
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-white relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-              {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt="Perfil" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-white tracking-wide">{userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"}</span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute right-4 sm:right-6 lg:right-8 top-0 z-20 py-6">
           <div className="flex items-center gap-3">
             <div className="relative" ref={notifRef}>
               <button onClick={() => setShowNotifications(!showNotifications)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md relative" data-testid="button-notifications">
@@ -245,7 +230,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-        </header>
+        </div>
 
         <div className="pt-2 pb-4 text-white">
           <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
@@ -373,7 +358,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
 
       {editingEntry && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setEditingEntry(null); }}>

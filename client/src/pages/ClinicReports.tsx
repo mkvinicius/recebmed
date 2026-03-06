@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, ArrowLeft, Plus, Trash2, Loader2, FileText, Calendar, DollarSign, User
+  Stethoscope, Plus, Trash2, Loader2, FileText, Calendar, DollarSign, User
 } from "lucide-react";
-import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
@@ -126,28 +126,7 @@ export default function ClinicReports() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f8] dark:bg-[#0d0a14] text-slate-900 dark:text-slate-100 relative">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
-
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3 text-white">
-            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
-              <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-                {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
-              </div>
-            ); })()}
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-semibold transition-colors backdrop-blur-md"
-            data-testid="button-back-dashboard"
-          >
-            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
-          </button>
-        </header>
-
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-2 pb-6 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
@@ -311,7 +290,6 @@ export default function ClinicReports() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }
