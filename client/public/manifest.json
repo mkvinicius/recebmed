@@ -1,0 +1,29 @@
+{
+  "name": "RecebMed",
+  "short_name": "RecebMed",
+  "description": "Gestão financeira inteligente para profissionais de saúde",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0a14",
+  "theme_color": "#8855f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "medical", "business"]
+}

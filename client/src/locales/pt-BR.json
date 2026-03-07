@@ -220,7 +220,17 @@
     "uploadError": "Falha ao enviar a foto.",
     "removeError": "Falha ao remover a foto.",
     "language": "Idioma",
-    "languageDesc": "Escolha o idioma da interface"
+    "languageDesc": "Escolha o idioma da interface",
+    "installApp": "Instalar App",
+    "installAppDesc": "Adicionar à tela inicial",
+    "installed": "App Instalado",
+    "installedDesc": "RecebMed está na sua tela inicial",
+    "iosGuideTitle": "Instalar no iPhone",
+    "iosGuideStep1": "Toque no botão compartilhar",
+    "iosGuideStep2": "Role para baixo e toque em",
+    "iosGuideStep2Bold": "\"Tela de Início\"",
+    "iosGuideStep3": "Toque em \"Adicionar\"",
+    "iosGuideDone": "Entendi"
   },
   "settings": {
     "title": "Configurações",

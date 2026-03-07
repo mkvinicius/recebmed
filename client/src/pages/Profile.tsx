@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import {
   User, Settings, LogOut, ClipboardList, CheckCheck,
-  ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2, Globe
+  ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2, Globe,
+  Download, CheckCircle2, Share, X
 } from "lucide-react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { useTheme } from "next-themes";
 import { getToken, getUser, clearAuth, updateUserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -163,6 +165,8 @@ export default function Profile() {
     localStorage.setItem("recebmed_language", langCode);
   };
 
+  const { canInstall, isInstalled, isIOS, showIOSGuide, setShowIOSGuide, install } = usePwaInstall();
+
   const currentLang = LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0]) && l.code === i18n.language) || LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0])) || LANGUAGE_OPTIONS[1];
 
   const links = [
@@ -271,6 +275,30 @@ export default function Profile() {
           </div>
         </div>
 
+        {(canInstall || isInstalled) && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-6">
+            <button
+              onClick={install}
+              disabled={isInstalled}
+              className="w-full flex items-center gap-3"
+              data-testid="button-install-pwa"
+            >
+              <div className={`size-10 rounded-xl flex items-center justify-center ${isInstalled ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" : "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"}`}>
+                {isInstalled ? <CheckCircle2 className="w-5 h-5" /> : <Download className="w-5 h-5" />}
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-slate-700 dark:text-slate-300">
+                  {isInstalled ? t("profile.installed") : t("profile.installApp")}
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {isInstalled ? t("profile.installedDesc") : t("profile.installAppDesc")}
+                </p>
+              </div>
+              {!isInstalled && <ChevronRight className="w-4 h-4 text-slate-400" />}
+            </button>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] overflow-hidden mb-6">
           {links.map((link, i) => (
             <button
@@ -290,12 +318,49 @@ export default function Profile() {
 
         <button
           onClick={() => { clearAuth(); setLocation("/login"); }}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/50 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/50 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors mb-8"
           data-testid="button-logout"
         >
           <LogOut className="w-5 h-5" />
           {t("profile.logout")}
         </button>
+
+        {showIOSGuide && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative animate-in slide-in-from-bottom" data-testid="modal-ios-install-guide">
+              <button onClick={() => setShowIOSGuide(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="button-close-ios-guide">
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-5">{t("profile.iosGuideTitle")}</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-full bg-[#8855f6] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                  <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    {t("profile.iosGuideStep1")}
+                    <Share className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-full bg-[#8855f6] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    {t("profile.iosGuideStep2")} <strong>{t("profile.iosGuideStep2Bold")}</strong>
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-full bg-[#8855f6] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{t("profile.iosGuideStep3")}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowIOSGuide(false)}
+                className="w-full mt-6 py-3 bg-[#8855f6] hover:bg-[#7744e0] text-white rounded-full font-bold text-sm shadow-lg shadow-[#8855f6]/30 transition-all"
+                data-testid="button-ios-guide-done"
+              >
+                {t("profile.iosGuideDone")}
+              </button>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

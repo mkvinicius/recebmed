@@ -179,6 +179,17 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - `PUBLIC_OBJECT_SEARCH_PATHS` - Public asset search paths
 - `PRIVATE_OBJECT_DIR` - Private object storage directory
 
+## PWA (Progressive Web App)
+
+- **Manifest**: `client/public/manifest.json` — app name, icons, theme color (#8855f6), standalone display
+- **Service Worker**: `client/public/sw.js` — network-first strategy with cache fallback, skips API routes
+- **Registration**: `client/src/main.tsx` registers SW on page load
+- **Install hook**: `client/src/hooks/use-pwa-install.ts` — captures `beforeinstallprompt` event
+- **Install button**: Profile page shows "Install App" card (Android: native prompt; iOS: visual step-by-step guide modal)
+- **Auto-update**: SW uses `skipWaiting()` + `clients.claim()` — new deploys auto-update on next visit
+- **Icons**: `favicon.png` (48x48), `apple-touch-icon.png` (180x180), `icon-512.png` (512x512)
+- **Meta tags**: `theme-color`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`
+
 ## Important Notes
 
 - Vite 3.2.11 + Rollup 2.80.0 (security requirement) - do NOT upgrade rollup above 2.x

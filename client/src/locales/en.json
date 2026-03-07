@@ -220,7 +220,17 @@
     "uploadError": "Failed to upload photo.",
     "removeError": "Failed to remove photo.",
     "language": "Language",
-    "languageDesc": "Choose the interface language"
+    "languageDesc": "Choose the interface language",
+    "installApp": "Install App",
+    "installAppDesc": "Add to home screen",
+    "installed": "App Installed",
+    "installedDesc": "RecebMed is on your home screen",
+    "iosGuideTitle": "Install on iPhone",
+    "iosGuideStep1": "Tap the share button",
+    "iosGuideStep2": "Scroll down and tap",
+    "iosGuideStep2Bold": "\"Add to Home Screen\"",
+    "iosGuideStep3": "Tap \"Add\"",
+    "iosGuideDone": "Got it"
   },
   "settings": {
     "title": "Settings",

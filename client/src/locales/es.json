@@ -220,7 +220,17 @@
     "uploadError": "Error al subir la foto.",
     "removeError": "Error al eliminar la foto.",
     "language": "Idioma",
-    "languageDesc": "Elija el idioma de la interfaz"
+    "languageDesc": "Elija el idioma de la interfaz",
+    "installApp": "Instalar App",
+    "installAppDesc": "Agregar a pantalla de inicio",
+    "installed": "App Instalada",
+    "installedDesc": "RecebMed está en tu pantalla de inicio",
+    "iosGuideTitle": "Instalar en iPhone",
+    "iosGuideStep1": "Toca el botón compartir",
+    "iosGuideStep2": "Desplázate y toca",
+    "iosGuideStep2Bold": "\"Pantalla de inicio\"",
+    "iosGuideStep3": "Toca \"Agregar\"",
+    "iosGuideDone": "Entendido"
   },
   "settings": {
     "title": "Configuración",
