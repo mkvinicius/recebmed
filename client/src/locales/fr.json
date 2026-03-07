@@ -336,7 +336,10 @@
     "sendPDF": "Envoyez un fichier pour démarrer la vérification",
     "resultsAfterProcessing": "Les résultats s'afficheront ici après le traitement",
     "loadPrevious": "Charger les résultats précédents",
-    "valueDiffers": "La valeur déclarée diffère du rapport de la clinique. Vérifiez les données."
+    "valueDiffers": "La valeur déclarée diffère du rapport de la clinique. Vérifiez les données.",
+    "exportReport": "Exporter le Rapport",
+    "downloadPDF": "Télécharger PDF",
+    "generatedBy": "Généré par RecebMed"
   },
   "clinicReports": {
     "title": "Rapports de la Clinique",

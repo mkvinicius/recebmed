@@ -336,7 +336,10 @@
     "sendPDF": "Suba un archivo para iniciar la verificación",
     "resultsAfterProcessing": "Los resultados se mostrarán aquí después del procesamiento",
     "loadPrevious": "Cargar resultados anteriores",
-    "valueDiffers": "El valor informado difiere del informe de la clínica. Verifique los datos."
+    "valueDiffers": "El valor informado difiere del informe de la clínica. Verifique los datos.",
+    "exportReport": "Exportar Informe",
+    "downloadPDF": "Descargar PDF",
+    "generatedBy": "Generado por RecebMed"
   },
   "clinicReports": {
     "title": "Informes de la Clínica",

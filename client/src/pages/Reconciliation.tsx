@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
-  ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle
+  ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
+  Share2, Mail, MessageCircle, FileDown
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -153,6 +154,115 @@ export default function Reconciliation() {
 
   const activeEntries = results ? results[activeTab] || [] : [];
 
+  const generateReportHTML = useCallback(() => {
+    if (!results) return "";
+    const totalEntries = (results.reconciled?.length || 0) + (results.divergent?.length || 0) + (results.pending?.length || 0);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+    const renderSection = (title: string, entries: EntryResult[], color: string) => {
+      if (!entries || entries.length === 0) return "";
+      const rows = entries.map(e => `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${e.patientName}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${formatDate(e.procedureDate)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${e.insuranceProvider || "—"}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${formatCurrency(e.procedureValue)}</td>
+        </tr>
+      `).join("");
+      return `
+        <h3 style="color:${color};margin:20px 0 8px;font-size:14px;">${title} (${entries.length})</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:#f8f9fa;">
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("common.patient")}</th>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("common.date")}</th>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("common.insurance")}</th>
+            <th style="padding:8px;text-align:right;border-bottom:2px solid #dee2e6;">${t("common.value")}</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    };
+
+    return `
+      <!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>RecebMed — ${t("reconciliation.title")}</title>
+      <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:30px;color:#333;max-width:800px;margin:0 auto;}
+      @media print{body{padding:10px;}}</style></head><body>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div style="width:40px;height:40px;background:#8855f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;">R</div>
+        <div><h1 style="margin:0;font-size:20px;color:#8855f6;">RecebMed</h1>
+        <p style="margin:0;font-size:12px;color:#888;">${t("reconciliation.title")} — ${dateStr}</p></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:20px;">
+        <div style="flex:1;background:#f0fdf4;padding:12px;border-radius:8px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#16a34a;">${results.reconciled?.length || 0}</div>
+          <div style="font-size:11px;color:#16a34a;">${t("reconciliation.reconciledTab")}</div>
+        </div>
+        <div style="flex:1;background:#fffbeb;padding:12px;border-radius:8px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#d97706;">${results.divergent?.length || 0}</div>
+          <div style="font-size:11px;color:#d97706;">${t("reconciliation.divergentTab")}</div>
+        </div>
+        <div style="flex:1;background:#fef2f2;padding:12px;border-radius:8px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#ef4444;">${results.pending?.length || 0}</div>
+          <div style="font-size:11px;color:#ef4444;">${t("reconciliation.pendingTab")}</div>
+        </div>
+      </div>
+      ${renderSection(t("reconciliation.reconciledTab"), results.reconciled, "#16a34a")}
+      ${renderSection(t("reconciliation.divergentTab"), results.divergent, "#d97706")}
+      ${renderSection(t("reconciliation.pendingTab"), results.pending, "#ef4444")}
+      <p style="margin-top:30px;text-align:center;font-size:10px;color:#aaa;">${t("reconciliation.generatedBy")}</p>
+      </body></html>
+    `;
+  }, [results, locale, t, formatCurrency, formatDate]);
+
+  const generateTextSummary = useCallback(() => {
+    if (!results) return "";
+    const lines: string[] = [];
+    lines.push(`📊 *RecebMed — ${t("reconciliation.title")}*`);
+    lines.push("");
+    lines.push(`✅ ${t("reconciliation.reconciledTab")}: ${results.reconciled?.length || 0}`);
+    lines.push(`⚠️ ${t("reconciliation.divergentTab")}: ${results.divergent?.length || 0}`);
+    lines.push(`🔴 ${t("reconciliation.pendingTab")}: ${results.pending?.length || 0}`);
+    lines.push("");
+
+    const addSection = (emoji: string, title: string, entries: EntryResult[]) => {
+      if (!entries || entries.length === 0) return;
+      lines.push(`${emoji} *${title}:*`);
+      entries.forEach(e => {
+        lines.push(`  • ${e.patientName} — ${formatDate(e.procedureDate)} — ${formatCurrency(e.procedureValue)}`);
+      });
+      lines.push("");
+    };
+
+    addSection("✅", t("reconciliation.reconciledTab"), results.reconciled);
+    addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+    addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+
+    lines.push(`📱 ${t("reconciliation.generatedBy")}`);
+    return lines.join("\n");
+  }, [results, t, formatCurrency, formatDate]);
+
+  const handleDownloadPDF = useCallback(() => {
+    const html = generateReportHTML();
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.print(); }, 500);
+  }, [generateReportHTML]);
+
+  const handleShareWhatsApp = useCallback(() => {
+    const text = generateTextSummary();
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }, [generateTextSummary]);
+
+  const handleShareEmail = useCallback(() => {
+    const text = generateTextSummary();
+    const subject = `RecebMed — ${t("reconciliation.title")}`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, "_blank");
+  }, [generateTextSummary, t]);
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
@@ -290,6 +400,35 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
 
         {results && (
           <div className="space-y-4 pb-12" data-testid="section-results">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-4">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border border-red-200 dark:border-red-800"
+                  data-testid="button-export-pdf"
+                >
+                  <FileDown className="w-5 h-5" />
+                  <span className="text-[11px] font-semibold">{t("reconciliation.downloadPDF")}</span>
+                </button>
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800"
+                  data-testid="button-share-whatsapp"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="text-[11px] font-semibold">WhatsApp</span>
+                </button>
+                <button
+                  onClick={handleShareEmail}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800"
+                  data-testid="button-share-email"
+                >
+                  <Mail className="w-5 h-5" />
+                  <span className="text-[11px] font-semibold">E-mail</span>
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-3 mb-4">
               {tabs.map(tab => (
                 <button
