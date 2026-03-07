@@ -4,11 +4,20 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
-  ChevronDown, ChevronUp, Stethoscope
+  ChevronDown, ChevronUp, Stethoscope, Image, Table, Download
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ACCEPTED_TYPES = [
+  "application/pdf",
+  "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+  "text/csv", "application/vnd.ms-excel",
+];
+const ACCEPTED_EXTENSIONS = ".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.csv";
 
 interface EntryResult {
   id: string;
@@ -53,9 +62,21 @@ export default function Reconciliation() {
     return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  const getFileType = (file: File): "pdf" | "image" | "csv" | null => {
+    if (file.type === "application/pdf") return "pdf";
+    if (file.type.startsWith("image/")) return "image";
+    if (file.type === "text/csv" || file.type === "application/vnd.ms-excel" || file.name.endsWith(".csv")) return "csv";
+    return null;
+  };
+
   const processFile = useCallback(async (file: File) => {
-    if (file.type !== "application/pdf") {
-      toast({ title: t("common.error"), description: t("reconciliation.pdfOnly"), variant: "destructive" });
+    const fileType = getFileType(file);
+    if (!fileType) {
+      toast({ title: t("common.error"), description: t("reconciliation.unsupportedFormat"), variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: t("common.error"), description: t("reconciliation.fileTooLarge", { max: MAX_FILE_SIZE_MB }), variant: "destructive" });
       return;
     }
     setFileName(file.name);
@@ -70,10 +91,10 @@ export default function Reconciliation() {
       reader.onload = async () => {
         const base64 = reader.result as string;
         try {
-          const res = await fetch("/api/reconciliation/upload-pdf", {
+          const res = await fetch("/api/reconciliation/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ pdf: base64 }),
+            body: JSON.stringify({ file: base64, fileType, fileName: file.name }),
           });
           if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
           const data = await res.json();
@@ -149,10 +170,10 @@ export default function Reconciliation() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/pdf"
+            accept={ACCEPTED_EXTENSIONS}
             className="hidden"
             onChange={handleFileChange}
-            data-testid="input-pdf-upload"
+            data-testid="input-file-upload"
           />
           {isProcessing ? (
             <div className="flex flex-col items-center gap-3">
@@ -168,14 +189,41 @@ export default function Reconciliation() {
               </div>
               <div>
                 <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-upload-prompt">{t("reconciliation.dragOrClick")}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("reconciliation.pdfSupport")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("reconciliation.fileSupport")}</p>
               </div>
-              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t("reconciliation.lastFile", { name: fileName })}</p>}
-              <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-pdf">
-                <FileText className="w-4 h-4 mr-2" /> {t("reconciliation.selectPDF")}
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-semibold">
+                  <FileText className="w-3.5 h-3.5" /> PDF
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs font-semibold">
+                  <Image className="w-3.5 h-3.5" /> {t("reconciliation.photo")}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 text-xs font-semibold">
+                  <Table className="w-3.5 h-3.5" /> CSV
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reconciliation.maxSize", { max: MAX_FILE_SIZE_MB })}</p>
+              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.lastFile", { name: fileName })}</p>}
+              <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-file">
+                <Upload className="w-4 h-4 mr-2" /> {t("reconciliation.selectFile")}
               </Button>
             </div>
           )}
+        </div>
+
+        <div className="flex justify-center mb-6">
+          <button
+            onClick={() => {
+              const token = getToken();
+              if (!token) return;
+              window.open("/api/reconciliation/csv-template", "_blank");
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800"
+            data-testid="button-download-csv-template"
+          >
+            <Download className="w-4 h-4" />
+            {t("reconciliation.downloadTemplate")}
+          </button>
         </div>
 
         {results && (

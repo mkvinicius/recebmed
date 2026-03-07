@@ -6,7 +6,7 @@ import { insertUserSchema, loginSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
-import { extractPdfData, runReconciliation } from "./reconciliation";
+import { extractPdfData, extractImageData, extractCsvData, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
@@ -648,20 +648,51 @@ export async function registerRoutes(
     }
   });
 
-  // ── PDF Reconciliation ──
+  // ── File Reconciliation (PDF, Image, CSV) ──
 
   app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const { pdf } = req.body;
-      if (!pdf) {
-        return res.status(400).json({ message: "PDF não enviado" });
-      }
-
+      if (!pdf) return res.status(400).json({ message: "PDF não enviado" });
       const base64Data = pdf.replace(/^data:[^;]+;base64,/, "");
       const pdfBuffer = Buffer.from(base64Data, "base64");
-
       const extractedData = await extractPdfData(pdfBuffer);
+      for (const item of extractedData) {
+        await storage.createClinicReport({ doctorId: userId, patientName: item.patientName, procedureDate: new Date(item.procedureDate), reportedValue: item.reportedValue || "0.00", description: item.description || null, sourcePdfUrl: null });
+      }
+      await runReconciliation(userId);
+      const allEntries = await storage.getDoctorEntries(userId);
+      return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending") } });
+    } catch (error) {
+      console.error("PDF reconciliation error:", error);
+      return res.status(500).json({ message: "Erro ao processar PDF" });
+    }
+  });
+
+  app.post("/api/reconciliation/upload", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { file, fileType, fileName } = req.body;
+      if (!file || !fileType) return res.status(400).json({ message: "Arquivo não enviado" });
+
+      const base64Data = file.replace(/^data:[^;]+;base64,/, "");
+      let extractedData: import("./reconciliation").PdfExtractedEntry[] = [];
+
+      if (fileType === "pdf") {
+        const pdfBuffer = Buffer.from(base64Data, "base64");
+        extractedData = await extractPdfData(pdfBuffer);
+      } else if (fileType === "image") {
+        extractedData = await extractImageData(file);
+      } else if (fileType === "csv") {
+        const csvText = Buffer.from(base64Data, "base64").toString("utf-8");
+        extractedData = extractCsvData(csvText);
+        if (extractedData.length === 0) {
+          return res.status(400).json({ message: "CSV inválido. Baixe o modelo e tente novamente." });
+        }
+      } else {
+        return res.status(400).json({ message: "Formato não suportado" });
+      }
 
       for (const item of extractedData) {
         await storage.createClinicReport({
@@ -675,21 +706,27 @@ export async function registerRoutes(
       }
 
       await runReconciliation(userId);
-
       const allEntries = await storage.getDoctorEntries(userId);
-      const reconciled = allEntries.filter(e => e.status === "reconciled");
-      const divergent = allEntries.filter(e => e.status === "divergent");
-      const pending = allEntries.filter(e => e.status === "pending");
-
       return res.json({
         success: true,
         extractedCount: extractedData.length,
-        reconciliation: { reconciled, divergent, pending },
+        reconciliation: {
+          reconciled: allEntries.filter(e => e.status === "reconciled"),
+          divergent: allEntries.filter(e => e.status === "divergent"),
+          pending: allEntries.filter(e => e.status === "pending"),
+        },
       });
     } catch (error) {
-      console.error("PDF reconciliation error:", error);
-      return res.status(500).json({ message: "Erro ao processar PDF" });
+      console.error("File reconciliation error:", error);
+      return res.status(500).json({ message: "Erro ao processar arquivo" });
     }
+  });
+
+  app.get("/api/reconciliation/csv-template", (_req: Request, res: Response) => {
+    const csv = generateCsvTemplate();
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=modelo_conciliacao.csv");
+    return res.send(csv);
   });
 
   app.get("/api/reconciliation/results", authMiddleware, async (req: Request, res: Response) => {

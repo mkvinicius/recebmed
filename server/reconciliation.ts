@@ -10,18 +10,8 @@ export interface PdfExtractedEntry {
   description?: string;
 }
 
-export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEntry[]> {
-  const pdfData = await pdfParse(pdfBuffer);
-  const text = pdfData.text;
-
-  const client = getOpenAIClient();
-  const response = await client.chat.completions.create({
-    model: "gpt-5-mini",
-    messages: [
-      {
-        role: "system",
-        content: `Você é um assistente especializado em extrair dados de relatórios financeiros de clínicas médicas.
-Analise o texto extraído de um PDF e extraia TODOS os registros de pacientes/procedimentos encontrados.
+const EXTRACTION_PROMPT = `Você é um assistente especializado em extrair dados de relatórios financeiros de clínicas médicas.
+Analise o conteúdo e extraia TODOS os registros de pacientes/procedimentos encontrados.
 Para cada registro, extraia:
 - patientName: nome completo do paciente
 - procedureDate: data do procedimento no formato YYYY-MM-DD
@@ -30,24 +20,104 @@ Para cada registro, extraia:
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
 Se não conseguir identificar algum campo, use "Não identificado" como valor.
-Se o valor não for encontrado, use "0.00".`,
-      },
-      {
-        role: "user",
-        content: `Texto extraído do PDF do relatório da clínica:\n\n${text}`,
-      },
-    ],
-    max_completion_tokens: 4000,
-  });
+Se o valor não for encontrado, use "0.00".`;
 
-  const content = response.choices[0]?.message?.content || "[]";
+function parseAIResponse(content: string): PdfExtractedEntry[] {
   try {
-    const parsed = JSON.parse(content);
+    const cleaned = content.replace(/```json\s*|```\s*/g, "").trim();
+    const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) return parsed;
     return [parsed];
   } catch {
     return [];
   }
+}
+
+export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEntry[]> {
+  const pdfData = await pdfParse(pdfBuffer);
+  const text = pdfData.text;
+
+  const client = getOpenAIClient();
+  const response = await client.chat.completions.create({
+    model: "gpt-5-mini",
+    messages: [
+      { role: "system", content: EXTRACTION_PROMPT },
+      { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
+    ],
+    max_completion_tokens: 4000,
+  });
+
+  return parseAIResponse(response.choices[0]?.message?.content || "[]");
+}
+
+export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {
+  const client = getOpenAIClient();
+  const response = await client.chat.completions.create({
+    model: "gpt-5-mini",
+    messages: [
+      { role: "system", content: EXTRACTION_PROMPT },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Analise esta imagem de relatório de clínica médica e extraia todos os registros:" },
+          { type: "image_url", image_url: { url: base64Image } },
+        ],
+      },
+    ],
+    max_completion_tokens: 4000,
+  });
+
+  return parseAIResponse(response.choices[0]?.message?.content || "[]");
+}
+
+export function extractCsvData(csvText: string): PdfExtractedEntry[] {
+  const lines = csvText.trim().split("\n");
+  if (lines.length < 2) return [];
+
+  const headerLine = lines[0].toLowerCase();
+  const separator = headerLine.includes(";") ? ";" : ",";
+  const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+
+  const patientIdx = headers.findIndex(h => ["paciente", "patient", "patientname", "patient_name", "nome", "nome_paciente", "nome do paciente"].includes(h));
+  const dateIdx = headers.findIndex(h => ["data", "date", "proceduredate", "procedure_date", "data_procedimento", "data do procedimento"].includes(h));
+  const valueIdx = headers.findIndex(h => ["valor", "value", "reportedvalue", "reported_value", "valor_reportado", "valor reportado"].includes(h));
+  const descIdx = headers.findIndex(h => ["descricao", "descrição", "description", "procedimento", "procedure", "observacao", "observação"].includes(h));
+
+  if (patientIdx === -1 || dateIdx === -1) return [];
+
+  const results: PdfExtractedEntry[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = line.split(separator).map(c => c.trim().replace(/^"|"$/g, ""));
+    const patientName = cols[patientIdx] || "";
+    if (!patientName) continue;
+
+    let procedureDate = cols[dateIdx] || "";
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(procedureDate)) {
+      const [d, m, y] = procedureDate.split("/");
+      procedureDate = `${y}-${m}-${d}`;
+    }
+
+    let reportedValue = cols[valueIdx] || "0.00";
+    reportedValue = reportedValue.replace(/[R$\s]/g, "").replace(",", ".");
+
+    results.push({
+      patientName,
+      procedureDate,
+      reportedValue,
+      description: descIdx >= 0 ? cols[descIdx] : undefined,
+    });
+  }
+  return results;
+}
+
+export function generateCsvTemplate(): string {
+  const bom = "\uFEFF";
+  const header = "paciente;data;valor;descricao";
+  const example1 = "João Silva;01/03/2026;250.00;Consulta cardiológica";
+  const example2 = "Maria Santos;05/03/2026;180.50;Retorno dermatologia";
+  return bom + [header, example1, example2].join("\n");
 }
 
 function levenshteinDistance(a: string, b: string): number {
