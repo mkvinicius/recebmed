@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,30 +25,18 @@ interface DoctorEntry {
   createdAt: string;
 }
 
-type PeriodFilter = "month" | "3months" | "6months" | "year";
-
 const PIE_COLORS = ["#8855f6", "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444", "#ec4899"];
-
-function getFilterDate(period: PeriodFilter): Date {
-  const now = new Date();
-  switch (period) {
-    case "month":
-      return new Date(now.getFullYear(), now.getMonth(), 1);
-    case "3months":
-      return new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    case "6months":
-      return new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    case "year":
-      return new Date(now.getFullYear(), 0, 1);
-  }
-}
 
 export default function Reports() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<PeriodFilter>("6months");
+  const now = new Date();
+  const defaultFrom = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
+  const defaultTo = now.toISOString().split("T")[0];
+  const [dateFrom, setDateFrom] = useState(defaultFrom);
+  const [dateTo, setDateTo] = useState(defaultTo);
 
   const locale = getLocale();
   const currency = getCurrencyCode();
@@ -60,13 +48,6 @@ export default function Reports() {
   const getMonthLabel = (date: Date): string => {
     return date.toLocaleDateString(locale, { month: "short", year: "2-digit" });
   };
-
-  const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
-    { value: "month", label: t("reports.thisMonth") },
-    { value: "3months", label: t("reports.last3Months") },
-    { value: "6months", label: t("reports.last6Months") },
-    { value: "year", label: t("reports.thisYear") },
-  ];
 
   useEffect(() => {
     const token = getToken();
@@ -83,12 +64,19 @@ export default function Reports() {
   }, [setLocation]);
 
   const filteredEntries = useMemo(() => {
-    const cutoff = getFilterDate(period);
     return entries.filter(e => {
       const d = new Date(e.procedureDate || e.createdAt);
-      return d >= cutoff;
+      if (dateFrom) {
+        const from = new Date(dateFrom + "T00:00:00");
+        if (d < from) return false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo + "T23:59:59");
+        if (d > to) return false;
+      }
+      return true;
     });
-  }, [entries, period]);
+  }, [entries, dateFrom, dateTo]);
 
   const totalValue = useMemo(() =>
     filteredEntries.reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0),
@@ -112,10 +100,10 @@ export default function Reports() {
 
   const monthlyData = useMemo(() => {
     const months: Record<string, number> = {};
-    const cutoff = getFilterDate(period);
-    const now = new Date();
-    const cur = new Date(cutoff.getFullYear(), cutoff.getMonth(), 1);
-    while (cur <= now) {
+    const startDate = dateFrom ? new Date(dateFrom + "T00:00:00") : new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
+    const endDate = dateTo ? new Date(dateTo + "T23:59:59") : new Date();
+    const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    while (cur <= endDate) {
       const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
       months[key] = 0;
       cur.setMonth(cur.getMonth() + 1);
@@ -131,7 +119,7 @@ export default function Reports() {
       const [y, m] = key.split("-").map(Number);
       return { name: getMonthLabel(new Date(y, m - 1, 1)), value };
     });
-  }, [filteredEntries, period]);
+  }, [filteredEntries, dateFrom, dateTo]);
 
   const insuranceData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -170,21 +158,35 @@ export default function Reports() {
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-6">
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reports.period")}</p>
-          <div className="flex flex-wrap gap-2">
-            {PERIOD_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setPeriod(opt.value)}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                  period === opt.value
-                    ? "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30"
-                    : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                }`}
-                data-testid={`filter-period-${opt.value}`}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateFrom")}</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                data-testid="filter-date-from"
+              />
+              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateTo")}</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                data-testid="filter-date-to"
+              />
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  data-testid="button-clear-dates"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
