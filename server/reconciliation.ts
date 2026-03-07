@@ -70,7 +70,11 @@ export async function extractImageData(base64Image: string): Promise<PdfExtracte
   return parseAIResponse(response.choices[0]?.message?.content || "[]");
 }
 
-export function extractCsvData(csvText: string): PdfExtractedEntry[] {
+export interface CsvExtractedEntry extends PdfExtractedEntry {
+  insuranceProvider?: string;
+}
+
+export function extractCsvData(csvText: string): CsvExtractedEntry[] {
   const lines = csvText.trim().split("\n");
   if (lines.length < 2) return [];
 
@@ -80,12 +84,13 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
 
   const patientIdx = headers.findIndex(h => ["paciente", "patient", "patientname", "patient_name", "nome", "nome_paciente", "nome do paciente"].includes(h));
   const dateIdx = headers.findIndex(h => ["data", "date", "proceduredate", "procedure_date", "data_procedimento", "data do procedimento"].includes(h));
-  const valueIdx = headers.findIndex(h => ["valor", "value", "reportedvalue", "reported_value", "valor_reportado", "valor reportado"].includes(h));
-  const descIdx = headers.findIndex(h => ["descricao", "descrição", "description", "procedimento", "procedure", "observacao", "observação"].includes(h));
+  const insuranceIdx = headers.findIndex(h => ["convenio", "convênio", "insurance", "insuranceprovider", "insurance_provider", "plano", "operadora"].includes(h));
+  const descIdx = headers.findIndex(h => ["procedimento", "procedure", "descricao", "descrição", "description", "observacao", "observação"].includes(h));
+  const valueIdx = headers.findIndex(h => ["valor", "value", "reportedvalue", "reported_value", "valor_reportado", "valor reportado", "preco", "preço", "price"].includes(h));
 
   if (patientIdx === -1 || dateIdx === -1) return [];
 
-  const results: PdfExtractedEntry[] = [];
+  const results: CsvExtractedEntry[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -106,6 +111,7 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
       patientName,
       procedureDate,
       reportedValue,
+      insuranceProvider: insuranceIdx >= 0 ? cols[insuranceIdx] : undefined,
       description: descIdx >= 0 ? cols[descIdx] : undefined,
     });
   }
@@ -114,10 +120,11 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
 
 export function generateCsvTemplate(): string {
   const bom = "\uFEFF";
-  const header = "paciente;data;valor;descricao";
-  const example1 = "João Silva;01/03/2026;250.00;Consulta cardiológica";
-  const example2 = "Maria Santos;05/03/2026;180.50;Retorno dermatologia";
-  return bom + [header, example1, example2].join("\n");
+  const header = "paciente;data;convenio;procedimento;valor";
+  const example1 = "João Silva;01/03/2026;Unimed;Consulta cardiológica;250.00";
+  const example2 = "Maria Santos;05/03/2026;Particular;Retorno dermatologia;180.50";
+  const example3 = "Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00";
+  return bom + [header, example1, example2, example3].join("\n");
 }
 
 function levenshteinDistance(a: string, b: string): number {

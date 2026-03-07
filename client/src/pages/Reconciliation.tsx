@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
-  ChevronDown, ChevronUp, Stethoscope, Image, Table, Download
+  ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,7 @@ export default function Reconciliation() {
   const [activeTab, setActiveTab] = useState<"reconciled" | "divergent" | "pending">("reconciled");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -211,20 +212,81 @@ export default function Reconciliation() {
           )}
         </div>
 
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
           <button
-            onClick={() => {
-              const token = getToken();
-              if (!token) return;
-              window.open("/api/reconciliation/csv-template", "_blank");
-            }}
+            onClick={() => window.open("/api/reconciliation/csv-template", "_blank")}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800"
             data-testid="button-download-csv-template"
           >
             <Download className="w-4 h-4" />
             {t("reconciliation.downloadTemplate")}
           </button>
+          <button
+            onClick={() => setShowTutorial(!showTutorial)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800"
+            data-testid="button-toggle-tutorial"
+          >
+            <HelpCircle className="w-4 h-4" />
+            {t("reconciliation.csvTutorialTitle")}
+            {showTutorial ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
         </div>
+
+        {showTutorial && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-blue-100 dark:border-blue-800 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-5 mb-6" data-testid="section-csv-tutorial">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+              <Table className="w-5 h-5 text-green-600" />
+              {t("reconciliation.csvTutorialTitle")}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t("reconciliation.csvTutorialIntro")}</p>
+
+            <div className="space-y-3 mb-4">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("reconciliation.csvColumns")}</p>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { col: t("reconciliation.colPatient"), desc: t("reconciliation.colPatientDesc"), required: true },
+                  { col: t("reconciliation.colDate"), desc: t("reconciliation.colDateDesc"), required: true },
+                  { col: t("reconciliation.colInsurance"), desc: t("reconciliation.colInsuranceDesc"), required: false },
+                  { col: t("reconciliation.colProcedure"), desc: t("reconciliation.colProcedureDesc"), required: false },
+                  { col: t("reconciliation.colValue"), desc: t("reconciliation.colValueDesc"), required: false },
+                ].map((item) => (
+                  <div key={item.col} className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2">
+                    <code className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2 py-0.5 rounded whitespace-nowrap">{item.col}</code>
+                    <span className="text-xs text-slate-600 dark:text-slate-400 flex-1">{item.desc}</span>
+                    {item.required && <span className="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">{t("reconciliation.required")}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 mb-4 overflow-x-auto">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t("reconciliation.csvExample")}</p>
+              <pre className="text-xs text-green-400 font-mono leading-relaxed whitespace-pre">
+{`paciente;data;convenio;procedimento;valor
+João Silva;01/03/2026;Unimed;Consulta;250.00
+Maria Santos;05/03/2026;Particular;Retorno;180.50
+Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("reconciliation.csvTips")}</p>
+              <ul className="space-y-1.5">
+                {[
+                  t("reconciliation.csvTip1"),
+                  t("reconciliation.csvTip2"),
+                  t("reconciliation.csvTip3"),
+                  t("reconciliation.csvTip4"),
+                ].map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         {results && (
           <div className="space-y-4 pb-12" data-testid="section-results">
