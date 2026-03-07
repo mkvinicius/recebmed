@@ -181,6 +181,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 
 ## PWA (Progressive Web App)
 
+- **Hero gradient**: `h-52` (208px) in AppLayout and ConfirmEntry; Dashboard search bar overlaps gradient boundary (half purple/half white)
 - **Manifest**: `client/public/manifest.json` — app name, icons, theme color (#8855f6), standalone display
 - **Service Worker**: `client/public/sw.js` — network-first strategy with cache fallback, skips API routes
 - **Registration**: `client/src/main.tsx` registers SW on page load

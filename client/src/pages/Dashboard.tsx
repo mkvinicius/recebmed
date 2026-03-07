@@ -232,13 +232,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="pt-1 pb-3 text-white">
+        <div className="pt-1 pb-6 text-white">
           <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
           <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">Dr. {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
           <p className="text-white/60 text-sm mt-1">{t("dashboard.financialSummary")}</p>
         </div>
 
-        <div className="relative mb-5" ref={searchRef}>
+        <div className="relative z-20 -mb-1" ref={searchRef}>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -246,7 +246,7 @@ export default function Dashboard() {
               onChange={e => { handleSearchChange(e.target.value); if (!showSearch) setShowSearch(true); }}
               onFocus={() => setShowSearch(true)}
               placeholder={t("dashboard.searchPlaceholder")}
-              className="w-full pl-11 pr-10 h-12 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border border-white/50 dark:border-slate-700 shadow-lg text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all"
+              className="w-full pl-11 pr-10 h-12 rounded-2xl bg-white dark:bg-slate-900 border-0 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)] text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all"
               data-testid="input-smart-search"
             />
             {searchLoading && <Loader2 className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-[#8855f6] animate-spin" />}

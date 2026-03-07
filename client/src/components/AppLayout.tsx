@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen pb-20 relative" data-testid="app-layout">
-      <div className="hero-gradient h-44 w-full absolute top-0 left-0 z-0" />
+      <div className="hero-gradient h-52 w-full absolute top-0 left-0 z-0" />
 
       <div className="relative z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
