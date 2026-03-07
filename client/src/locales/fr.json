@@ -67,8 +67,8 @@
   },
   "nav": {
     "home": "Accueil",
-    "entries": "Entrées",
-    "capture": "Capture",
+    "entries": "Production",
+    "capture": "Nouveau",
     "reports": "Rapports",
     "profile": "Profil"
   },
