@@ -226,8 +226,8 @@ export async function registerRoutes(
       if (!images || !Array.isArray(images) || images.length === 0) {
         return res.status(400).json({ message: "Nenhuma imagem enviada" });
       }
-      if (images.length > 30) {
-        return res.status(400).json({ message: "Máximo de 30 imagens por vez" });
+      if (images.length > 50) {
+        return res.status(400).json({ message: "Máximo de 50 imagens por vez" });
       }
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
@@ -379,8 +379,8 @@ export async function registerRoutes(
       if (!Array.isArray(entriesData) || entriesData.length === 0) {
         return res.status(400).json({ message: "Nenhum lançamento fornecido" });
       }
-      if (entriesData.length > 50) {
-        return res.status(400).json({ message: "Máximo de 50 lançamentos por vez" });
+      if (entriesData.length > 60) {
+        return res.status(400).json({ message: "Máximo de 60 lançamentos por vez" });
       }
 
       const validEntries = entriesData.filter((item: any) =>
