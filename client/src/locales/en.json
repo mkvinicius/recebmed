@@ -68,7 +68,7 @@
   "nav": {
     "home": "Home",
     "entries": "Production",
-    "capture": "New",
+    "capture": "New\nEntry",
     "reports": "Reports",
     "profile": "Profile"
   },

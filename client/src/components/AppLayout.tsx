@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 ) : (
                   <tab.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
                 )}
-                <span className={`text-[10px] font-semibold ${isCapture ? "text-[#8855f6] mt-0.5" : ""}`}>{label}</span>
+                <span className={`text-[10px] font-semibold text-center leading-tight whitespace-pre-line ${isCapture ? "text-[#8855f6] mt-0.5" : ""}`}>{label}</span>
               </button>
             );
           })}
