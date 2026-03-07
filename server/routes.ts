@@ -226,8 +226,8 @@ export async function registerRoutes(
       if (!images || !Array.isArray(images) || images.length === 0) {
         return res.status(400).json({ message: "Nenhuma imagem enviada" });
       }
-      if (images.length > 10) {
-        return res.status(400).json({ message: "Máximo de 10 imagens por vez" });
+      if (images.length > 30) {
+        return res.status(400).json({ message: "Máximo de 30 imagens por vez" });
       }
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
@@ -258,21 +258,27 @@ export async function registerRoutes(
         return res.json({ success: true, duplicateWarning: { type: "exact_image_batch", duplicates: duplicateHashes } });
       }
 
-      const results = await Promise.all(
-        imagesToProcess.map(async ({ base64, index, hash }) => {
-          try {
-            const [entries, sourceUrl] = await Promise.all([
-              extractDataFromImage(base64, corrections),
-              mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(() => null),
-            ]);
-            return entries.map(e => ({ ...e, _sourceImage: index + 1, sourceUrl, _imageHash: hash }));
-          } catch (err) {
-            console.error(`Error processing image ${index + 1}:`, err);
-            return [];
-          }
-        })
-      );
-      const allEntries = results.flat();
+      const CHUNK_SIZE = 3;
+      const allEntries: any[] = [];
+      for (let c = 0; c < imagesToProcess.length; c += CHUNK_SIZE) {
+        const chunk = imagesToProcess.slice(c, c + CHUNK_SIZE);
+        const chunkResults = await Promise.all(
+          chunk.map(async ({ base64, index, hash }) => {
+            try {
+              const [entries, sourceUrl] = await Promise.all([
+                extractDataFromImage(base64, corrections),
+                mediaStorage.uploadBuffer(Buffer.from(base64, "base64"), "image/jpeg").catch(() => null),
+              ]);
+              return entries.map(e => ({ ...e, _sourceImage: index + 1, sourceUrl, _imageHash: hash }));
+            } catch (err) {
+              console.error(`Error processing image ${index + 1}:`, err);
+              return [];
+            }
+          })
+        );
+        allEntries.push(...chunkResults.flat());
+      }
+
       return res.json({
         success: true, extractedData: allEntries, totalImages: images.length, totalEntries: allEntries.length,
         ...(duplicateHashes.length > 0 ? { skippedDuplicates: duplicateHashes.length } : {}),
@@ -373,35 +379,59 @@ export async function registerRoutes(
       if (!Array.isArray(entriesData) || entriesData.length === 0) {
         return res.status(400).json({ message: "Nenhum lançamento fornecido" });
       }
+      if (entriesData.length > 50) {
+        return res.status(400).json({ message: "Máximo de 50 lançamentos por vez" });
+      }
+
+      const validEntries = entriesData.filter((item: any) =>
+        item.patientName && item.procedureDate && item.insuranceProvider && item.description
+      );
+
+      if (validEntries.length === 0) {
+        return res.status(400).json({ message: "Nenhum lançamento válido encontrado" });
+      }
 
       const savedEntries = [];
-      const skippedDuplicates: any[] = [];
       const allDiffs: Array<{ doctorId: string; field: string; originalValue: string; correctedValue: string; entryMethod: string }> = [];
-      for (const item of entriesData) {
-        if (!item.patientName || !item.procedureDate || !item.insuranceProvider || !item.description) {
-          continue;
-        }
-        const entry = await storage.createDoctorEntry({
-          doctorId: userId,
-          patientName: item.patientName,
-          procedureDate: new Date(item.procedureDate),
-          insuranceProvider: item.insuranceProvider,
-          description: item.description,
-          procedureValue: item.procedureValue || null,
-          entryMethod: entryMethod || "manual",
-          sourceUrl: item.sourceUrl || null,
-          imageHash: item._imageHash || null,
-          status: "pending",
-        });
-        savedEntries.push(entry);
-        if (item._originalData && entryMethod && entryMethod !== "manual") {
-          const diffs = detectCorrections(item._originalData, { patientName: item.patientName, procedureDate: item.procedureDate, insuranceProvider: item.insuranceProvider, description: item.description, procedureValue: item.procedureValue || "" }, entryMethod, userId);
-          allDiffs.push(...diffs);
-        }
+      const BATCH_CHUNK = 5;
+
+      for (let c = 0; c < validEntries.length; c += BATCH_CHUNK) {
+        const chunk = validEntries.slice(c, c + BATCH_CHUNK);
+        const chunkSaved = await Promise.all(
+          chunk.map(async (item: any) => {
+            try {
+              const entry = await storage.createDoctorEntry({
+                doctorId: userId,
+                patientName: item.patientName,
+                procedureDate: new Date(item.procedureDate),
+                insuranceProvider: item.insuranceProvider,
+                description: item.description,
+                procedureValue: item.procedureValue || null,
+                entryMethod: entryMethod || "manual",
+                sourceUrl: item.sourceUrl || null,
+                imageHash: item._imageHash || null,
+                status: "pending",
+              });
+              if (item._originalData && entryMethod && entryMethod !== "manual") {
+                const diffs = detectCorrections(item._originalData, { patientName: item.patientName, procedureDate: item.procedureDate, insuranceProvider: item.insuranceProvider, description: item.description, procedureValue: item.procedureValue || "" }, entryMethod, userId);
+                allDiffs.push(...diffs);
+              }
+              return entry;
+            } catch (err) {
+              console.error("Error saving entry in batch:", err);
+              return null;
+            }
+          })
+        );
+        savedEntries.push(...chunkSaved.filter(Boolean));
       }
 
       if (allDiffs.length > 0) {
-        await storage.createAiCorrections(allDiffs.map(d => ({ doctorId: d.doctorId, field: d.field, originalValue: d.originalValue, correctedValue: d.correctedValue, entryMethod: d.entryMethod as any })));
+        try {
+          await storage.createAiCorrections(allDiffs.map(d => ({ doctorId: d.doctorId, field: d.field, originalValue: d.originalValue, correctedValue: d.correctedValue, entryMethod: d.entryMethod as any })));
+        } catch (err) {
+          console.error("Error saving AI corrections:", err);
+        }
       }
 
       if (savedEntries.length > 0) {
