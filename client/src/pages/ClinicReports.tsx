@@ -127,7 +127,7 @@ export default function ClinicReports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-2 pb-6 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>

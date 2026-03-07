@@ -101,7 +101,7 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-2 pb-8 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">{t("settings.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("settings.subtitle")}</p>
         </div>

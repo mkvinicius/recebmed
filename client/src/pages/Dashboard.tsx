@@ -202,7 +202,7 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute right-4 sm:right-6 lg:right-8 top-0 z-20 py-6">
+        <div className="absolute right-4 sm:right-6 lg:right-8 top-0 z-20 py-4">
           <div className="flex items-center gap-3">
             <div className="relative" ref={notifRef}>
               <button onClick={() => setShowNotifications(!showNotifications)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md relative" data-testid="button-notifications">
@@ -232,7 +232,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="pt-2 pb-4 text-white">
+        <div className="pt-1 pb-3 text-white">
           <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
           <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">Dr. {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
           <p className="text-white/60 text-sm mt-1">{t("dashboard.financialSummary")}</p>

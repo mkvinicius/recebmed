@@ -21,25 +21,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen pb-20 relative" data-testid="app-layout">
-      <div className="hero-gradient h-56 w-full absolute top-0 left-0 z-0" />
+      <div className="hero-gradient h-44 w-full absolute top-0 left-0 z-0" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-6" data-testid="persistent-header">
-          <div className="flex items-center gap-3 text-white">
-            <div className="size-14 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
-              {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-white tracking-wide">{userInitials}</span>
-              )}
+      <div className="relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <header className="flex items-center justify-between py-4" data-testid="persistent-header">
+            <div className="flex items-center gap-3 text-white">
+              <div className="size-12 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt={t("common.profile")} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-white tracking-wide">{userInitials}</span>
+                )}
+              </div>
+              <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
             </div>
-            <h1 className="text-xl font-bold tracking-tight">RecebMed</h1>
-          </div>
-          <div id="header-right-slot" />
-        </header>
-      </div>
+            <div id="header-right-slot" />
+          </header>
+        </div>
 
-      {children}
+        {children}
+      </div>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]" data-testid="tab-bar">
         <div className="max-w-lg mx-auto flex items-center justify-around px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">

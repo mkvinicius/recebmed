@@ -177,7 +177,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-lg mx-auto px-4 sm:px-6">
-        <div className="pt-2 pb-8 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("profile.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("profile.subtitle")}</p>
         </div>
@@ -224,6 +224,30 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {(canInstall || isInstalled) && (
+          <div className="bg-gradient-to-r from-[#8855f6] to-[#6644cc] rounded-2xl shadow-lg shadow-[#8855f6]/20 p-4 mb-6">
+            <button
+              onClick={install}
+              disabled={isInstalled}
+              className="w-full flex items-center gap-3"
+              data-testid="button-install-pwa"
+            >
+              <div className={`size-10 rounded-xl flex items-center justify-center ${isInstalled ? "bg-white/20" : "bg-white/20"}`}>
+                {isInstalled ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Download className="w-5 h-5 text-white" />}
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-white">
+                  {isInstalled ? t("profile.installed") : t("profile.installApp")}
+                </p>
+                <p className="text-xs text-white/70">
+                  {isInstalled ? t("profile.installedDesc") : t("profile.installAppDesc")}
+                </p>
+              </div>
+              {!isInstalled && <ChevronRight className="w-5 h-5 text-white/60" />}
+            </button>
+          </div>
+        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-6">
           <div className="flex items-center justify-between">
@@ -274,30 +298,6 @@ export default function Profile() {
             ))}
           </div>
         </div>
-
-        {(canInstall || isInstalled) && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-4 mb-6">
-            <button
-              onClick={install}
-              disabled={isInstalled}
-              className="w-full flex items-center gap-3"
-              data-testid="button-install-pwa"
-            >
-              <div className={`size-10 rounded-xl flex items-center justify-center ${isInstalled ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" : "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"}`}>
-                {isInstalled ? <CheckCircle2 className="w-5 h-5" /> : <Download className="w-5 h-5" />}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-slate-700 dark:text-slate-300">
-                  {isInstalled ? t("profile.installed") : t("profile.installApp")}
-                </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {isInstalled ? t("profile.installedDesc") : t("profile.installAppDesc")}
-                </p>
-              </div>
-              {!isInstalled && <ChevronRight className="w-4 h-4 text-slate-400" />}
-            </button>
-          </div>
-        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] overflow-hidden mb-6">
           {links.map((link, i) => (

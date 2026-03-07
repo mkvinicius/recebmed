@@ -133,7 +133,7 @@ export default function Reconciliation() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-2 pb-6 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reconciliation.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>

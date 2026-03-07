@@ -238,7 +238,7 @@ export default function Capture() {
 
   return (
     <div className="max-w-lg mx-auto px-4 sm:px-6">
-        <div className="pt-2 pb-8 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("capture.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("capture.subtitle")}</p>
         </div>

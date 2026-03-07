@@ -166,7 +166,7 @@ export default function Entries() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-2 pb-8 text-white">
+        <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("entries.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
