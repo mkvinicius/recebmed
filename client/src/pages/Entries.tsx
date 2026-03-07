@@ -39,7 +39,8 @@ export default function Entries() {
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [insuranceFilter, setInsuranceFilter] = useState("all");
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [editForm, setEditForm] = useState({ patientName: "", procedureDate: "", insuranceProvider: "", description: "", status: "", procedureValue: "" });
@@ -148,12 +149,16 @@ export default function Entries() {
       if (!e.patientName.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q) && !e.insuranceProvider.toLowerCase().includes(q)) return false;
     }
     if (insuranceFilter !== "all" && e.insuranceProvider !== insuranceFilter) return false;
-    if (dateFilter !== "all") {
+    if (dateFrom || dateTo) {
       const d = new Date(e.procedureDate || e.createdAt);
-      const now = new Date();
-      if (dateFilter === "today" && d.toDateString() !== now.toDateString()) return false;
-      if (dateFilter === "week") { const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7); if (d < weekAgo) return false; }
-      if (dateFilter === "month") { const monthAgo = new Date(now); monthAgo.setMonth(monthAgo.getMonth() - 1); if (d < monthAgo) return false; }
+      if (dateFrom) {
+        const from = new Date(dateFrom + "T00:00:00");
+        if (d < from) return false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo + "T23:59:59");
+        if (d > to) return false;
+      }
     }
     return true;
   });
@@ -183,10 +188,35 @@ export default function Entries() {
               ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {[{ v: "all", l: t("entries.allDates") }, { v: "today", l: t("entries.todayFilter") }, { v: "week", l: t("entries.thisWeek") }, { v: "month", l: t("entries.thisMonth") }].map(f => (
-              <button key={f.v} onClick={() => setDateFilter(f.v)} className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dateFilter === f.v ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900" : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"}`} data-testid={`filter-date-${f.v}`}>{f.l}</button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateFrom")}</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                data-testid="filter-date-from"
+              />
+              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateTo")}</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                data-testid="filter-date-to"
+              />
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  data-testid="button-clear-dates"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             {uniqueInsurances.length > 1 && (
               <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance">
                 <option value="all">{t("entries.allInsurances")}</option>
