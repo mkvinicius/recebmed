@@ -398,7 +398,7 @@ export default function ConfirmEntry() {
             data-testid="button-cancel">
             {t("common.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}
+          <Button onClick={() => handleSave()} disabled={isSaving}
             className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
             data-testid="button-save-entry">
             {isSaving

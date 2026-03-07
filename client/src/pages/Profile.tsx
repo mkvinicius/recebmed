@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   User, Settings, LogOut, ClipboardList, CheckCheck,
   ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2, Globe,
-  Download, CheckCircle2, Share, X
+  Download, Share, X
 } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { useTheme } from "next-themes";
@@ -53,7 +53,7 @@ function FlagFR() {
   );
 }
 
-const FLAG_COMPONENTS: Record<string, () => JSX.Element> = {
+const FLAG_COMPONENTS: Record<string, () => React.ReactElement> = {
   "pt-BR": FlagBR,
   "en": FlagUS,
   "es": FlagES,
@@ -165,7 +165,7 @@ export default function Profile() {
     localStorage.setItem("recebmed_language", langCode);
   };
 
-  const { canInstall, isInstalled, isIOS, showIOSGuide, setShowIOSGuide, install } = usePwaInstall();
+  const { canInstall, isInstalled, isIOS, showIOSGuide, setShowIOSGuide, install, markInstalled } = usePwaInstall();
 
   const currentLang = LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0]) && l.code === i18n.language) || LANGUAGE_OPTIONS.find(l => i18n.language.startsWith(l.code.split("-")[0])) || LANGUAGE_OPTIONS[1];
 
@@ -225,26 +225,25 @@ export default function Profile() {
           </div>
         </div>
 
-        {(canInstall || isInstalled) && (
+        {canInstall && !isInstalled && (
           <div className="bg-gradient-to-r from-[#8855f6] to-[#6644cc] rounded-2xl shadow-lg shadow-[#8855f6]/20 p-4 mb-6">
             <button
               onClick={install}
-              disabled={isInstalled}
               className="w-full flex items-center gap-3"
               data-testid="button-install-pwa"
             >
-              <div className={`size-10 rounded-xl flex items-center justify-center ${isInstalled ? "bg-white/20" : "bg-white/20"}`}>
-                {isInstalled ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Download className="w-5 h-5 text-white" />}
+              <div className="size-10 rounded-xl flex items-center justify-center bg-white/20">
+                <Download className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 text-left">
                 <p className="font-semibold text-white">
-                  {isInstalled ? t("profile.installed") : t("profile.installApp")}
+                  {t("profile.installApp")}
                 </p>
                 <p className="text-xs text-white/70">
-                  {isInstalled ? t("profile.installedDesc") : t("profile.installAppDesc")}
+                  {t("profile.installAppDesc")}
                 </p>
               </div>
-              {!isInstalled && <ChevronRight className="w-5 h-5 text-white/60" />}
+              <ChevronRight className="w-5 h-5 text-white/60" />
             </button>
           </div>
         )}
@@ -351,13 +350,22 @@ export default function Profile() {
                   <p className="text-sm text-slate-700 dark:text-slate-300">{t("profile.iosGuideStep3")}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowIOSGuide(false)}
-                className="w-full mt-6 py-3 bg-[#8855f6] hover:bg-[#7744e0] text-white rounded-full font-bold text-sm shadow-lg shadow-[#8855f6]/30 transition-all"
-                data-testid="button-ios-guide-done"
-              >
-                {t("profile.iosGuideDone")}
-              </button>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowIOSGuide(false)}
+                  className="flex-1 py-3 border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-full font-bold text-sm transition-all"
+                  data-testid="button-ios-guide-close"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={markInstalled}
+                  className="flex-1 py-3 bg-[#8855f6] hover:bg-[#7744e0] text-white rounded-full font-bold text-sm shadow-lg shadow-[#8855f6]/30 transition-all"
+                  data-testid="button-ios-guide-done"
+                >
+                  {t("profile.iosGuideDone")}
+                </button>
+              </div>
             </div>
           </div>
         )}

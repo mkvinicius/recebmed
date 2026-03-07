@@ -6,6 +6,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
+const INSTALLED_KEY = "recebmed_pwa_installed";
 
 export function usePwaInstall() {
   const [canInstall, setCanInstall] = useState(false);
@@ -14,11 +15,17 @@ export function usePwaInstall() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem(INSTALLED_KEY) === "true") {
+      setIsInstalled(true);
+      return;
+    }
+
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as any).standalone === true;
     if (isStandalone) {
       setIsInstalled(true);
+      localStorage.setItem(INSTALLED_KEY, "true");
       return;
     }
 
@@ -42,6 +49,7 @@ export function usePwaInstall() {
     window.addEventListener("appinstalled", () => {
       setIsInstalled(true);
       setCanInstall(false);
+      localStorage.setItem(INSTALLED_KEY, "true");
       deferredPrompt = null;
     });
 
@@ -60,9 +68,17 @@ export function usePwaInstall() {
     if (outcome === "accepted") {
       setIsInstalled(true);
       setCanInstall(false);
+      localStorage.setItem(INSTALLED_KEY, "true");
     }
     deferredPrompt = null;
   }, [isIOS]);
 
-  return { canInstall, isInstalled, isIOS, showIOSGuide, setShowIOSGuide, install };
+  const markInstalled = useCallback(() => {
+    setIsInstalled(true);
+    setCanInstall(false);
+    localStorage.setItem(INSTALLED_KEY, "true");
+    setShowIOSGuide(false);
+  }, []);
+
+  return { canInstall, isInstalled, isIOS, showIOSGuide, setShowIOSGuide, install, markInstalled };
 }

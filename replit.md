@@ -184,8 +184,8 @@ Pages without tab bar: Login, Register, ConfirmEntry
 - **Manifest**: `client/public/manifest.json` — app name, icons, theme color (#8855f6), standalone display
 - **Service Worker**: `client/public/sw.js` — network-first strategy with cache fallback, skips API routes
 - **Registration**: `client/src/main.tsx` registers SW on page load
-- **Install hook**: `client/src/hooks/use-pwa-install.ts` — captures `beforeinstallprompt` event
-- **Install button**: Profile page shows "Install App" card (Android: native prompt; iOS: visual step-by-step guide modal)
+- **Install hook**: `client/src/hooks/use-pwa-install.ts` — captures `beforeinstallprompt` event; persists install state in localStorage (`recebmed_pwa_installed`); `markInstalled()` for iOS confirmation
+- **Install button**: Profile page shows purple gradient "Install App" card — disappears permanently after installation (Android: native prompt; iOS: step-by-step guide modal with Cancel/Done buttons)
 - **Auto-update**: SW uses `skipWaiting()` + `clients.claim()` — new deploys auto-update on next visit
 - **Icons**: `favicon.png` (48x48), `apple-touch-icon.png` (180x180), `icon-512.png` (512x512)
 - **Meta tags**: `theme-color`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`

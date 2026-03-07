@@ -158,7 +158,7 @@ export default function Entries() {
     return true;
   });
 
-  const uniqueInsurances = [...new Set(entries.map(e => e.insuranceProvider).filter(Boolean))];
+  const uniqueInsurances = Array.from(new Set(entries.map(e => e.insuranceProvider).filter(Boolean)));
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const methodLabel = (m: string) => m === "photo" ? t("common.photo") : m === "audio" ? t("common.audio") : t("common.manual");
   const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
