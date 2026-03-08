@@ -19,7 +19,8 @@ client/src/
   pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import
   components/ui/     - shadcn/ui components
   components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
-  components/ProjectionsPanel.tsx - Financial projections panel (30/60/90 days)
+  components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
+  components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
   components/ObjectUploader.tsx   - Uppy-based file upload component
   hooks/use-upload.ts             - Upload hook for presigned URL flow
   lib/auth.ts        - Token/user management utilities

@@ -3,8 +3,8 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
-  Download, Upload, FileSpreadsheet, FileText, Loader2,
-  CheckCircle2, AlertCircle, ChevronDown, Calendar, X, Files
+  Download, Upload, FileSpreadsheet, Loader2,
+  CheckCircle2, AlertCircle, ChevronDown, Calendar
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -34,14 +34,6 @@ export default function Import() {
   const [csvProcessing, setCsvProcessing] = useState(false);
   const [csvResult, setCsvResult] = useState<{ count: number; year: number; skipped: number } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
-
-  const [pdfYear, setPdfYear] = useState(currentYear - 1);
-  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
-  const [pdfDragging, setPdfDragging] = useState(false);
-  const [pdfProcessing, setPdfProcessing] = useState(false);
-  const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
-  const [pdfResult, setPdfResult] = useState<{ extractedCount: number; reconciled: number; divergent: number; pending: number } | null>(null);
-  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const handleCsvUpload = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
@@ -85,61 +77,6 @@ export default function Import() {
       toast({ title: t("common.error"), description: t("import.readError"), variant: "destructive" });
     }
   }, [toast, setLocation, csvYear, t]);
-
-  const handlePdfUpload = useCallback(async (files: File[]) => {
-    const validFiles = files.filter(f => f.type === "application/pdf" || f.name.endsWith(".pdf"));
-    if (validFiles.length === 0) {
-      toast({ title: t("import.invalidFormat"), description: t("import.invalidPDF"), variant: "destructive" });
-      return;
-    }
-    if (validFiles.length > 20) {
-      toast({ title: t("import.limitExceeded"), description: t("import.limitExceededDesc"), variant: "destructive" });
-      return;
-    }
-    setPdfFiles(validFiles);
-    setPdfProcessing(true);
-    setPdfResult(null);
-    setPdfProgress({ current: 0, total: validFiles.length });
-    const token = getToken();
-    if (!token) { clearAuth(); setLocation("/login"); return; }
-
-    try {
-      const pdfPromises = validFiles.map(file => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string));
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      }));
-      const base64Pdfs = await Promise.all(pdfPromises);
-
-      const res = await fetch("/api/import/clinic-reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          pdfs: base64Pdfs.map((b, i) => ({ data: b, name: validFiles[i].name })),
-          year: pdfYear,
-        }),
-      });
-      if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
-      const data = await res.json();
-      if (res.ok) {
-        setPdfResult({
-          extractedCount: data.extractedCount,
-          reconciled: data.reconciliation?.reconciled || 0,
-          divergent: data.reconciliation?.divergent || 0,
-          pending: data.reconciliation?.pending || 0,
-        });
-        const errMsg = data.pdfErrors > 0 ? t("import.pdfErrors", { count: data.pdfErrors }) : "";
-        toast({ title: t("import.pdfProcessed"), description: t("import.pdfProcessedDesc", { count: data.extractedCount, files: validFiles.length }) + errMsg });
-      } else {
-        toast({ title: t("common.error"), description: data.message || t("import.pdfProcessError"), variant: "destructive" });
-      }
-    } catch {
-      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
-    } finally {
-      setPdfProcessing(false);
-    }
-  }, [toast, setLocation, pdfYear, t]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,108 +188,11 @@ export default function Import() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="size-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-              <Files className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("import.clinicPDFs")}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t("import.clinicPDFsDesc")}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mb-4">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.referenceYear")}</label>
-            <div className="relative">
-              <select
-                value={pdfYear}
-                onChange={e => setPdfYear(Number(e.target.value))}
-                className="appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 pr-8 text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40"
-                data-testid="select-pdf-year"
-              >
-                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-          </div>
-
-          <input
-            ref={pdfInputRef}
-            type="file"
-            accept="application/pdf"
-            multiple
-            className="hidden"
-            onChange={e => { const files = Array.from(e.target.files || []); if (files.length > 0) handlePdfUpload(files); if (pdfInputRef.current) pdfInputRef.current.value = ""; }}
-            data-testid="input-pdf-upload"
-          />
-
-          <div
-            className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${pdfDragging ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 scale-[1.01]" : "border-slate-200 dark:border-slate-700 hover:border-blue-400/60"}`}
-            onClick={() => !pdfProcessing && pdfInputRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setPdfDragging(true); }}
-            onDragLeave={e => { e.preventDefault(); setPdfDragging(false); }}
-            onDrop={e => { e.preventDefault(); setPdfDragging(false); const files = Array.from(e.dataTransfer.files || []); if (files.length > 0) handlePdfUpload(files); }}
-            data-testid="dropzone-pdf"
-          >
-            {pdfProcessing ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("import.processingPDFs")}</p>
-                <p className="text-xs text-slate-400">{t("import.filesCount", { count: pdfFiles.length })}</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <Upload className="w-8 h-8 text-slate-400" />
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.dragPdfsOrClick")}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{t("import.multiplePDFs")}</p>
-              </div>
-            )}
-          </div>
-
-          {pdfFiles.length > 0 && !pdfProcessing && !pdfResult && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {pdfFiles.map((f, i) => (
-                <span key={i} className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">
-                  <FileText className="w-3 h-3" /> {f.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {pdfResult && (
-            <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4" data-testid="pdf-result">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <p className="font-bold text-blue-700 dark:text-blue-300">{t("import.pdfCompleted")}</p>
-              </div>
-              <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
-                {t("import.pdfExtracted", { count: pdfResult.extractedCount, files: pdfFiles.length })}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-extrabold text-green-600 dark:text-green-400" data-testid="text-reconciled-count">{pdfResult.reconciled}</p>
-                  <p className="text-[10px] font-semibold text-green-600/80 dark:text-green-400/80 uppercase tracking-wider">{t("import.reconciledLabel")}</p>
-                </div>
-                <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400" data-testid="text-divergent-count">{pdfResult.divergent}</p>
-                  <p className="text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wider">{t("import.divergentLabel")}</p>
-                </div>
-                <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-extrabold text-red-500 dark:text-red-400" data-testid="text-pending-count">{pdfResult.pending}</p>
-                  <p className="text-[10px] font-semibold text-red-500/80 dark:text-red-400/80 uppercase tracking-wider">{t("import.pendingLabel")}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setLocation("/reconciliation")}
-                className="mt-3 w-full text-center text-sm text-[#8855f6] font-bold hover:underline"
-                data-testid="link-view-reconciliation"
-              >
-                {t("import.viewReconciliation")}
-              </button>
-            </div>
-          )}
+        <div className="text-center px-4 py-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/40 mb-8">
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <AlertCircle className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-slate-400" />
+            {t("import.pdfHint")}
+          </p>
         </div>
     </div>
   );

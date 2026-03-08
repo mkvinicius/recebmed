@@ -13,9 +13,6 @@ interface ProjectionsData {
 export default function ProjectionsPanel() {
   const { t } = useTranslation();
 
-  const formatCurrency = (val: number) =>
-    val.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
-
   const [data, setData] = useState<ProjectionsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +58,7 @@ export default function ProjectionsPanel() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
             <p className="text-sm font-semibold text-white/80 mb-1">{card.label}</p>
             <p className="text-2xl font-extrabold" data-testid={`projection-value-${i}`}>
-              {formatCurrency(card.value)}
+              {card.value}
             </p>
           </div>
         ))}
@@ -69,15 +66,15 @@ export default function ProjectionsPanel() {
       <div className="grid grid-cols-3 gap-4 mt-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.reconciledTotal")}</p>
-          <p className="text-sm font-bold text-green-600" data-testid="projection-total-reconciled">{formatCurrency(data.totals.reconciled)}</p>
+          <p className="text-sm font-bold text-green-600" data-testid="projection-total-reconciled">{data.totals.reconciled}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.divergentTotal")}</p>
-          <p className="text-sm font-bold text-red-500" data-testid="projection-total-divergent">{formatCurrency(data.totals.divergent)}</p>
+          <p className="text-sm font-bold text-red-500" data-testid="projection-total-divergent">{data.totals.divergent}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.totalLabel")}</p>
-          <p className="text-sm font-bold text-[#8855f6]" data-testid="projection-total">{formatCurrency(data.totals.total)}</p>
+          <p className="text-sm font-bold text-[#8855f6]" data-testid="projection-total">{data.totals.total}</p>
         </div>
       </div>
     </div>

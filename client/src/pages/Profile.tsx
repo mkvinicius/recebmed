@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import {
-  User, Settings, LogOut, ClipboardList, CheckCheck,
+  User, Settings, LogOut,
   ChevronRight, Stethoscope, Moon, Sun, Camera, Loader2, Trash2, Globe,
   Download, Share, X
 } from "lucide-react";
@@ -171,8 +171,6 @@ export default function Profile() {
 
   const links = [
     { label: t("profile.settings"), icon: Settings, path: "/settings", color: "text-[#8855f6]" },
-    { label: t("profile.clinicReports"), icon: ClipboardList, path: "/clinic-reports", color: "text-blue-600" },
-    { label: t("profile.pdfReconciliation"), icon: CheckCheck, path: "/reconciliation", color: "text-green-600" },
   ];
 
   return (

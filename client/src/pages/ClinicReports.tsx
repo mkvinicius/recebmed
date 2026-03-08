@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, Plus, Trash2, Loader2, FileText, Calendar, DollarSign, User
+  Trash2, Loader2, FileText, Calendar
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,15 +22,7 @@ export default function ClinicReports() {
   const [, setLocation] = useLocation();
   const [reports, setReports] = useState<ClinicReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    patientName: "",
-    procedureDate: "",
-    reportedValue: "",
-    description: "",
-  });
   const { toast } = useToast();
 
   const locale = getLocale();
@@ -55,42 +44,6 @@ export default function ClinicReports() {
       if (res.ok) setReports(data.reports || []);
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = getToken();
-    if (!token) return;
-
-    if (!form.patientName || !form.procedureDate || !form.reportedValue) {
-      toast({ title: t("common.error"), description: t("clinicReports.requiredFields"), variant: "destructive" });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const res = await fetch("/api/clinic-reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          patientName: form.patientName,
-          procedureDate: form.procedureDate,
-          reportedValue: form.reportedValue,
-          description: form.description || null,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setReports(prev => [data.report, ...prev]);
-        setForm({ patientName: "", procedureDate: "", reportedValue: "", description: "" });
-        setShowForm(false);
-        toast({ title: t("common.success"), description: t("clinicReports.saved") });
-      } else {
-        toast({ title: t("common.error"), description: data.message || t("clinicReports.saveError"), variant: "destructive" });
-      }
-    } catch {
-      toast({ title: t("common.error"), description: t("clinicReports.connectionError"), variant: "destructive" });
-    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
@@ -130,97 +83,6 @@ export default function ClinicReports() {
         <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
-        </div>
-
-        <div className="glass-card dark:glass-card-dark rounded-2xl p-6 shadow-2xl mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t("clinicReports.addReport")}</h3>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className={`flex items-center gap-2 px-4 py-2 h-auto rounded-full font-bold transition-all ${
-                showForm
-                  ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
-                  : "bg-[#8855f6] text-white shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]"
-              }`}
-              data-testid="button-toggle-form"
-            >
-              <Plus className={`w-4 h-4 transition-transform ${showForm ? "rotate-45" : ""}`} />
-              {showForm ? t("clinicReports.cancelAdd") : t("clinicReports.newReport")}
-            </Button>
-          </div>
-
-          {showForm && (
-            <form onSubmit={handleSubmit} className="space-y-4 border-t border-slate-100 dark:border-slate-700 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="patientName" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    {t("clinicReports.patientName")}
-                  </Label>
-                  <Input
-                    id="patientName"
-                    value={form.patientName}
-                    onChange={e => setForm(f => ({ ...f, patientName: e.target.value }))}
-                    placeholder={t("clinicReports.patientPlaceholder")}
-                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    data-testid="input-patient-name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="procedureDate" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    {t("clinicReports.procedureDate")}
-                  </Label>
-                  <Input
-                    id="procedureDate"
-                    type="date"
-                    value={form.procedureDate}
-                    onChange={e => setForm(f => ({ ...f, procedureDate: e.target.value }))}
-                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    data-testid="input-procedure-date"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="reportedValue" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    {t("clinicReports.reportedValue")}
-                  </Label>
-                  <Input
-                    id="reportedValue"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.reportedValue}
-                    onChange={e => setForm(f => ({ ...f, reportedValue: e.target.value }))}
-                    placeholder="0,00"
-                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    data-testid="input-reported-value"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description" className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5 block">
-                    {t("clinicReports.description")}
-                  </Label>
-                  <Input
-                    id="description"
-                    value={form.description}
-                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder={t("clinicReports.descriptionPlaceholder")}
-                    className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    data-testid="input-description"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center gap-2 px-6 py-2.5 h-auto bg-[#8855f6] text-white rounded-full font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]"
-                  data-testid="button-save-report"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  {saving ? t("clinicReports.savingReport") : t("clinicReports.saveReport")}
-                </Button>
-              </div>
-            </form>
-          )}
         </div>
 
         <div className="mb-12">

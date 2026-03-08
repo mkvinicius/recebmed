@@ -911,17 +911,14 @@ export async function registerRoutes(
           .filter(e => {
             const d = new Date(e.procedureDate);
             return d >= now && d <= cutoff;
-          })
-          .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+          }).length;
       };
 
       const allReconciledTotal = entries
-        .filter(e => e.status === "reconciled")
-        .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+        .filter(e => e.status === "reconciled").length;
 
       const allDivergentTotal = entries
-        .filter(e => e.status === "divergent")
-        .reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0);
+        .filter(e => e.status === "divergent").length;
 
       return res.json({
         projections: {
