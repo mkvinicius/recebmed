@@ -300,8 +300,8 @@
     "passwordMismatch": "Passwords do not match."
   },
   "reports": {
-    "title": "Financial Reports",
-    "subtitle": "Track your billing and performance",
+    "title": "Production Reports",
+    "subtitle": "Track your procedures and productivity",
     "period": "Period",
     "thisMonth": "This month",
     "last3Months": "Last 3 months",
@@ -319,14 +319,22 @@
     "divergentLabel": "Divergent",
     "monthlyRevenue": "Monthly Revenue",
     "noDataForPeriod": "No data for the selected period",
-    "insuranceDistribution": "Insurance Distribution",
-    "topInsurers": "Top Insurances by Value",
+    "insuranceDistribution": "Production by Insurance",
+    "topInsurers": "Top Insurances by Production",
     "insurerColumn": "Insurance",
     "totalValueColumn": "Total Value",
-    "entriesColumn": "Entries",
+    "entriesColumn": "Procedures",
     "percentColumn": "% of Total",
     "revenue": "Revenue",
-    "noInsurance": "No insurance"
+    "noInsurance": "No insurance",
+    "productionChart": "Production",
+    "totalProduction": "Total Production",
+    "procedures": "procedures",
+    "particularLabel": "Private",
+    "convenioLabel": "Insurance",
+    "weekly": "Week",
+    "monthly": "Month",
+    "yearly": "Year"
   },
   "reconciliation": {
     "title": "Check Production",

@@ -300,8 +300,8 @@
     "passwordMismatch": "As senhas não coincidem."
   },
   "reports": {
-    "title": "Relatórios Financeiros",
-    "subtitle": "Acompanhe seu faturamento e desempenho",
+    "title": "Relatórios de Produção",
+    "subtitle": "Acompanhe seus atendimentos e produtividade",
     "period": "Período",
     "thisMonth": "Este mês",
     "last3Months": "Últimos 3 meses",
@@ -319,14 +319,22 @@
     "divergentLabel": "Divergente",
     "monthlyRevenue": "Faturamento por Mês",
     "noDataForPeriod": "Sem dados para o período selecionado",
-    "insuranceDistribution": "Distribuição por Convênio",
-    "topInsurers": "Top Convênios por Valor",
+    "insuranceDistribution": "Produção por Convênio",
+    "topInsurers": "Top Convênios por Produção",
     "insurerColumn": "Convênio",
     "totalValueColumn": "Valor Total",
-    "entriesColumn": "Lançamentos",
+    "entriesColumn": "Atendimentos",
     "percentColumn": "% do Total",
     "revenue": "Faturamento",
-    "noInsurance": "Sem convênio"
+    "noInsurance": "Sem convênio",
+    "productionChart": "Produção",
+    "totalProduction": "Total Produção",
+    "procedures": "atendimentos",
+    "particularLabel": "Particular",
+    "convenioLabel": "Convênio",
+    "weekly": "Semana",
+    "monthly": "Mês",
+    "yearly": "Ano"
   },
   "reconciliation": {
     "title": "Conferir Produção",

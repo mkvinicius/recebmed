@@ -300,8 +300,8 @@
     "passwordMismatch": "Las contraseñas no coinciden."
   },
   "reports": {
-    "title": "Informes Financieros",
-    "subtitle": "Siga su facturación y rendimiento",
+    "title": "Informes de Producción",
+    "subtitle": "Siga sus procedimientos y productividad",
     "period": "Período",
     "thisMonth": "Este mes",
     "last3Months": "Últimos 3 meses",
@@ -319,14 +319,22 @@
     "divergentLabel": "Divergente",
     "monthlyRevenue": "Facturación por Mes",
     "noDataForPeriod": "Sin datos para el período seleccionado",
-    "insuranceDistribution": "Distribución por Seguro",
-    "topInsurers": "Top Seguros por Valor",
+    "insuranceDistribution": "Producción por Seguro",
+    "topInsurers": "Top Seguros por Producción",
     "insurerColumn": "Seguro",
     "totalValueColumn": "Valor Total",
-    "entriesColumn": "Registros",
+    "entriesColumn": "Procedimientos",
     "percentColumn": "% del Total",
     "revenue": "Facturación",
-    "noInsurance": "Sin seguro"
+    "noInsurance": "Sin seguro",
+    "productionChart": "Producción",
+    "totalProduction": "Producción Total",
+    "procedures": "procedimientos",
+    "particularLabel": "Particular",
+    "convenioLabel": "Seguro",
+    "weekly": "Semana",
+    "monthly": "Mes",
+    "yearly": "Año"
   },
   "reconciliation": {
     "title": "Verificar Producción",

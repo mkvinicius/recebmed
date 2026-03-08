@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -26,12 +26,23 @@ interface DoctorEntry {
 }
 
 const PIE_COLORS = ["#8855f6", "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444", "#ec4899"];
+const PRODUCTION_COLORS = { particular: "#8855f6", sus: "#3b82f6", convenio: "#22c55e" };
+
+type PeriodMode = "weekly" | "monthly" | "yearly";
+
+function classifyInsurance(provider: string): "particular" | "sus" | "convenio" {
+  const lower = provider.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (!lower || lower === "particular" || lower === "privado" || lower === "private") return "particular";
+  if (lower === "sus" || lower.includes("sistema unico") || lower.includes("unified health")) return "sus";
+  return "convenio";
+}
 
 export default function Reports() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const now = new Date();
   const defaultFrom = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
   const defaultTo = now.toISOString().split("T")[0];
@@ -47,6 +58,12 @@ export default function Reports() {
 
   const getMonthLabel = (date: Date): string => {
     return date.toLocaleDateString(locale, { month: "short", year: "2-digit" });
+  };
+
+  const getWeekLabel = (date: Date): string => {
+    const day = date.getDate();
+    const month = date.toLocaleDateString(locale, { month: "short" });
+    return `${day} ${month}`;
   };
 
   useEffect(() => {
@@ -98,41 +115,98 @@ export default function Reports() {
     [filteredEntries]
   );
 
-  const monthlyData = useMemo(() => {
-    const months: Record<string, number> = {};
-    const startDate = dateFrom ? new Date(dateFrom + "T00:00:00") : new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
+  const productionData = useMemo(() => {
+    const startDate = dateFrom ? new Date(dateFrom + "T00:00:00") : new Date(now.getFullYear(), now.getMonth() - 5, 1);
     const endDate = dateTo ? new Date(dateTo + "T23:59:59") : new Date();
+
+    if (periodMode === "weekly") {
+      const buckets: Record<string, { particular: number; sus: number; convenio: number; label: string }> = {};
+      const cur = new Date(startDate);
+      cur.setDate(cur.getDate() - cur.getDay());
+      while (cur <= endDate) {
+        const key = cur.toISOString().split("T")[0];
+        buckets[key] = { particular: 0, sus: 0, convenio: 0, label: getWeekLabel(cur) };
+        cur.setDate(cur.getDate() + 7);
+      }
+      filteredEntries.forEach(e => {
+        const d = new Date(e.procedureDate || e.createdAt);
+        const weekStart = new Date(d);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const key = weekStart.toISOString().split("T")[0];
+        const category = classifyInsurance(e.insuranceProvider);
+        if (buckets[key]) buckets[key][category]++;
+      });
+      return Object.values(buckets);
+    }
+
+    if (periodMode === "yearly") {
+      const buckets: Record<string, { particular: number; sus: number; convenio: number; label: string }> = {};
+      const startY = startDate.getFullYear();
+      const endY = endDate.getFullYear();
+      for (let y = startY; y <= endY; y++) {
+        buckets[String(y)] = { particular: 0, sus: 0, convenio: 0, label: String(y) };
+      }
+      filteredEntries.forEach(e => {
+        const d = new Date(e.procedureDate || e.createdAt);
+        const key = String(d.getFullYear());
+        const category = classifyInsurance(e.insuranceProvider);
+        if (buckets[key]) buckets[key][category]++;
+      });
+      return Object.values(buckets);
+    }
+
+    const buckets: Record<string, { particular: number; sus: number; convenio: number; label: string }> = {};
     const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     while (cur <= endDate) {
       const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
-      months[key] = 0;
+      buckets[key] = { particular: 0, sus: 0, convenio: 0, label: getMonthLabel(cur) };
       cur.setMonth(cur.getMonth() + 1);
     }
     filteredEntries.forEach(e => {
       const d = new Date(e.procedureDate || e.createdAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (key in months) {
-        months[key] += e.procedureValue ? parseFloat(e.procedureValue) : 0;
-      }
+      const category = classifyInsurance(e.insuranceProvider);
+      if (buckets[key]) buckets[key][category]++;
     });
-    return Object.entries(months).map(([key, value]) => {
-      const [y, m] = key.split("-").map(Number);
-      return { name: getMonthLabel(new Date(y, m - 1, 1)), value };
-    });
-  }, [filteredEntries, dateFrom, dateTo]);
+    return Object.values(buckets);
+  }, [filteredEntries, dateFrom, dateTo, periodMode]);
 
-  const insuranceData = useMemo(() => {
+  const insuranceCountData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredEntries.forEach(e => {
       const provider = e.insuranceProvider || t("reports.noInsurance");
-      map[provider] = (map[provider] || 0) + (e.procedureValue ? parseFloat(e.procedureValue) : 0);
+      map[provider] = (map[provider] || 0) + 1;
     });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [filteredEntries, t]);
 
-  const topInsurers = useMemo(() => insuranceData.slice(0, 10), [insuranceData]);
+  const topInsurers = useMemo(() => {
+    const map: Record<string, { value: number; count: number }> = {};
+    filteredEntries.forEach(e => {
+      const provider = e.insuranceProvider || t("reports.noInsurance");
+      if (!map[provider]) map[provider] = { value: 0, count: 0 };
+      map[provider].value += e.procedureValue ? parseFloat(e.procedureValue) : 0;
+      map[provider].count++;
+    });
+    return Object.entries(map)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [filteredEntries, t]);
+
+  const totalProduction = filteredEntries.length;
+  const productionByType = useMemo(() => {
+    let particular = 0, sus = 0, convenio = 0;
+    filteredEntries.forEach(e => {
+      const cat = classifyInsurance(e.insuranceProvider);
+      if (cat === "particular") particular++;
+      else if (cat === "sus") sus++;
+      else convenio++;
+    });
+    return { particular, sus, convenio };
+  }, [filteredEntries]);
 
   if (loading) {
     return (
@@ -141,6 +215,12 @@ export default function Reports() {
       </div>
     );
   }
+
+  const periodTabs: { key: PeriodMode; label: string }[] = [
+    { key: "weekly", label: t("reports.weekly") },
+    { key: "monthly", label: t("reports.monthly") },
+    { key: "yearly", label: t("reports.yearly") },
+  ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -233,60 +313,116 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-total-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-total-production">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><Activity className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalProduction")}</span>
+            </div>
+            <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100" data-testid="value-total-production">{totalProduction}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-particular">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalBilled")}</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.particularLabel")}</span>
             </div>
-            <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100" data-testid="value-total">{formatCurrency(totalValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.length} {t("common.entries")}</p>
+            <p className="text-xl font-extrabold text-[#8855f6]" data-testid="value-particular">{productionByType.particular}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-reconciled-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-sus">
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.reconciledLabel")}</span>
+              <span className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">SUS</span>
             </div>
-            <p className="text-xl font-extrabold text-green-600" data-testid="value-reconciled">{formatCurrency(reconciledValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "reconciled").length} {t("common.entries")}</p>
+            <p className="text-xl font-extrabold text-blue-600" data-testid="value-sus">{productionByType.sus}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-pending-value">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-convenio">
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl"><Clock className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.pendingLabel")}</span>
+              <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><Stethoscope className="w-4 h-4" /></span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.convenioLabel")}</span>
             </div>
-            <p className="text-xl font-extrabold text-amber-600" data-testid="value-pending">{formatCurrency(pendingValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "pending").length} {t("common.entries")}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="card-divergent-value">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.divergentLabel")}</span>
-            </div>
-            <p className="text-xl font-extrabold text-red-600" data-testid="value-divergent">{formatCurrency(divergentValue)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{filteredEntries.filter(e => e.status === "divergent").length} {t("common.entries")}</p>
+            <p className="text-xl font-extrabold text-green-600" data-testid="value-convenio">{productionByType.convenio}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="chart-monthly">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-[#8855f6]" />
-              <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.monthlyRevenue")}</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)]" data-testid="chart-production">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[#8855f6]" />
+                <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.productionChart")}</h3>
+              </div>
+              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5" data-testid="period-selector">
+                {periodTabs.map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setPeriodMode(tab.key)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                      periodMode === tab.key
+                        ? "bg-[#8855f6] text-white shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                    data-testid={`period-${tab.key}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {monthlyData.length > 0 ? (
+
+            <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: PRODUCTION_COLORS.particular }} />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("reports.particularLabel")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: PRODUCTION_COLORS.sus }} />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">SUS</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: PRODUCTION_COLORS.convenio }} />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("reports.convenioLabel")}</span>
+              </div>
+            </div>
+
+            {productionData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={monthlyData}>
+                <BarChart data={productionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:[&>line]:stroke-slate-700" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#94a3b8" }} />
-                  <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => new Intl.NumberFormat(locale, { style: "currency", currency, notation: "compact", maximumFractionDigits: 0 }).format(v)} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94a3b8" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} allowDecimals={false} />
                   <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), t("reports.revenue")]}
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload) return null;
+                      const total = payload.reduce((s, p) => s + (Number(p.value) || 0), 0);
+                      return (
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-3 shadow-lg text-sm">
+                          <p className="font-bold text-slate-800 dark:text-slate-100 mb-1.5">{label}</p>
+                          {payload.map((p, i) => (
+                            <div key={i} className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: p.color }} />
+                                <span className="text-slate-600 dark:text-slate-300">{p.name}</span>
+                              </div>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">{p.value}</span>
+                            </div>
+                          ))}
+                          <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-700 flex justify-between font-bold text-slate-800 dark:text-slate-100">
+                            <span>Total</span>
+                            <span>{total}</span>
+                          </div>
+                        </div>
+                      );
+                    }}
                   />
-                  <Bar dataKey="value" fill="#8855f6" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="particular" name={t("reports.particularLabel")} stackId="production" fill={PRODUCTION_COLORS.particular} radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="sus" name="SUS" stackId="production" fill={PRODUCTION_COLORS.sus} radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="convenio" name={t("reports.convenioLabel")} stackId="production" fill={PRODUCTION_COLORS.convenio} radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -301,11 +437,11 @@ export default function Reports() {
               <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
               <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.insuranceDistribution")}</h3>
             </div>
-            {insuranceData.length > 0 ? (
+            {insuranceCountData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
-                    data={insuranceData}
+                    data={insuranceCountData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -315,12 +451,12 @@ export default function Reports() {
                     label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     labelLine={{ stroke: "#94a3b8" }}
                   >
-                    {insuranceData.map((_, index) => (
+                    {insuranceCountData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), t("common.value")]}
+                    formatter={(value: number) => [value, t("reports.procedures")]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
                   />
                 </PieChart>
@@ -343,8 +479,8 @@ export default function Reports() {
                 <tr className="border-b border-slate-100 dark:border-slate-700">
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">#</th>
                   <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.insurerColumn")}</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.totalValueColumn")}</th>
                   <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.entriesColumn")}</th>
+                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.totalValueColumn")}</th>
                   <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.percentColumn")}</th>
                 </tr>
               </thead>
@@ -357,8 +493,7 @@ export default function Reports() {
                   </tr>
                 ) : (
                   topInsurers.map((ins, i) => {
-                    const count = filteredEntries.filter(e => (e.insuranceProvider || t("reports.noInsurance")) === ins.name).length;
-                    const pct = totalValue > 0 ? ((ins.value / totalValue) * 100).toFixed(1) : "0.0";
+                    const pct = totalProduction > 0 ? ((ins.count / totalProduction) * 100).toFixed(1) : "0.0";
                     return (
                       <tr key={ins.name} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-testid={`row-insurer-${i}`}>
                         <td className="px-6 py-4 text-sm font-bold text-slate-400 dark:text-slate-500">{i + 1}</td>
@@ -368,8 +503,8 @@ export default function Reports() {
                             <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-200 text-sm">{formatCurrency(ins.value)}</td>
-                        <td className="px-6 py-4 text-right text-sm text-slate-500 dark:text-slate-400">{count}</td>
+                        <td className="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.count}</td>
+                        <td className="px-6 py-4 text-right text-sm text-slate-500 dark:text-slate-400">{formatCurrency(ins.value)}</td>
                         <td className="px-6 py-4 text-right">
                           <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2.5 py-1 rounded-full">{pct}%</span>
                         </td>

@@ -126,7 +126,7 @@ Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 - **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field); shows per-field AI confidence indicators (green/amber/red dots) and overall confidence banner for photo/audio entries
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
-- **Reports**: Financial charts with recharts (bar chart by month, pie chart by insurance), summary cards, period filters
+- **Reports (Relatórios de Produção)**: Production charts with recharts — stacked bar chart showing procedure count by type (Particular/SUS/Convênio) with period selector (weekly/monthly/yearly), pie chart showing production distribution by insurance. Summary cards: Total Production, Particular, SUS, Convênio counts. Top insurers table sorted by procedure count
 - **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries
 - **EntryDetail**: Detailed view of individual entry with image evidence display
 - **Import (Auditoria Retroativa)**: Historical data import — CSV/Excel template download, spreadsheet upload with year selector, multi-PDF upload for clinic reports with bulk reconciliation
