@@ -438,18 +438,16 @@ export default function Reports() {
               <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.insuranceDistribution")}</h3>
             </div>
             {insuranceCountData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={insuranceCountData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    cy="45%"
+                    innerRadius={50}
+                    outerRadius={85}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine={{ stroke: "#94a3b8" }}
                   >
                     {insuranceCountData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
@@ -458,6 +456,17 @@ export default function Reports() {
                   <Tooltip
                     formatter={(value: number) => [value, t("reports.procedures")]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    iconSize={10}
+                    formatter={(value: string, entry: any) => {
+                      const item = insuranceCountData.find(d => d.name === value);
+                      const pct = item ? ((item.value / insuranceCountData.reduce((s, d) => s + d.value, 0)) * 100).toFixed(0) : "0";
+                      return `${value} (${pct}%)`;
+                    }}
+                    wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -477,17 +486,17 @@ export default function Reports() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-700">
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">#</th>
-                  <th className="text-left px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.insurerColumn")}</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.entriesColumn")}</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.totalValueColumn")}</th>
-                  <th className="text-right px-6 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.percentColumn")}</th>
+                  <th className="text-left pl-4 pr-2 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">#</th>
+                  <th className="text-left px-2 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.insurerColumn")}</th>
+                  <th className="text-right px-2 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.entriesColumn")}</th>
+                  <th className="text-right px-2 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.totalValueColumn")}</th>
+                  <th className="text-right pl-2 pr-4 py-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("reports.percentColumn")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {topInsurers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                       {t("reports.noDataForPeriod")}
                     </td>
                   </tr>
@@ -496,17 +505,17 @@ export default function Reports() {
                     const pct = totalProduction > 0 ? ((ins.count / totalProduction) * 100).toFixed(1) : "0.0";
                     return (
                       <tr key={ins.name} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-testid={`row-insurer-${i}`}>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-400 dark:text-slate-500">{i + 1}</td>
-                        <td className="px-6 py-4">
+                        <td className="pl-4 pr-2 py-4 text-sm font-bold text-slate-400 dark:text-slate-500">{i + 1}</td>
+                        <td className="px-2 py-4">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.name}</span>
+                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">{ins.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.count}</td>
-                        <td className="px-6 py-4 text-right text-sm text-slate-500 dark:text-slate-400">{formatCurrency(ins.value)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2.5 py-1 rounded-full">{pct}%</span>
+                        <td className="px-2 py-4 text-right font-bold text-slate-800 dark:text-slate-200 text-sm">{ins.count}</td>
+                        <td className="px-2 py-4 text-right text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatCurrency(ins.value)}</td>
+                        <td className="pl-2 pr-4 py-4 text-right">
+                          <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2 py-1 rounded-full">{pct}%</span>
                         </td>
                       </tr>
                     );
