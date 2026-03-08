@@ -33,13 +33,8 @@ export default function Login() {
       }
       saveAuth(data.token, data.user);
       setRequiresPasswordUpdate(!!data.requiresPasswordUpdate);
-      if (data.requiresPasswordUpdate) {
-        toast({ title: t("login.weakPasswordTitle"), description: t("login.weakPasswordDesc"), variant: "destructive" });
-        setLocation("/settings");
-      } else {
-        toast({ title: t("login.successTitle"), description: t("login.welcomeBack", { name: data.user.name }) });
-        setLocation("/dashboard");
-      }
+      toast({ title: t("login.successTitle"), description: t("login.welcomeBack", { name: data.user.name }) });
+      setLocation("/dashboard");
     } catch {
       toast({ title: t("common.connectionError"), description: t("common.connectionErrorDesc"), variant: "destructive" });
     } finally {

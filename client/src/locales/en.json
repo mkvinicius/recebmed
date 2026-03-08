@@ -285,6 +285,7 @@
     "changePasswordDesc": "Keep your account secure",
     "weakPasswordWarning": "Your password needs to be updated!",
     "weakPasswordWarningDesc": "Your current password is weak. For security, set a new password with at least 8 characters, including uppercase, lowercase, and numbers.",
+    "weakPasswordBannerHint": "Tap here to update your password",
     "currentPassword": "Current password",
     "currentPasswordPlaceholder": "Enter your current password",
     "newPassword": "New password",

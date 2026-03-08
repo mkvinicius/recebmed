@@ -285,6 +285,7 @@
     "changePasswordDesc": "Mantenga su cuenta segura",
     "weakPasswordWarning": "¡Su contraseña necesita ser actualizada!",
     "weakPasswordWarningDesc": "Su contraseña actual es débil. Por seguridad, defina una nueva contraseña con al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números.",
+    "weakPasswordBannerHint": "Toque aquí para actualizar su contraseña",
     "currentPassword": "Contraseña actual",
     "currentPasswordPlaceholder": "Ingrese su contraseña actual",
     "newPassword": "Nueva contraseña",

@@ -285,6 +285,7 @@
     "changePasswordDesc": "Mantenha sua conta segura",
     "weakPasswordWarning": "Sua senha precisa ser atualizada!",
     "weakPasswordWarningDesc": "Sua senha atual é fraca. Por segurança, defina uma nova senha que contenha no mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.",
+    "weakPasswordBannerHint": "Toque aqui para atualizar sua senha",
     "currentPassword": "Senha atual",
     "currentPasswordPlaceholder": "Digite sua senha atual",
     "newPassword": "Nova senha",

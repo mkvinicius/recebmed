@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
-import { Home, FileText, Plus, BarChart3, User } from "lucide-react";
+import { Home, FileText, Plus, BarChart3, User, ShieldAlert, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getUser } from "@/lib/auth";
+import { getUser, getRequiresPasswordUpdate } from "@/lib/auth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -10,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const user = getUser();
   const profilePhotoUrl = user?.profilePhotoUrl || null;
   const userInitials = user?.name ? user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
+  const showPwWarning = getRequiresPasswordUpdate();
 
   const tabs = [
     { path: "/dashboard", labelKey: "nav.home", icon: Home },
@@ -39,6 +40,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div id="header-right-slot" />
           </header>
         </div>
+
+        {showPwWarning && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-2">
+            <button
+              onClick={() => setLocation("/settings")}
+              className="w-full bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+              data-testid="banner-weak-password-global"
+            >
+              <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-amber-800 dark:text-amber-300">{t("settings.weakPasswordWarning")}</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 truncate">{t("settings.weakPasswordBannerHint")}</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-amber-500 shrink-0" />
+            </button>
+          </div>
+        )}
 
         {children}
       </div>

@@ -285,6 +285,7 @@
     "changePasswordDesc": "Gardez votre compte sécurisé",
     "weakPasswordWarning": "Votre mot de passe doit être mis à jour !",
     "weakPasswordWarningDesc": "Votre mot de passe actuel est faible. Pour votre sécurité, définissez un nouveau mot de passe avec au moins 8 caractères, incluant majuscules, minuscules et chiffres.",
+    "weakPasswordBannerHint": "Appuyez ici pour mettre à jour votre mot de passe",
     "currentPassword": "Mot de passe actuel",
     "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
     "newPassword": "Nouveau mot de passe",
