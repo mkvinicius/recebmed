@@ -46,6 +46,7 @@ export interface IStorage {
 
   findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
   findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]>;
+  getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -204,16 +205,63 @@ export class DatabaseStorage implements IStorage {
     const dayEnd = new Date(procedureDate);
     dayEnd.setHours(23, 59, 59, 999);
 
-    return db.select().from(doctorEntries).where(
+    const normalized = normalizePatientName(patientName);
+    const allSameDay = await db.select().from(doctorEntries).where(
       and(
         eq(doctorEntries.doctorId, doctorId),
-        ilike(doctorEntries.patientName, patientName),
         gte(doctorEntries.procedureDate, dayStart),
         sql`${doctorEntries.procedureDate} <= ${dayEnd}`,
         ilike(doctorEntries.description, description)
       )
-    ).orderBy(desc(doctorEntries.createdAt)).limit(5);
+    ).orderBy(desc(doctorEntries.createdAt)).limit(20);
+
+    return allSameDay.filter(e => normalizePatientName(e.patientName) === normalized).slice(0, 5);
   }
+
+  async getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]> {
+    const rows = await db.selectDistinct({ patientName: doctorEntries.patientName })
+      .from(doctorEntries)
+      .where(
+        query
+          ? and(eq(doctorEntries.doctorId, doctorId), ilike(doctorEntries.patientName, `%${query}%`))
+          : eq(doctorEntries.doctorId, doctorId)
+      )
+      .orderBy(doctorEntries.patientName)
+      .limit(50);
+
+    if (!query) return rows.map(r => r.patientName);
+
+    const normalizedQuery = normalizePatientName(query);
+    const allNames = rows.map(r => r.patientName);
+
+    if (normalizedQuery.length >= 2) {
+      const extraRows = await db.selectDistinct({ patientName: doctorEntries.patientName })
+        .from(doctorEntries)
+        .where(eq(doctorEntries.doctorId, doctorId))
+        .orderBy(doctorEntries.patientName)
+        .limit(200);
+
+      const seen = new Set(allNames.map(n => n.toLowerCase()));
+      for (const r of extraRows) {
+        if (!seen.has(r.patientName.toLowerCase()) && normalizePatientName(r.patientName).includes(normalizedQuery)) {
+          allNames.push(r.patientName);
+          seen.add(r.patientName.toLowerCase());
+        }
+      }
+    }
+
+    return allNames.slice(0, 20);
+  }
+}
+
+function normalizePatientName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export const storage = new DatabaseStorage();

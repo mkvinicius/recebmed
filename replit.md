@@ -93,6 +93,9 @@ shared/
 - `POST /api/uploads/request-url` - Get presigned upload URL
 - `GET /objects/{*objectPath}` - Serve uploaded files
 
+### Patients
+- `GET /api/patients/names?q=` - Get distinct patient names for autocomplete (fuzzy match, accent-insensitive, max 20 results)
+
 ### AI Corrections
 - `GET /api/ai-corrections/stats` - Get correction statistics (totalCorrections, fieldCounts, recentCorrections)
 
@@ -149,7 +152,8 @@ Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 3. Audio: MediaRecorder -> WAV conversion -> base64 -> POST /api/entries/audio -> AI transcribes + extracts -> ConfirmEntry page
 4. Manual: Direct navigation to ConfirmEntry with empty form
 5. ConfirmEntry: User reviews/edits extracted data + value -> POST /api/entries (with _originalData for AI methods, _imageHash for duplicate tracking) -> saved to DB + corrections stored in ai_corrections -> back to Dashboard
-   - Duplicate detection: Photo capture computes SHA-256 hash of image; exact image duplicates warned at capture time. Data duplicates (same patient+date+description) checked on entry save (409 response) with continue/cancel modal
+   - Smart patient name autocomplete: As user types (2+ chars), debounced search fetches matching patient names from previous entries, including fuzzy matching that ignores accents (João = Joao = JOÃO). Dropdown with keyboard nav (arrows + enter/escape)
+   - Duplicate detection: Photo capture computes SHA-256 hash of image; exact image duplicates warned at capture time. Data duplicates checked with fuzzy/normalized patient name matching (ignores accents, case, extra spaces) on same date+description (409 response) with continue/cancel modal
 6. Learning loop: On next photo/audio extraction, recent corrections from ai_corrections are fetched and injected into AI prompts as context to improve accuracy
 7. Notifications auto-generated on entry creation and divergence marking
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,99 @@ function ConfidenceBanner({ confidence }: { confidence: ConfidenceData }) {
   return (
     <div className={`mb-4 px-3 py-2 rounded-xl border text-xs font-semibold text-center ${config.bannerClass}`} data-testid="confidence-banner">
       {config.bannerText}
+    </div>
+  );
+}
+
+function PatientNameInput({ value, onChange, placeholder, testId }: {
+  value: string; onChange: (val: string) => void; placeholder: string; testId: string;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) { setSuggestions([]); setShowDropdown(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`/api/patients/names?q=${encodeURIComponent(q)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const filtered = (data.names || []).filter((n: string) => n.toLowerCase() !== q.toLowerCase());
+          setSuggestions(filtered);
+          setShowDropdown(filtered.length > 0);
+          setActiveIndex(-1);
+        }
+      } catch {}
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      onChange(suggestions[activeIndex]);
+      setShowDropdown(false);
+    } else if (e.key === "Escape") {
+      setShowDropdown(false);
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); fetchSuggestions(e.target.value); }}
+        onFocus={() => { if (value.length >= 2 && suggestions.length > 0) setShowDropdown(true); }}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        autoComplete="off"
+        className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
+        data-testid={testId}
+      />
+      {showDropdown && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg max-h-48 overflow-y-auto" data-testid={`${testId}-suggestions`}>
+          {suggestions.map((name, i) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => { onChange(name); setShowDropdown(false); }}
+              className={`w-full text-left px-3 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 ${
+                i === activeIndex
+                  ? "bg-[#8855f6]/10 text-[#8855f6] dark:text-[#a880ff]"
+                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+              } ${i === 0 ? "rounded-t-xl" : ""} ${i === suggestions.length - 1 ? "rounded-b-xl" : ""}`}
+              data-testid={`suggestion-patient-${i}`}
+            >
+              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{name}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -317,10 +410,12 @@ export default function ConfirmEntry() {
                     <User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}
                     {showConfidence && entry.confidence && <ConfidenceIndicator level={entry.confidence.patientName} />}
                   </Label>
-                  <Input value={entry.patientName} onChange={(e) => updateEntry(index, "patientName", e.target.value)}
+                  <PatientNameInput
+                    value={entry.patientName}
+                    onChange={(val) => updateEntry(index, "patientName", val)}
                     placeholder={t("confirm.patientPlaceholder")}
-                    className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
-                    data-testid={`input-patient-name-${index}`} />
+                    testId={`input-patient-name-${index}`}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
