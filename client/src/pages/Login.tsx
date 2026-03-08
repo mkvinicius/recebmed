@@ -44,14 +44,15 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center p-4 dark:bg-[#0d0a14]">
-      <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0 overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-80 z-0 overflow-hidden">
         <img
           src="/login-bg-doctors.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-top opacity-20 mix-blend-luminosity"
+          className="absolute inset-0 w-full h-full object-cover object-top"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#8855f6]/30 via-transparent to-[#8855f6]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#7040d4]/75 via-[#8855f6]/70 to-[#a070ff]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-[#0d0a14]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
