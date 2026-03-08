@@ -50,11 +50,22 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  name: true,
-  email: true,
-  password: true,
-});
+export const passwordSchema = z
+  .string()
+  .min(8, "Senha deve ter no mínimo 8 caracteres")
+  .regex(/[A-Z]/, "Senha deve conter pelo menos 1 letra maiúscula")
+  .regex(/[a-z]/, "Senha deve conter pelo menos 1 letra minúscula")
+  .regex(/[0-9]/, "Senha deve conter pelo menos 1 número");
+
+export const insertUserSchema = createInsertSchema(users)
+  .pick({
+    name: true,
+    email: true,
+    password: true,
+  })
+  .extend({
+    password: passwordSchema,
+  });
 
 export const loginSchema = z.object({
   email: z.string().email(),

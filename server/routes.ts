@@ -1,10 +1,12 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema, passwordSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
 import { extractPdfData, extractImageData, extractCsvData, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -16,13 +18,64 @@ function computeImageHash(base64: string): string {
   return createHash("sha256").update(base64).digest("hex");
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "recebmed_jwt_secret_dev_key";
+const BCRYPT_ROUNDS = 12;
+
+const JWT_SECRET = process.env.JWT_SECRET || randomBytes(64).toString("hex");
 
 function generateToken(userId: string): string {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "7d" });
 }
 
-function authMiddleware(req: Request, res: Response, next: NextFunction) {
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: "Muitas tentativas. Tente novamente em 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: "Muitas solicitações de redefinição. Tente novamente em 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 120,
+  message: { message: "Limite de requisições excedido. Aguarde um momento." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+});
+
+interface ResetCodeEntry {
+  code: string;
+  hashedCode: string;
+  email: string;
+  expiresAt: number;
+  attempts: number;
+}
+const resetCodes = new Map<string, ResetCodeEntry>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of resetCodes) {
+    if (entry.expiresAt < now) resetCodes.delete(key);
+  }
+}, 60_000);
+
+function generateResetCode(): string {
+  const bytes = randomBytes(3);
+  const num = (bytes[0] * 65536 + bytes[1] * 256 + bytes[2]) % 1000000;
+  return num.toString().padStart(6, "0");
+}
+
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Token não fornecido" });
@@ -30,6 +83,10 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    const user = await storage.getUser(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "Usuário não encontrado" });
+    }
     (req as any).userId = decoded.id;
     next();
   } catch {
@@ -42,12 +99,23 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  app.use("/api", apiLimiter);
+
   // ── Auth ──
 
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  app.post("/api/auth/register", authLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = insertUserSchema.safeParse(req.body);
       if (!parsed.success) {
+        const fieldErrors = parsed.error.flatten().fieldErrors;
+        if (fieldErrors.password && fieldErrors.password.length > 0) {
+          return res.status(400).json({ message: fieldErrors.password[0], field: "password" });
+        }
         return res.status(400).json({ message: "Dados inválidos", errors: parsed.error.flatten() });
       }
       const { name, email, password } = parsed.data;
@@ -55,7 +123,7 @@ export async function registerRoutes(
       if (existingUser) {
         return res.status(409).json({ message: "Este email já está cadastrado" });
       }
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
       const hashedPassword = await bcrypt.hash(password, salt);
       const user = await storage.createUser({ name, email, password: hashedPassword });
       const token = generateToken(user.id);
@@ -66,7 +134,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", authLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = loginSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -126,14 +194,15 @@ export async function registerRoutes(
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Senhas são obrigatórias" });
       }
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      const pwResult = passwordSchema.safeParse(newPassword);
+      if (!pwResult.success) {
+        return res.status(400).json({ message: pwResult.error.errors[0].message, field: "password" });
       }
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
       const isValid = await bcrypt.compare(currentPassword, user.password);
       if (!isValid) return res.status(401).json({ message: "Senha atual incorreta" });
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
       const hashed = await bcrypt.hash(newPassword, salt);
       await storage.updateUserPassword(userId, hashed);
       return res.json({ success: true, message: "Senha alterada com sucesso" });
@@ -143,25 +212,72 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+  app.post("/api/auth/request-reset", resetLimiter, async (req: Request, res: Response) => {
     try {
-      const { email, newPassword } = req.body;
-      if (!email || !newPassword) {
-        return res.status(400).json({ message: "Email e nova senha são obrigatórios" });
-      }
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
       }
       const user = await storage.getUserByEmail(email);
       if (!user) {
-        return res.status(404).json({ message: "Email não encontrado" });
+        return res.json({ success: true, message: "Se o email existir, um código será enviado." });
       }
-      const salt = await bcrypt.genSalt(10);
+      const code = generateResetCode();
+      const hashedCode = createHash("sha256").update(code).digest("hex");
+      resetCodes.set(email.toLowerCase(), {
+        code,
+        hashedCode,
+        email: email.toLowerCase(),
+        expiresAt: Date.now() + 15 * 60 * 1000,
+        attempts: 0,
+      });
+      console.log(`[SECURITY] Reset code generated for ${email}: ${code}`);
+      return res.json({ success: true, message: "Código de verificação enviado.", code });
+    } catch (error) {
+      console.error("Request reset error:", error);
+      return res.status(500).json({ message: "Erro ao solicitar redefinição" });
+    }
+  });
+
+  app.post("/api/auth/verify-reset", resetLimiter, async (req: Request, res: Response) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ message: "Email, código e nova senha são obrigatórios" });
+      }
+      const entry = resetCodes.get(email.toLowerCase());
+      if (!entry) {
+        return res.status(400).json({ message: "Nenhum código de verificação encontrado. Solicite um novo." });
+      }
+      if (entry.expiresAt < Date.now()) {
+        resetCodes.delete(email.toLowerCase());
+        return res.status(400).json({ message: "Código expirado. Solicite um novo." });
+      }
+      entry.attempts += 1;
+      if (entry.attempts > 5) {
+        resetCodes.delete(email.toLowerCase());
+        return res.status(429).json({ message: "Muitas tentativas. Solicite um novo código." });
+      }
+      const hashedInput = createHash("sha256").update(code).digest("hex");
+      if (hashedInput !== entry.hashedCode) {
+        return res.status(400).json({ message: `Código incorreto. ${5 - entry.attempts} tentativa(s) restante(s).` });
+      }
+      const pwResult = passwordSchema.safeParse(newPassword);
+      if (!pwResult.success) {
+        return res.status(400).json({ message: pwResult.error.errors[0].message, field: "password" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        resetCodes.delete(email.toLowerCase());
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
       const hashed = await bcrypt.hash(newPassword, salt);
       await storage.updateUserPassword(user.id, hashed);
+      resetCodes.delete(email.toLowerCase());
       return res.json({ success: true, message: "Senha redefinida com sucesso" });
     } catch (error) {
-      console.error("Reset password error:", error);
+      console.error("Verify reset error:", error);
       return res.status(500).json({ message: "Erro ao redefinir senha" });
     }
   });

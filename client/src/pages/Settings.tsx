@@ -66,8 +66,9 @@ export default function Settings() {
       toast({ title: t("common.error"), description: t("settings.fillAllPassword"), variant: "destructive" });
       return;
     }
-    if (newPassword.length < 6) {
-      toast({ title: t("common.error"), description: t("settings.passwordTooShort"), variant: "destructive" });
+    const pwValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /[0-9]/.test(newPassword);
+    if (!pwValid) {
+      toast({ title: t("common.error"), description: t("forgotPassword.passwordRequirements"), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {

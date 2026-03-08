@@ -1,24 +1,71 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Stethoscope } from "lucide-react";
+import { Loader2, Stethoscope, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { saveAuth } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
+
+function PasswordStrength({ password }: { password: string }) {
+  const { t } = useTranslation();
+  const checks = useMemo(() => [
+    { ok: password.length >= 8, label: t("forgotPassword.rule8chars") },
+    { ok: /[A-Z]/.test(password), label: t("forgotPassword.ruleUppercase") },
+    { ok: /[a-z]/.test(password), label: t("forgotPassword.ruleLowercase") },
+    { ok: /[0-9]/.test(password), label: t("forgotPassword.ruleNumber") },
+  ], [password, t]);
+
+  const passed = checks.filter(c => c.ok).length;
+  const strength = passed === 0 ? 0 : passed <= 2 ? 1 : passed <= 3 ? 2 : 3;
+  const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500"];
+  const labels = [t("forgotPassword.strengthWeak"), t("forgotPassword.strengthWeak"), t("forgotPassword.strengthMedium"), t("forgotPassword.strengthStrong")];
+
+  if (!password) return null;
+
+  return (
+    <div className="space-y-2 mt-2">
+      <div className="flex gap-1">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= strength ? colors[strength] : "bg-slate-200 dark:bg-slate-700"}`} />
+        ))}
+      </div>
+      <p className={`text-xs font-semibold ${strength <= 1 ? "text-red-500" : strength === 2 ? "text-yellow-600" : "text-green-600"}`}>
+        {labels[strength]}
+      </p>
+      <ul className="space-y-1">
+        {checks.map((c, i) => (
+          <li key={i} className={`text-xs flex items-center gap-1.5 ${c.ok ? "text-green-600" : "text-slate-400 dark:text-slate-500"}`}>
+            {c.ok ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600 inline-block" />}
+            {c.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function Register() {
   const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  const passwordValid = useMemo(() => {
+    return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+  }, [password]);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!passwordValid) {
+      toast({ title: t("common.error"), description: t("forgotPassword.passwordRequirements"), variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -88,22 +135,32 @@ export default function Register() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">{t("register.password")}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t("register.passwordPlaceholder")}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100"
-                data-testid="input-register-password"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={t("register.passwordPlaceholder")}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 pr-12"
+                  data-testid="input-register-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <PasswordStrength password={password} />
             </div>
             <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold text-md shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all"
+              disabled={isLoading || !passwordValid}
+              className="w-full h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold text-md shadow-lg shadow-[#8855f6]/30 hover:shadow-xl hover:shadow-[#8855f6]/40 hover:scale-[1.02] transition-all disabled:opacity-50"
               data-testid="button-register"
             >
               {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("register.submitting")}</> : t("register.submit")}

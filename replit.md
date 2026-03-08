@@ -7,7 +7,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Frontend**: React (Vite 3.2.11 + Rollup 2.80.0) + TailwindCSS v4 (via @tailwindcss/postcss) + shadcn/ui components
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
-- **Auth**: JWT (jsonwebtoken) + bcryptjs for password hashing
+- **Auth**: JWT (jsonwebtoken) + bcryptjs (12 rounds) for password hashing + express-rate-limit + helmet security headers
 - **AI**: OpenAI direct API (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT)
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
@@ -52,12 +52,14 @@ shared/
 
 ## API Routes
 
-### Auth
-- `POST /api/auth/register` - Create account (name, email, password) -> JWT
+### Auth (rate-limited: 10 req/15min login/register, 5 req/15min reset)
+- `POST /api/auth/register` - Create account (name, email, password with strength validation: min 8 chars, uppercase, lowercase, number) -> JWT
 - `POST /api/auth/login` - Login (email, password) -> JWT
-- `GET /api/auth/me` - Get current user (requires Bearer token)
+- `GET /api/auth/me` - Get current user (requires Bearer token, validates user exists)
 - `PUT /api/auth/profile` - Update user name
-- `PUT /api/auth/password` - Change password (requires currentPassword, newPassword)
+- `PUT /api/auth/password` - Change password (requires currentPassword, newPassword with strength validation)
+- `POST /api/auth/request-reset` - Request password reset code (6-digit, 15min expiry, stored hashed in memory)
+- `POST /api/auth/verify-reset` - Verify code + set new password (max 5 attempts per code, one-time use)
 - `PUT /api/auth/profile-photo` - Update profile photo URL
 
 ### Entries
@@ -108,11 +110,12 @@ Bottom tab bar (AppLayout) with 5 tabs on authenticated pages:
 - **Relatórios** (/reports) - Financial charts and reports
 - **Perfil** (/profile) - User info, quick links (Settings, Clinic Reports, Reconciliation), logout
 
-Pages without tab bar: Login, Register, ConfirmEntry
+Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 
 ## Pages
 
-- **Login/Register**: Authentication flow
+- **Login/Register**: Authentication flow with password strength meter (8+ chars, uppercase, lowercase, number required)
+- **ForgotPassword**: Secure 2-step reset flow: 1) enter email → receive 6-digit code, 2) enter code + new strong password → reset complete
 - **Dashboard (Início)**: Clean widget home with greeting, smart search bar (debounced, server-side via /api/entries/search), stats grid (Pendentes/Conferidos/Divergentes/Total), ProjectionsPanel, recent 5 entries with edit modal, notification bell dropdown
 - **Entries (Lançamentos)**: Full entries list with search, status/date/insurance filters, edit modal, quick status change
 - **Capture (Captura)**: Three capture method cards (Photo/Audio/Manual) with AI processing; photo supports batch upload (multiple files)
@@ -158,7 +161,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 
 ## Key Dependencies
 
-- bcryptjs, jsonwebtoken (auth)
+- bcryptjs, jsonwebtoken, express-rate-limit, helmet (auth + security)
 - openai (AI integrations - uses AI_INTEGRATIONS_OPENAI_API_KEY + AI_INTEGRATIONS_OPENAI_BASE_URL)
 - pdf-parse (PDF text extraction for reconciliation)
 - papaparse (CSV parsing for historical import)
@@ -173,7 +176,7 @@ Pages without tab bar: Login, Register, ConfirmEntry
 
 ## Environment Variables
 
-- `JWT_SECRET` - JWT signing secret
+- `JWT_SECRET` - JWT signing secret (auto-generated random 64-byte hex if not set)
 - `OPENAI_API_KEY` - OpenAI API key (direct, https://api.openai.com/v1)
 - `DEFAULT_OBJECT_STORAGE_BUCKET_ID` - Replit object storage bucket ID
 - `PUBLIC_OBJECT_SEARCH_PATHS` - Public asset search paths
