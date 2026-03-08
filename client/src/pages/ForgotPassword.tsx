@@ -123,7 +123,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen relative flex flex-col items-center justify-center p-4 dark:bg-[#0d0a14]">
       <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0" />
       <div className="absolute top-0 left-0 w-full h-72 z-0 overflow-hidden pointer-events-none">
-        <img src="/login-bg-doctors.png" alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-[0.35]" loading="eager" />
+        <img src="/login-bg-doctors.png" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.35]" loading="eager" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">

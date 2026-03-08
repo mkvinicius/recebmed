@@ -49,7 +49,7 @@ export default function Login() {
         <img
           src="/login-bg-doctors.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-top opacity-[0.35]"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.35]"
           loading="eager"
         />
       </div>
