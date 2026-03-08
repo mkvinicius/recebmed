@@ -28,7 +28,7 @@ export default function ProjectionsPanel() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.3)] mb-8 flex items-center justify-center">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] mb-8 flex items-center justify-center">
         <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
       </div>
     );
@@ -52,7 +52,7 @@ export default function ProjectionsPanel() {
         {cards.map((card, i) => (
           <div
             key={i}
-            className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-5 text-white shadow-lg relative overflow-hidden`}
+            className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-5 text-white shadow-[0_8px_24px_-4px_rgba(136,85,246,0.4),0_4px_8px_-2px_rgba(0,0,0,0.15)] relative overflow-hidden`}
             data-testid={`projection-card-${i}`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
@@ -64,15 +64,15 @@ export default function ProjectionsPanel() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-4 mt-3">
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100/60 dark:border-slate-700/40 text-center shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.reconciledTotal")}</p>
           <p className="text-sm font-bold text-green-600" data-testid="projection-total-reconciled">{data.totals.reconciled}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100/60 dark:border-slate-700/40 text-center shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.divergentTotal")}</p>
           <p className="text-sm font-bold text-red-500" data-testid="projection-total-divergent">{data.totals.divergent}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100/60 dark:border-slate-700/40 text-center shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{t("projections.totalLabel")}</p>
           <p className="text-sm font-bold text-[#8855f6]" data-testid="projection-total">{data.totals.total}</p>
         </div>

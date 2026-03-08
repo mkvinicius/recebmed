@@ -85,7 +85,7 @@ export default function Import() {
           <p className="text-white/80 mt-1 text-sm">{t("import.subtitle")}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="size-10 bg-[#8855f6]/10 rounded-xl flex items-center justify-center">
               <Download className="w-5 h-5 text-[#8855f6]" />
@@ -111,7 +111,7 @@ export default function Import() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="size-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
