@@ -238,7 +238,7 @@ export default function Dashboard() {
           <p className="text-white/60 text-sm mt-1">{t("dashboard.financialSummary")}</p>
         </div>
 
-        <div className="relative z-20 -mb-1" ref={searchRef}>
+        <div className="relative z-20 mb-4" ref={searchRef}>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -257,7 +257,7 @@ export default function Dashboard() {
             )}
           </div>
           {showSearch && searchQuery.length >= 2 && (
-            <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-80 overflow-y-auto">
+            <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-[60] overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-80 overflow-y-auto">
               {searchLoading ? (
                 <div className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 text-[#8855f6] animate-spin mx-auto mb-2" /><p className="text-xs text-slate-400">{t("dashboard.searching")}</p></div>
               ) : searchResults.length === 0 ? (
