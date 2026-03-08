@@ -44,14 +44,22 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center p-4 dark:bg-[#0d0a14]">
-      <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0" />
+      <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0 overflow-hidden">
+        <img
+          src="/login-bg-doctors.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-top opacity-[0.12] mix-blend-soft-light scale-110"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#8855f6]" />
+      </div>
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="size-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
-            <Stethoscope className="text-white w-6 h-6" />
+          <div className="size-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.15)]">
+            <Stethoscope className="text-white w-6 h-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">RecebMed</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">RecebMed</h1>
         </div>
 
         <div className="bg-white/80 dark:bg-[#1a1225]/90 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
