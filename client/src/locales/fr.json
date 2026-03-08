@@ -45,7 +45,9 @@
     "errorTitle": "Erreur de connexion",
     "errorDesc": "Vérifiez vos identifiants.",
     "successTitle": "Connexion réussie !",
-    "welcomeBack": "Bienvenue, {{name}} !"
+    "welcomeBack": "Bienvenue, {{name}} !",
+    "weakPasswordTitle": "Mot de passe faible détecté",
+    "weakPasswordDesc": "Votre mot de passe actuel ne répond pas aux nouvelles exigences de sécurité. Veuillez le mettre à jour maintenant."
   },
   "forgotPassword": {
     "title": "Réinitialiser le Mot de Passe",
@@ -281,6 +283,8 @@
     "profileUpdateError": "Erreur lors de la mise à jour du profil.",
     "changePassword": "Changer le Mot de Passe",
     "changePasswordDesc": "Gardez votre compte sécurisé",
+    "weakPasswordWarning": "Votre mot de passe doit être mis à jour !",
+    "weakPasswordWarningDesc": "Votre mot de passe actuel est faible. Pour votre sécurité, définissez un nouveau mot de passe avec au moins 8 caractères, incluant majuscules, minuscules et chiffres.",
     "currentPassword": "Mot de passe actuel",
     "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
     "newPassword": "Nouveau mot de passe",

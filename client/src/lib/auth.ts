@@ -1,5 +1,6 @@
 const TOKEN_KEY = "recebmed_token";
 const USER_KEY = "recebmed_user";
+const PW_UPDATE_KEY = "recebmed_pw_update";
 
 export interface UserData {
   id: string;
@@ -37,8 +38,21 @@ export function updateUserData(updates: Partial<UserData>) {
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(PW_UPDATE_KEY);
 }
 
 export function isAuthenticated(): boolean {
   return !!getToken();
+}
+
+export function setRequiresPasswordUpdate(required: boolean) {
+  if (required) {
+    localStorage.setItem(PW_UPDATE_KEY, "true");
+  } else {
+    localStorage.removeItem(PW_UPDATE_KEY);
+  }
+}
+
+export function getRequiresPasswordUpdate(): boolean {
+  return localStorage.getItem(PW_UPDATE_KEY) === "true";
 }

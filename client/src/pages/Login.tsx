@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Stethoscope } from "lucide-react";
-import { saveAuth } from "@/lib/auth";
+import { saveAuth, setRequiresPasswordUpdate } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
 
 export default function Login() {
@@ -32,8 +32,14 @@ export default function Login() {
         return;
       }
       saveAuth(data.token, data.user);
-      toast({ title: t("login.successTitle"), description: t("login.welcomeBack", { name: data.user.name }) });
-      setLocation("/dashboard");
+      setRequiresPasswordUpdate(!!data.requiresPasswordUpdate);
+      if (data.requiresPasswordUpdate) {
+        toast({ title: t("login.weakPasswordTitle"), description: t("login.weakPasswordDesc"), variant: "destructive" });
+        setLocation("/settings");
+      } else {
+        toast({ title: t("login.successTitle"), description: t("login.welcomeBack", { name: data.user.name }) });
+        setLocation("/dashboard");
+      }
     } catch {
       toast({ title: t("common.connectionError"), description: t("common.connectionErrorDesc"), variant: "destructive" });
     } finally {

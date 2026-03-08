@@ -150,7 +150,9 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Email ou senha incorretos" });
       }
       const token = generateToken(user.id);
-      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl } });
+      const pwStrong = passwordSchema.safeParse(password);
+      const requiresPasswordUpdate = !pwStrong.success;
+      return res.json({ token, user: { id: user.id, name: user.name, email: user.email, profilePhotoUrl: user.profilePhotoUrl }, requiresPasswordUpdate });
     } catch (error) {
       console.error("Login error:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });

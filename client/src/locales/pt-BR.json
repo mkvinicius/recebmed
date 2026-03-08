@@ -45,7 +45,9 @@
     "errorTitle": "Erro ao fazer login",
     "errorDesc": "Verifique suas credenciais.",
     "successTitle": "Login realizado!",
-    "welcomeBack": "Bem-vindo de volta, {{name}}!"
+    "welcomeBack": "Bem-vindo de volta, {{name}}!",
+    "weakPasswordTitle": "Senha fraca detectada",
+    "weakPasswordDesc": "Sua senha atual não atende aos novos requisitos de segurança. Por favor, atualize-a agora."
   },
   "forgotPassword": {
     "title": "Redefinir Senha",
@@ -281,6 +283,8 @@
     "profileUpdateError": "Erro ao atualizar perfil.",
     "changePassword": "Alterar Senha",
     "changePasswordDesc": "Mantenha sua conta segura",
+    "weakPasswordWarning": "Sua senha precisa ser atualizada!",
+    "weakPasswordWarningDesc": "Sua senha atual é fraca. Por segurança, defina uma nova senha que contenha no mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.",
     "currentPassword": "Senha atual",
     "currentPasswordPlaceholder": "Digite sua senha atual",
     "newPassword": "Nova senha",

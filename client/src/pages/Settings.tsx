@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save,
+  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2,
 } from "lucide-react";
-import { getToken, getUser, saveAuth, updateUserData, clearAuth, type UserData } from "@/lib/auth";
+import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -25,6 +25,14 @@ export default function Settings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [requiresPwUpdate, setRequiresPwUpdate] = useState(getRequiresPasswordUpdate());
+
+  const passwordChecks = [
+    { ok: newPassword.length >= 8, label: t("forgotPassword.rule8chars") },
+    { ok: /[A-Z]/.test(newPassword), label: t("forgotPassword.ruleUppercase") },
+    { ok: /[a-z]/.test(newPassword), label: t("forgotPassword.ruleLowercase") },
+    { ok: /[0-9]/.test(newPassword), label: t("forgotPassword.ruleNumber") },
+  ];
 
   useEffect(() => {
     const token = getToken();
@@ -89,6 +97,8 @@ export default function Settings() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setRequiresPasswordUpdate(false);
+        setRequiresPwUpdate(false);
         toast({ title: t("common.success"), description: t("settings.passwordChanged") });
       } else {
         toast({ title: t("common.error"), description: data.message || t("settings.passwordChangeError"), variant: "destructive" });
@@ -106,6 +116,16 @@ export default function Settings() {
           <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">{t("settings.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("settings.subtitle")}</p>
         </div>
+
+        {requiresPwUpdate && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-4 flex items-start gap-3" data-testid="banner-weak-password">
+            <ShieldAlert className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-red-800 dark:text-red-300 text-sm">{t("settings.weakPasswordWarning")}</h3>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{t("settings.weakPasswordWarningDesc")}</p>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12),0_1px_4px_-1px_rgba(0,0,0,0.06)] border border-slate-100/70 dark:border-slate-700/50 dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4),0_1px_4px_-1px_rgba(0,0,0,0.2)] p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
@@ -199,6 +219,16 @@ export default function Settings() {
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {newPassword && (
+                <ul className="mt-2 space-y-1">
+                  {passwordChecks.map((c, i) => (
+                    <li key={i} className={`text-xs flex items-center gap-1.5 ${c.ok ? "text-green-600" : "text-slate-400 dark:text-slate-500"}`}>
+                      {c.ok ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600 inline-block" />}
+                      {c.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div>

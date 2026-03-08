@@ -45,7 +45,9 @@
     "errorTitle": "Error al iniciar sesión",
     "errorDesc": "Verifique sus credenciales.",
     "successTitle": "¡Sesión iniciada!",
-    "welcomeBack": "¡Bienvenido de vuelta, {{name}}!"
+    "welcomeBack": "¡Bienvenido de vuelta, {{name}}!",
+    "weakPasswordTitle": "Contraseña débil detectada",
+    "weakPasswordDesc": "Su contraseña actual no cumple con los nuevos requisitos de seguridad. Por favor, actualícela ahora."
   },
   "forgotPassword": {
     "title": "Restablecer Contraseña",
@@ -281,6 +283,8 @@
     "profileUpdateError": "Error al actualizar perfil.",
     "changePassword": "Cambiar Contraseña",
     "changePasswordDesc": "Mantenga su cuenta segura",
+    "weakPasswordWarning": "¡Su contraseña necesita ser actualizada!",
+    "weakPasswordWarningDesc": "Su contraseña actual es débil. Por seguridad, defina una nueva contraseña con al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números.",
     "currentPassword": "Contraseña actual",
     "currentPasswordPlaceholder": "Ingrese su contraseña actual",
     "newPassword": "Nueva contraseña",
