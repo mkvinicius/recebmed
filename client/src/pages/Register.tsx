@@ -92,8 +92,8 @@ export default function Register() {
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center p-4 dark:bg-[#0d0a14]">
       <div className="hero-gradient absolute top-0 left-0 w-full h-72 z-0 overflow-hidden">
-        <img src="/login-bg-doctors.png" alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-[0.12] mix-blend-soft-light scale-110" loading="eager" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#8855f6]" />
+        <img src="/login-bg-doctors.png" alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-20 mix-blend-luminosity" loading="eager" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#8855f6]/30 via-transparent to-[#8855f6]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
