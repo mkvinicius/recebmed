@@ -47,6 +47,21 @@
     "successTitle": "Connexion réussie !",
     "welcomeBack": "Bienvenue, {{name}} !"
   },
+  "forgotPassword": {
+    "title": "Réinitialiser le Mot de Passe",
+    "subtitle": "Entrez votre e-mail et choisissez un nouveau mot de passe",
+    "newPassword": "Nouveau Mot de Passe",
+    "confirmPassword": "Confirmer le Nouveau Mot de Passe",
+    "resetButton": "Réinitialiser",
+    "resetting": "Réinitialisation...",
+    "minLength": "Le mot de passe doit contenir au moins 6 caractères.",
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "success": "Mot de passe réinitialisé avec succès !",
+    "error": "Impossible de réinitialiser le mot de passe.",
+    "resetDone": "Mot de Passe Réinitialisé !",
+    "resetDoneDesc": "Votre nouveau mot de passe est maintenant actif. Connectez-vous avec.",
+    "backToLogin": "Retour à la connexion"
+  },
   "register": {
     "title": "Créer un compte",
     "subtitle": "Remplissez vos informations pour commencer à utiliser RecebMed",
@@ -88,7 +103,7 @@
     "recentEntries": "Dernières Entrées",
     "viewAll": "Voir tout",
     "noEntries": "Aucune entrée",
-    "noEntriesHint": "Utilisez l'onglet Capture pour créer la première",
+    "noEntriesHint": "Utilisez le bouton Ajouter pour créer la première",
     "editEntry": "Modifier l'Entrée",
     "updated": "Mis à jour !",
     "updatedDesc": "Entrée mise à jour avec succès.",

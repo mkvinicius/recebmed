@@ -47,6 +47,21 @@
     "successTitle": "¡Sesión iniciada!",
     "welcomeBack": "¡Bienvenido de vuelta, {{name}}!"
   },
+  "forgotPassword": {
+    "title": "Restablecer Contraseña",
+    "subtitle": "Ingrese su correo y elija una nueva contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmPassword": "Confirmar Nueva Contraseña",
+    "resetButton": "Restablecer Contraseña",
+    "resetting": "Restableciendo...",
+    "minLength": "La contraseña debe tener al menos 6 caracteres.",
+    "mismatch": "Las contraseñas no coinciden.",
+    "success": "¡Contraseña restablecida con éxito!",
+    "error": "No se pudo restablecer la contraseña.",
+    "resetDone": "¡Contraseña Restablecida!",
+    "resetDoneDesc": "Su nueva contraseña ya está activa. Inicie sesión con ella.",
+    "backToLogin": "Volver al inicio de sesión"
+  },
   "register": {
     "title": "Crear una cuenta",
     "subtitle": "Complete sus datos para comenzar a usar RecebMed",
@@ -88,7 +103,7 @@
     "recentEntries": "Últimos Registros",
     "viewAll": "Ver todos",
     "noEntries": "Sin registros aún",
-    "noEntriesHint": "Use la pestaña Captura para crear el primero",
+    "noEntriesHint": "Use el botón Insertar Nuevo para crear el primero",
     "editEntry": "Editar Registro",
     "updated": "¡Actualizado!",
     "updatedDesc": "Registro actualizado con éxito.",

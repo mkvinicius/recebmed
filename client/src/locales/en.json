@@ -47,6 +47,21 @@
     "successTitle": "Login successful!",
     "welcomeBack": "Welcome back, {{name}}!"
   },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter your email and choose a new password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "resetButton": "Reset Password",
+    "resetting": "Resetting...",
+    "minLength": "Password must be at least 6 characters.",
+    "mismatch": "Passwords do not match.",
+    "success": "Password reset successfully!",
+    "error": "Could not reset password.",
+    "resetDone": "Password Reset!",
+    "resetDoneDesc": "Your new password is now active. Sign in with it.",
+    "backToLogin": "Back to login"
+  },
   "register": {
     "title": "Create an account",
     "subtitle": "Fill in your details to start using RecebMed",
@@ -88,7 +103,7 @@
     "recentEntries": "Recent Entries",
     "viewAll": "View all",
     "noEntries": "No entries yet",
-    "noEntriesHint": "Use the Capture tab to create your first",
+    "noEntriesHint": "Use the Add New button to create your first",
     "editEntry": "Edit Entry",
     "updated": "Updated!",
     "updatedDesc": "Entry updated successfully.",

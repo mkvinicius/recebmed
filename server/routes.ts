@@ -143,6 +143,29 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { email, newPassword } = req.body;
+      if (!email || !newPassword) {
+        return res.status(400).json({ message: "Email e nova senha são obrigatórios" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Email não encontrado" });
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hashed = await bcrypt.hash(newPassword, salt);
+      await storage.updateUserPassword(user.id, hashed);
+      return res.json({ success: true, message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return res.status(500).json({ message: "Erro ao redefinir senha" });
+    }
+  });
+
   app.put("/api/auth/profile-photo", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;

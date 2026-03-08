@@ -241,7 +241,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
   await storage.createNotification({
     doctorId,
     type: "reconciliation",
-    title: "Conciliação concluída",
+    title: "Conferência concluída",
     message: `${result.reconciled.length} conferidos, ${result.divergent.length} divergentes, ${result.pending.length} pendentes`,
     read: false,
   });

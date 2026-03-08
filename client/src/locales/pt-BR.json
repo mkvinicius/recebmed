@@ -47,6 +47,21 @@
     "successTitle": "Login realizado!",
     "welcomeBack": "Bem-vindo de volta, {{name}}!"
   },
+  "forgotPassword": {
+    "title": "Redefinir Senha",
+    "subtitle": "Digite seu e-mail e escolha uma nova senha",
+    "newPassword": "Nova Senha",
+    "confirmPassword": "Confirmar Nova Senha",
+    "resetButton": "Redefinir Senha",
+    "resetting": "Redefinindo...",
+    "minLength": "A senha deve ter pelo menos 6 caracteres.",
+    "mismatch": "As senhas não coincidem.",
+    "success": "Senha redefinida com sucesso!",
+    "error": "Não foi possível redefinir a senha.",
+    "resetDone": "Senha Redefinida!",
+    "resetDoneDesc": "Sua nova senha já está ativa. Faça login com ela.",
+    "backToLogin": "Voltar ao login"
+  },
   "register": {
     "title": "Criar uma conta",
     "subtitle": "Preencha seus dados para começar a usar o RecebMed",
@@ -88,7 +103,7 @@
     "recentEntries": "Últimos Lançamentos",
     "viewAll": "Ver todos",
     "noEntries": "Nenhum lançamento ainda",
-    "noEntriesHint": "Use a aba Captura para criar seu primeiro",
+    "noEntriesHint": "Use o botão Inserir Novo para criar seu primeiro",
     "editEntry": "Editar Lançamento",
     "updated": "Atualizado!",
     "updatedDesc": "Lançamento atualizado com sucesso.",
@@ -206,7 +221,7 @@
     "subtitle": "Gerencie sua conta e preferências",
     "settings": "Configurações",
     "clinicReports": "Relatórios da Clínica",
-    "pdfReconciliation": "Conciliação PDF",
+    "pdfReconciliation": "Conferência PDF",
     "darkMode": "Modo Escuro",
     "darkModeOn": "Ativado",
     "darkModeOff": "Desativado",
@@ -408,7 +423,7 @@
     "reconciledLabel": "Conciliados",
     "divergentLabel": "Divergentes",
     "pendingLabel": "Pendentes",
-    "viewReconciliation": "Ver detalhes na Conciliação",
+    "viewReconciliation": "Ver detalhes na Conferência",
     "pdfProcessError": "Falha ao processar PDFs."
   },
   "entryDetail": {

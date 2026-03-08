@@ -19,6 +19,7 @@ import Entries from "@/pages/Entries";
 import Capture from "@/pages/Capture";
 import Profile from "@/pages/Profile";
 import Import from "@/pages/Import";
+import ForgotPassword from "@/pages/ForgotPassword";
 import AppLayout from "@/components/AppLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -58,6 +59,7 @@ function Router() {
       </Route>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/confirm-entry" component={ConfirmEntry} />
       <Route component={AppRoutes} />
     </Switch>
