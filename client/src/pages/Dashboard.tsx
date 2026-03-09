@@ -164,7 +164,7 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute right-4 sm:right-6 lg:right-8 top-0 z-20 py-4">
+        <div className="absolute right-4 sm:right-6 lg:right-8 top-0 z-[60] py-4">
           <div className="flex items-center gap-3">
             <div className="relative" ref={notifRef}>
               <button onClick={() => setShowNotifications(!showNotifications)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md relative" data-testid="button-notifications">
