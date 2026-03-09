@@ -484,5 +484,16 @@
   "notFound": {
     "title": "Página não encontrada",
     "description": "A página que você procura não existe."
+  },
+  "tour": {
+    "step1Title": "Registre seus atendimentos",
+    "step1Content": "Bem-vindo ao RecebMed! Comece por aqui para registrar seus atendimentos com uma foto ou áudio.",
+    "step2Title": "Confira sua produção",
+    "step2Content": "Recebeu o extrato da clínica? Suba o PDF aqui para conferir sua produção e encontrar divergências.",
+    "step3Title": "Acompanhe tudo em tempo real",
+    "step3Content": "Acompanhe tudo em tempo real por aqui. Tenha uma visão clara da sua produção e finanças.",
+    "skip": "Pular",
+    "next": "Próximo",
+    "finish": "Entendi!"
   }
 }

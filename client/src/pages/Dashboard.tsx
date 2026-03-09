@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import ProjectionsPanel from "@/components/ProjectionsPanel";
 import EditEntryModal from "@/components/EditEntryModal";
+import AppTour from "@/components/AppTour";
 
 interface DoctorEntry {
   id: string;
@@ -329,6 +330,8 @@ export default function Dashboard() {
           onDeleted={(id) => { setEntries(prev => prev.filter(e => e.id !== id)); setEditingEntry(null); }}
         />
       )}
+
+      <AppTour />
     </div>
   );
 }

@@ -21,6 +21,7 @@ client/src/
   components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
   components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
+  components/AppTour.tsx          - Custom guided tour for first-time users (3 steps: capture, reports, stats)
   components/ObjectUploader.tsx   - Uppy-based file upload component
   hooks/use-upload.ts             - Upload hook for presigned URL flow
   lib/auth.ts        - Token/user management utilities

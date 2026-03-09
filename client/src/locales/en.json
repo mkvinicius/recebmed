@@ -484,5 +484,16 @@
   "notFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist."
+  },
+  "tour": {
+    "step1Title": "Record your appointments",
+    "step1Content": "Welcome to RecebMed! Start here to record your appointments with a photo or audio.",
+    "step2Title": "Check your production",
+    "step2Content": "Got the clinic statement? Upload the PDF here to check your production and find discrepancies.",
+    "step3Title": "Track everything in real time",
+    "step3Content": "Track everything in real time right here. Get a clear view of your production and finances.",
+    "skip": "Skip",
+    "next": "Next",
+    "finish": "Got it!"
   }
 }

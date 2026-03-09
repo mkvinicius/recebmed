@@ -1,0 +1,41 @@
+**Assunto:** Refinamento da Experiência do Usuário (UX) - v1.6.
+
+**Contexto:**
+O sistema está funcionalmente completo. O foco agora é no polimento da interface para tornar a experiência do usuário ainda mais clara, intuitiva e agradável, especialmente para novos usuários.
+
+**Sua Tarefa:**
+Implemente duas melhorias de UX de alto impacto: um sistema de feedback visual pós-ação e um tour guiado de boas-vindas.
+
+---
+
+### **Prioridade 1: Implementar Feedback Visual Pós-Ação (Toasts/Snackbars)**
+
+*   **Objetivo:** Fornecer confirmação imediata e não intrusiva ao usuário após ele completar uma ação importante.
+*   **Ação:**
+    1.  Utilize a biblioteca de "Toast" já inclusa no `shadcn/ui` (`@radix-ui/react-toast`).
+    2.  Integre o `Toaster` no layout principal da aplicação (`AppLayout.tsx` ou `App.tsx`).
+    3.  Adicione a chamada da função `toast()` nos seguintes locais:
+        *   **Após salvar um novo lançamento (ConfirmEntry.tsx):** Ao receber a resposta de sucesso da API, chame o toast com a mensagem "Lançamento salvo com sucesso!".
+        *   **Após iniciar o upload de um PDF (Reconciliation.tsx):** Ao enviar o arquivo para a API, chame o toast com a mensagem "Relatório enviado! O processamento foi iniciado.".
+        *   **Após salvar uma edição em um lançamento (EditEntryModal.tsx):** Ao receber a resposta de sucesso, chame o toast com "Alterações salvas!".
+        *   **Em caso de erro em qualquer uma dessas operações:** Chame o toast com uma variante de erro (vermelha) e uma mensagem como "Ocorreu um erro. Tente novamente.".
+
+---
+
+### **Prioridade 2: Implementar o Tour Guiado de Boas-Vindas**
+
+*   **Objetivo:** Guiar novos usuários pelas 3 funcionalidades principais do aplicativo no primeiro acesso, eliminando a curva de aprendizado.
+*   **Ação:**
+    1.  **Instale uma biblioteca de tour guiado.** A recomendação é `react-joyride`.
+    2.  **Crie um novo componente `AppTour.tsx`**.
+    3.  **Lógica de Exibição:** O tour só deve ser exibido se for o primeiro login do usuário. Você pode controlar isso com uma flag no `localStorage` (ex: `hasCompletedTour`).
+    4.  **Defina os Passos do Tour:** Configure o `react-joyride` com os seguintes 3 passos no Dashboard:
+        *   **Passo 1:** O alvo (`target`) deve ser o botão central de "Capturar Lançamento". O conteúdo deve ser: "Bem-vindo ao RecebMed! Comece por aqui para registrar seus atendimentos com uma foto ou áudio."
+        *   **Passo 2:** O alvo deve ser a aba "Conferência" na barra de navegação inferior. O conteúdo deve ser: "Recebeu o extrato da clínica? Suba o PDF aqui para conferir sua produção e encontrar divergências."
+        *   **Passo 3:** O alvo deve ser a área do Dashboard que mostra os cards de status (Pendentes, Conferidos, etc.). O conteúdo deve ser: "Acompanhe tudo em tempo real por aqui. Tenha uma visão clara da sua produção e finanças."
+    5.  **Integração:** Importe e renderize o componente `AppTour.tsx` na página do `Dashboard.tsx`.
+
+---
+
+**Resumo do Entregável:**
+Ao final, o RecebMed terá um sistema de notificações "toast" para feedback imediato e um tour guiado para novos usuários, tornando a plataforma extremamente profissional e fácil de usar desde o primeiro segundo.

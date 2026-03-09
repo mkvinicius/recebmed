@@ -484,5 +484,16 @@
   "notFound": {
     "title": "Page non trouvée",
     "description": "La page que vous recherchez n'existe pas."
+  },
+  "tour": {
+    "step1Title": "Enregistrez vos consultations",
+    "step1Content": "Bienvenue sur RecebMed ! Commencez ici pour enregistrer vos consultations avec une photo ou un audio.",
+    "step2Title": "Vérifiez votre production",
+    "step2Content": "Vous avez reçu le relevé de la clinique ? Téléchargez le PDF ici pour vérifier votre production et trouver des divergences.",
+    "step3Title": "Suivez tout en temps réel",
+    "step3Content": "Suivez tout en temps réel ici. Ayez une vision claire de votre production et de vos finances.",
+    "skip": "Passer",
+    "next": "Suivant",
+    "finish": "Compris !"
   }
 }

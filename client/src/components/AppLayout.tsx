@@ -76,6 +76,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 onClick={() => setLocation(tab.path)}
                 className={`flex flex-col items-center gap-0.5 min-w-[56px] py-0.5 transition-all duration-200 ${isCapture ? "" : isActive ? "text-[#8855f6]" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"}`}
                 data-testid={`tab-${label.toLowerCase()}`}
+                data-tour={`tab-${tab.path.slice(1)}`}
               >
                 {isCapture ? (
                   <div className="size-14 -mt-8 rounded-full flex items-center justify-center text-white bg-gradient-to-b from-[#a478ff] via-[#8855f6] to-[#6b3fd4] shadow-[0_4px_16px_rgba(136,85,246,0.5),0_2px_4px_rgba(136,85,246,0.3),inset_0_1px_1px_rgba(255,255,255,0.3)] ring-[3px] ring-white dark:ring-slate-900 active:scale-95 transition-transform">

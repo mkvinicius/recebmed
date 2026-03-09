@@ -484,5 +484,16 @@
   "notFound": {
     "title": "Página no encontrada",
     "description": "La página que busca no existe."
+  },
+  "tour": {
+    "step1Title": "Registre sus atenciones",
+    "step1Content": "¡Bienvenido a RecebMed! Comience aquí para registrar sus atenciones con una foto o audio.",
+    "step2Title": "Verifique su producción",
+    "step2Content": "¿Recibió el extracto de la clínica? Suba el PDF aquí para verificar su producción y encontrar divergencias.",
+    "step3Title": "Acompañe todo en tiempo real",
+    "step3Content": "Acompañe todo en tiempo real desde aquí. Tenga una visión clara de su producción y finanzas.",
+    "skip": "Saltar",
+    "next": "Siguiente",
+    "finish": "¡Entendido!"
   }
 }
