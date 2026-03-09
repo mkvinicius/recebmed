@@ -469,6 +469,8 @@
     "registeredAt": "Registered on",
     "sourceAudio": "Source Audio",
     "sourceImage": "Source Image",
+    "originalEvidence": "Original Evidence",
+    "evidenceDesc": "Original source used by AI to extract this entry's data.",
     "notFound": "Entry not found",
     "fetchError": "Error fetching entry"
   },

@@ -469,6 +469,8 @@
     "registeredAt": "Registrado el",
     "sourceAudio": "Audio de Origen",
     "sourceImage": "Imagen de Origen",
+    "originalEvidence": "Evidencia Original",
+    "evidenceDesc": "Fuente original utilizada por la IA para extraer los datos de este registro.",
     "notFound": "Registro no encontrado",
     "fetchError": "Error al buscar registro"
   },

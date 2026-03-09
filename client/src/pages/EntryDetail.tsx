@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, CheckCircle2, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope } from "lucide-react";
+import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, CheckCircle2, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope, ShieldCheck } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
@@ -107,6 +107,32 @@ export default function EntryDetail() {
             </span>
           </div>
 
+          {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (
+            <div className="mx-6 mt-6 rounded-2xl border-2 border-[#8855f6]/20 bg-gradient-to-br from-[#8855f6]/5 to-transparent dark:from-[#8855f6]/10 overflow-hidden" data-testid="section-evidence">
+              <div className="flex items-center gap-2.5 px-5 py-3 bg-[#8855f6]/10 dark:bg-[#8855f6]/20 border-b border-[#8855f6]/10">
+                <ShieldCheck className="w-5 h-5 text-[#8855f6]" />
+                <div>
+                  <h3 className="text-sm font-bold text-[#8855f6]">{t("entryDetail.originalEvidence")}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t("entryDetail.evidenceDesc")}</p>
+                </div>
+              </div>
+              <div className="p-4">
+                {entry.entryMethod === "audio" ? (
+                  <audio controls className="w-full" data-testid="audio-source">
+                    <source src={entry.sourceUrl} />
+                  </audio>
+                ) : (
+                  <img
+                    src={entry.sourceUrl}
+                    alt={t("entryDetail.sourceImage")}
+                    className="w-full rounded-xl object-contain max-h-[28rem] shadow-[0_4px_20px_-4px_rgba(136,85,246,0.2)]"
+                    data-testid="img-source"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="px-6 py-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">
@@ -163,31 +189,6 @@ export default function EntryDetail() {
               </p>
             </div>
 
-            {entry.sourceUrl && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-semibold">
-                  {entry.entryMethod === "audio" ? (
-                    <><Mic className="w-4 h-4 text-[#8855f6]" /> {t("entryDetail.sourceAudio")}</>
-                  ) : (
-                    <><Camera className="w-4 h-4 text-[#8855f6]" /> {t("entryDetail.sourceImage")}</>
-                  )}
-                </div>
-                <div className="border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 p-2">
-                  {entry.entryMethod === "audio" ? (
-                    <audio controls className="w-full" data-testid="audio-source">
-                      <source src={entry.sourceUrl} />
-                    </audio>
-                  ) : (
-                    <img
-                      src={entry.sourceUrl}
-                      alt={t("entryDetail.sourceImage")}
-                      className="w-full rounded-lg object-contain max-h-96"
-                      data-testid="img-source"
-                    />
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
     </div>

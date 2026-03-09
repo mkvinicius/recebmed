@@ -1,0 +1,28 @@
+**Assunto:** Implementação Final e Crítica - Exibição da "Prova do Crime" na Tela de Detalhes.
+
+**Contexto:**
+Identificamos a falha final e mais crítica na experiência de auditoria. A página de detalhes do lançamento (`/entry/:id`) exibe os dados extraídos, mas não mostra a fonte original (a imagem da etiqueta ou o áudio gravado), que é a "prova do crime". Precisamos corrigir isso para garantir a confiança total do usuário no sistema.
+
+**Sua Tarefa:**
+Modifique a página `EntryDetail.tsx` para exibir a evidência de mídia original.
+
+---
+
+### **Ação de Implementação Específica:**
+
+1.  **Localize o Componente:** Abra o arquivo `client/src/pages/EntryDetail.tsx`.
+
+2.  **Busque a `sourceUrl`:** Certifique-se de que, ao buscar os dados do lançamento, o campo `sourceUrl` esteja incluído na resposta da API e disponível no componente.
+
+3.  **Renderize a Evidência:** No topo da página de detalhes, antes de listar os campos de texto, adicione uma lógica condicional para renderizar a "prova do crime":
+    *   Crie uma seção de destaque chamada "Evidência Original".
+    *   Dentro desta seção, adicione a seguinte lógica:
+        *   Se `entry.entryMethod === 'photo'` e `entry.sourceUrl` existir, renderize um componente de imagem (`<img />`) cujo `src` seja o `entry.sourceUrl`. Aplique um estilo para que a imagem seja bem visível (ex: `width: 100%`, `border-radius`, `box-shadow`).
+        *   Se `entry.entryMethod === 'audio'` e `entry.sourceUrl` existir, renderize um componente de player de áudio (`<audio controls />`) cujo `src` seja o `entry.sourceUrl`.
+
+4.  **Ajuste o Layout:** Garanta que, abaixo deste novo componente de mídia, os campos de texto com os dados extraídos continuem sendo exibidos normalmente, permitindo que o médico compare facilmente a fonte com o resultado.
+
+---
+
+**Resumo do Entregável:**
+Ao final, quando o usuário navegar para a página de detalhes de um lançamento, ele verá, em destaque, a imagem da etiqueta ou o player com o áudio que originou aquele registro, seguido pelos dados que a IA extraiu. Isso completa o ciclo de auditoria e torna a funcionalidade "Prova do Crime" finalmente uma realidade.

@@ -469,6 +469,8 @@
     "registeredAt": "Registrado em",
     "sourceAudio": "Áudio de Origem",
     "sourceImage": "Imagem de Origem",
+    "originalEvidence": "Evidência Original",
+    "evidenceDesc": "Fonte original usada pela IA para extrair os dados deste lançamento.",
     "notFound": "Lançamento não encontrado",
     "fetchError": "Erro ao buscar lançamento"
   },
