@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Download, Upload, FileSpreadsheet, Loader2,
-  CheckCircle2, AlertCircle, ChevronDown, Calendar
+  CheckCircle2, AlertCircle, ChevronDown, Calendar, FileText
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ export default function Import() {
 
   const handleCsvUpload = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["csv", "xls", "xlsx"].includes(ext || "")) {
+    if (!["csv", "xls", "xlsx", "pdf"].includes(ext || "")) {
       toast({ title: t("import.invalidFormat"), description: t("import.invalidFormatDesc"), variant: "destructive" });
       return;
     }
@@ -141,7 +141,7 @@ export default function Import() {
           <input
             ref={csvInputRef}
             type="file"
-            accept=".csv,.xls,.xlsx"
+            accept=".csv,.xls,.xlsx,.pdf"
             className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleCsvUpload(f); if (csvInputRef.current) csvInputRef.current.value = ""; }}
             data-testid="input-csv-upload"
@@ -165,7 +165,17 @@ export default function Import() {
               <div className="flex flex-col items-center gap-2">
                 <Upload className="w-8 h-8 text-slate-400" />
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("import.dragCsvOrClick")}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{t("import.acceptedFormats")}</p>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 text-xs font-semibold">
+                    <FileSpreadsheet className="w-3.5 h-3.5" /> CSV
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs font-semibold">
+                    <FileSpreadsheet className="w-3.5 h-3.5" /> XLS/XLSX
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-semibold">
+                    <FileText className="w-3.5 h-3.5" /> PDF
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -191,7 +201,7 @@ export default function Import() {
         <div className="text-center px-4 py-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/40 mb-8">
           <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
             <AlertCircle className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-slate-400" />
-            {t("import.pdfHint")}
+            {t("import.pdfImportHint")}
           </p>
         </div>
     </div>

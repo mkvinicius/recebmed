@@ -1034,32 +1034,69 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Arquivo não enviado" });
       }
       const targetYear = year ? parseInt(year) : new Date().getFullYear() - 1;
-      const buffer = Buffer.from(file, "base64");
-      const rows = normalizeSpreadsheetRows(buffer, fileName);
-
-      if (rows.length === 0) {
-        return res.status(400).json({ message: "Nenhum dado encontrado na planilha. Verifique se o formato está correto." });
-      }
+      const ext = fileName.split(".").pop()?.toLowerCase();
 
       let imported = 0;
       let skipped = 0;
+      let totalRows = 0;
 
-      for (const row of rows) {
-        const mapped = mapRowToEntry(row, targetYear);
-        if (!mapped) { skipped++; continue; }
+      if (ext === "pdf") {
+        const base64Data = file.replace(/^data:[^;]+;base64,/, "");
+        const pdfBuffer = Buffer.from(base64Data, "base64");
+        const extractedData = await extractPdfData(pdfBuffer);
+        totalRows = extractedData.length;
 
-        await storage.createDoctorEntry({
-          doctorId: userId,
-          patientName: mapped.patientName,
-          procedureDate: mapped.procedureDate,
-          insuranceProvider: mapped.insuranceProvider,
-          description: mapped.description,
-          procedureValue: mapped.procedureValue,
-          entryMethod: "manual",
-          sourceUrl: null,
-          status: "pending",
-        });
-        imported++;
+        if (extractedData.length === 0) {
+          return res.status(400).json({ message: "Nenhum dado encontrado no PDF. Verifique se o arquivo contém registros de procedimentos." });
+        }
+
+        for (const item of extractedData) {
+          if (!item.patientName || item.patientName === "Não identificado") { skipped++; continue; }
+          let procDate = new Date(item.procedureDate);
+          if (isNaN(procDate.getTime())) { skipped++; continue; }
+          if (targetYear && procDate.getFullYear() !== targetYear) {
+            procDate.setFullYear(targetYear);
+          }
+
+          await storage.createDoctorEntry({
+            doctorId: userId,
+            patientName: item.patientName,
+            procedureDate: procDate,
+            insuranceProvider: "Não informado",
+            description: item.description || "Procedimento importado",
+            procedureValue: item.reportedValue && item.reportedValue !== "0.00" ? item.reportedValue : null,
+            entryMethod: "manual",
+            sourceUrl: null,
+            status: "pending",
+          });
+          imported++;
+        }
+      } else {
+        const buffer = Buffer.from(file, "base64");
+        const rows = normalizeSpreadsheetRows(buffer, fileName);
+        totalRows = rows.length;
+
+        if (rows.length === 0) {
+          return res.status(400).json({ message: "Nenhum dado encontrado na planilha. Verifique se o formato está correto." });
+        }
+
+        for (const row of rows) {
+          const mapped = mapRowToEntry(row, targetYear);
+          if (!mapped) { skipped++; continue; }
+
+          await storage.createDoctorEntry({
+            doctorId: userId,
+            patientName: mapped.patientName,
+            procedureDate: mapped.procedureDate,
+            insuranceProvider: mapped.insuranceProvider,
+            description: mapped.description,
+            procedureValue: mapped.procedureValue,
+            entryMethod: "manual",
+            sourceUrl: null,
+            status: "pending",
+          });
+          imported++;
+        }
       }
 
       if (imported > 0) {
@@ -1067,15 +1104,15 @@ export async function registerRoutes(
           doctorId: userId,
           type: "import",
           title: "Importação histórica",
-          message: `${imported} lançamentos de ${targetYear} importados via planilha`,
+          message: `${imported} lançamentos de ${targetYear} importados via ${ext === "pdf" ? "PDF" : "planilha"}`,
           read: false,
         });
       }
 
-      return res.json({ success: true, imported, skipped, year: targetYear, totalRows: rows.length });
+      return res.json({ success: true, imported, skipped, year: targetYear, totalRows });
     } catch (error) {
       console.error("Import doctor entries error:", error);
-      return res.status(500).json({ message: "Erro ao processar planilha" });
+      return res.status(500).json({ message: "Erro ao processar arquivo" });
     }
   });
 
