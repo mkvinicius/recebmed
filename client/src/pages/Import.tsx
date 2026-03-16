@@ -10,6 +10,8 @@ import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 
+const MAX_IMPORT_SIZE_MB = 20;
+const MAX_IMPORT_SIZE_BYTES = MAX_IMPORT_SIZE_MB * 1024 * 1024;
 const currentYear = new Date().getFullYear();
 const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
@@ -39,6 +41,10 @@ export default function Import() {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!["csv", "xls", "xlsx", "pdf"].includes(ext || "")) {
       toast({ title: t("import.invalidFormat"), description: t("import.invalidFormatDesc"), variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_IMPORT_SIZE_BYTES) {
+      toast({ title: t("common.error"), description: t("import.fileTooLarge", { max: MAX_IMPORT_SIZE_MB }), variant: "destructive" });
       return;
     }
     setCsvFile(file);

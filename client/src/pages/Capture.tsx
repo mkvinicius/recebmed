@@ -7,6 +7,9 @@ import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 import { useTranslation } from "react-i18next";
 import { getLocale } from "@/lib/i18n";
 
+const MAX_IMAGE_SIZE_MB = 20;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
 interface DuplicateEntry {
   id: string;
   patientName: string;
@@ -135,6 +138,12 @@ export default function Capture() {
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const oversized = Array.from(files).filter(f => f.size > MAX_IMAGE_SIZE_BYTES);
+    if (oversized.length > 0) {
+      toast({ title: t("common.error"), description: t("capture.fileTooLarge", { max: MAX_IMAGE_SIZE_MB }), variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     if (files.length === 1) {
       const base64 = await readFileAsDataURL(files[0]);
       await processPhoto(base64, false);
