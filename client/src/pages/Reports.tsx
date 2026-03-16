@@ -49,6 +49,35 @@ export default function Reports() {
   const defaultTo = now.toISOString().split("T")[0];
   const [dateFrom, setDateFrom] = useState(defaultFrom);
   const [dateTo, setDateTo] = useState(defaultTo);
+  const [quickFilter, setQuickFilter] = useState<string | null>(null);
+
+  const applyQuickFilter = (key: string) => {
+    const today = new Date();
+    const toStr = today.toISOString().split("T")[0];
+    let fromDate: Date;
+    if (key === "7d") {
+      fromDate = new Date(today); fromDate.setDate(today.getDate() - 7);
+    } else if (key === "30d") {
+      fromDate = new Date(today); fromDate.setDate(today.getDate() - 30);
+    } else if (key === "60d") {
+      fromDate = new Date(today); fromDate.setDate(today.getDate() - 60);
+    } else if (key === "month") {
+      fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else if (key === "year") {
+      fromDate = new Date(today.getFullYear(), 0, 1);
+    } else {
+      return;
+    }
+    if (quickFilter === key) {
+      setDateFrom(defaultFrom);
+      setDateTo(defaultTo);
+      setQuickFilter(null);
+    } else {
+      setDateFrom(fromDate.toISOString().split("T")[0]);
+      setDateTo(toStr);
+      setQuickFilter(key);
+    }
+  };
 
   const locale = getLocale();
   const currency = getCurrencyCode();
@@ -256,7 +285,7 @@ export default function Reports() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
+                onChange={e => { setDateFrom(e.target.value); setQuickFilter(null); }}
                 className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
                 data-testid="filter-date-from"
               />
@@ -264,13 +293,13 @@ export default function Reports() {
               <input
                 type="date"
                 value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
+                onChange={e => { setDateTo(e.target.value); setQuickFilter(null); }}
                 className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
                 data-testid="filter-date-to"
               />
               {(dateFrom || dateTo) && (
                 <button
-                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  onClick={() => { setDateFrom(""); setDateTo(""); setQuickFilter(null); }}
                   className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   data-testid="button-clear-dates"
                 >
@@ -278,6 +307,24 @@ export default function Reports() {
                 </button>
               )}
             </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {[
+              { key: "7d", label: t("reports.quick7d") },
+              { key: "30d", label: t("reports.quick30d") },
+              { key: "60d", label: t("reports.quick60d") },
+              { key: "month", label: t("reports.quickMonth") },
+              { key: "year", label: t("reports.quickYear") },
+            ].map(q => (
+              <button
+                key={q.key}
+                onClick={() => applyQuickFilter(q.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${quickFilter === q.key ? "bg-[#8855f6] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                data-testid={`quick-filter-${q.key}`}
+              >
+                {q.label}
+              </button>
+            ))}
           </div>
         </div>
 
