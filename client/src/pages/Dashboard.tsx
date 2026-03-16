@@ -254,7 +254,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" data-testid="stats-grid">
-          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-pending">
+          <button onClick={() => setLocation("/entries?status=pending")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-pending">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl"><Clock className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">{pendingCount}</span>
@@ -262,7 +262,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.pendingLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-pending">{pendingCount}</p>
           </button>
-          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-reconciled">
+          <button onClick={() => setLocation("/entries?status=reconciled")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-reconciled">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl"><CreditCard className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">{reconciledCount}</span>
@@ -270,7 +270,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.reconciledLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-reconciled">{reconciledCount}</p>
           </button>
-          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-divergent">
+          <button onClick={() => setLocation("/entries?status=divergent")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-divergent">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{divergentCount}</span>

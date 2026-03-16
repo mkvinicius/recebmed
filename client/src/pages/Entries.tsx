@@ -36,7 +36,10 @@ export default function Entries() {
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("status") || "all";
+  });
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [insuranceFilter, setInsuranceFilter] = useState("all");
