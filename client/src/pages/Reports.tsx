@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity, ChevronDown, ChevronUp, User
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -43,6 +43,7 @@ export default function Reports() {
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
+  const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
   const now = new Date();
   const defaultFrom = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
   const defaultTo = now.toISOString().split("T")[0];
@@ -208,6 +209,16 @@ export default function Reports() {
     return { particular, sus, convenio };
   }, [filteredEntries]);
 
+  const cardFilteredEntries = useMemo(() => {
+    if (!activeFilter) return [];
+    if (activeFilter === "all") return filteredEntries;
+    return filteredEntries.filter(e => classifyInsurance(e.insuranceProvider) === activeFilter);
+  }, [filteredEntries, activeFilter]);
+
+  const toggleFilter = (filter: "all" | "particular" | "sus" | "convenio") => {
+    setActiveFilter(prev => prev === filter ? null : filter);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -312,43 +323,107 @@ export default function Reports() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="card-total-production">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <button onClick={() => toggleFilter("all")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "all" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-total-production">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><Activity className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalProduction")}</span>
             </div>
             <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100" data-testid="value-total-production">{totalProduction}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
-          </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.procedures")}</p>
+              {activeFilter === "all" ? <ChevronUp className="w-3.5 h-3.5 text-[#8855f6]" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />}
+            </div>
+          </button>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="card-particular">
+          <button onClick={() => toggleFilter("particular")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "particular" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-particular">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.particularLabel")}</span>
             </div>
             <p className="text-xl font-extrabold text-[#8855f6]" data-testid="value-particular">{productionByType.particular}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
-          </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.procedures")}</p>
+              {activeFilter === "particular" ? <ChevronUp className="w-3.5 h-3.5 text-[#8855f6]" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />}
+            </div>
+          </button>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="card-sus">
+          <button onClick={() => toggleFilter("sus")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "sus" ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-sus">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">SUS</span>
             </div>
             <p className="text-xl font-extrabold text-blue-600" data-testid="value-sus">{productionByType.sus}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
-          </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.procedures")}</p>
+              {activeFilter === "sus" ? <ChevronUp className="w-3.5 h-3.5 text-blue-500" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />}
+            </div>
+          </button>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="card-convenio">
+          <button onClick={() => toggleFilter("convenio")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "convenio" ? "border-green-500 ring-2 ring-green-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-convenio">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><Stethoscope className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.convenioLabel")}</span>
             </div>
             <p className="text-xl font-extrabold text-green-600" data-testid="value-convenio">{productionByType.convenio}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reports.procedures")}</p>
-          </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.procedures")}</p>
+              {activeFilter === "convenio" ? <ChevronUp className="w-3.5 h-3.5 text-green-500" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />}
+            </div>
+          </button>
         </div>
+
+        {activeFilter && (
+          <div className="mb-8 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden" data-testid="filtered-entries-list">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {activeFilter === "all" ? t("reports.totalProduction") : activeFilter === "particular" ? t("reports.particularLabel") : activeFilter === "sus" ? "SUS" : t("reports.convenioLabel")}
+                <span className="ml-2 text-xs font-semibold text-slate-400 dark:text-slate-500">({cardFilteredEntries.length})</span>
+              </p>
+              <button onClick={() => setActiveFilter(null)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400" data-testid="close-filter-list">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {cardFilteredEntries.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t("dashboard.noEntries")}</div>
+            ) : (
+              <div className="divide-y divide-slate-50 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
+                {cardFilteredEntries.map(entry => (
+                  <button
+                    key={entry.id}
+                    onClick={() => setLocation(`/entries/${entry.id}`)}
+                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-left transition-colors"
+                    data-testid={`filtered-entry-${entry.id}`}
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-[#8855f6]/10 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-[#8855f6]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                        {entry.description || entry.insuranceProvider} · {new Date(entry.procedureDate).toLocaleDateString(getLocale())}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      {entry.procedureValue && (
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                          {new Intl.NumberFormat(getLocale(), { style: "currency", currency: getCurrencyCode() }).format(parseFloat(entry.procedureValue))}
+                        </p>
+                      )}
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        entry.status === "reconciled" ? "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400" :
+                        entry.status === "divergent" ? "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
+                        "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                      }`}>
+                        {entry.status === "reconciled" ? t("reconciliation.tabReconciled") : entry.status === "divergent" ? t("reconciliation.tabDivergent") : t("reconciliation.tabPending")}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="chart-production">
