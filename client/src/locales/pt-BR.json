@@ -376,6 +376,8 @@
     "csvTip3": "Datas no formato DD/MM/AAAA — o sistema converte automaticamente",
     "csvTip4": "Valores com vírgula (250,00) ou ponto (250.00) — ambos funcionam",
     "reconciledTab": "Conciliados",
+    "verifiedTab": "Conferidos",
+    "receivedTab": "Recebidos",
     "divergentTab": "Divergentes",
     "pendingTab": "Pendentes",
     "noEntriesInCategory": "Nenhum lançamento nesta categoria",

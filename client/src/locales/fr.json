@@ -376,6 +376,8 @@
     "csvTip3": "Dates au format JJ/MM/AAAA — le système convertit automatiquement",
     "csvTip4": "Valeurs avec virgule (250,00) ou point (250.00) — les deux fonctionnent",
     "reconciledTab": "Rapprochés",
+    "verifiedTab": "Vérifiés",
+    "receivedTab": "Reçus",
     "divergentTab": "Divergents",
     "pendingTab": "En attente",
     "noEntriesInCategory": "Aucune entrée dans cette catégorie",

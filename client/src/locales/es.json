@@ -376,6 +376,8 @@
     "csvTip3": "Fechas en formato DD/MM/AAAA — el sistema convierte automáticamente",
     "csvTip4": "Valores con coma (250,00) o punto (250.00) — ambos funcionan",
     "reconciledTab": "Conciliados",
+    "verifiedTab": "Conferidos",
+    "receivedTab": "Recibidos",
     "divergentTab": "Divergentes",
     "pendingTab": "Pendientes",
     "noEntriesInCategory": "Sin registros en esta categoría",

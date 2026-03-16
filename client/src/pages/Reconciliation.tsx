@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
-  Share2, Mail, MessageCircle, FileDown
+  Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ export default function Reconciliation() {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ReconciliationResults | null>(null);
-  const [activeTab, setActiveTab] = useState<"reconciled" | "divergent" | "pending">("reconciled");
+  const [activeTab, setActiveTab] = useState<"verified" | "received" | "divergent" | "pending">("verified");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -146,13 +146,20 @@ export default function Reconciliation() {
     } catch {}
   }, []);
 
+  const verifiedCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0);
   const tabs = [
-    { key: "reconciled" as const, label: t("reconciliation.reconciledTab"), icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30", border: "border-green-200 dark:border-green-800", count: results?.reconciled?.length || 0 },
+    { key: "verified" as const, label: t("reconciliation.verifiedTab"), icon: ClipboardCheck, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30", border: "border-blue-200 dark:border-blue-800", count: verifiedCount },
+    { key: "received" as const, label: t("reconciliation.receivedTab"), icon: CircleDollarSign, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30", border: "border-green-200 dark:border-green-800", count: results?.reconciled?.length || 0 },
     { key: "divergent" as const, label: t("reconciliation.divergentTab"), icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800", count: results?.divergent?.length || 0 },
     { key: "pending" as const, label: t("reconciliation.pendingTab"), icon: Clock, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30", border: "border-red-200 dark:border-red-800", count: results?.pending?.length || 0 },
   ];
 
-  const activeEntries = results ? results[activeTab] || [] : [];
+  const activeEntries = results ? (
+    activeTab === "verified" ? [...(results.reconciled || []), ...(results.divergent || [])] :
+    activeTab === "received" ? results.reconciled || [] :
+    activeTab === "divergent" ? results.divergent || [] :
+    results.pending || []
+  ) : [];
 
   const generateReportHTML = useCallback(() => {
     if (!results) return "";
@@ -194,21 +201,25 @@ export default function Reconciliation() {
         <div><h1 style="margin:0;font-size:20px;color:#8855f6;">RecebMed</h1>
         <p style="margin:0;font-size:12px;color:#888;">${t("reconciliation.title")} — ${dateStr}</p></div>
       </div>
-      <div style="display:flex;gap:16px;margin-bottom:20px;">
-        <div style="flex:1;background:#f0fdf4;padding:12px;border-radius:8px;text-align:center;">
-          <div style="font-size:22px;font-weight:bold;color:#16a34a;">${results.reconciled?.length || 0}</div>
-          <div style="font-size:11px;color:#16a34a;">${t("reconciliation.reconciledTab")}</div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;background:#eff6ff;padding:12px;border-radius:8px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#2563eb;">${(results.reconciled?.length || 0) + (results.divergent?.length || 0)}</div>
+          <div style="font-size:11px;color:#2563eb;">${t("reconciliation.verifiedTab")}</div>
         </div>
-        <div style="flex:1;background:#fffbeb;padding:12px;border-radius:8px;text-align:center;">
+        <div style="flex:1;min-width:120px;background:#f0fdf4;padding:12px;border-radius:8px;text-align:center;">
+          <div style="font-size:22px;font-weight:bold;color:#16a34a;">${results.reconciled?.length || 0}</div>
+          <div style="font-size:11px;color:#16a34a;">${t("reconciliation.receivedTab")}</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:#fffbeb;padding:12px;border-radius:8px;text-align:center;">
           <div style="font-size:22px;font-weight:bold;color:#d97706;">${results.divergent?.length || 0}</div>
           <div style="font-size:11px;color:#d97706;">${t("reconciliation.divergentTab")}</div>
         </div>
-        <div style="flex:1;background:#fef2f2;padding:12px;border-radius:8px;text-align:center;">
+        <div style="flex:1;min-width:120px;background:#fef2f2;padding:12px;border-radius:8px;text-align:center;">
           <div style="font-size:22px;font-weight:bold;color:#ef4444;">${results.pending?.length || 0}</div>
           <div style="font-size:11px;color:#ef4444;">${t("reconciliation.pendingTab")}</div>
         </div>
       </div>
-      ${renderSection(t("reconciliation.reconciledTab"), results.reconciled, "#16a34a")}
+      ${renderSection(t("reconciliation.receivedTab"), results.reconciled, "#16a34a")}
       ${renderSection(t("reconciliation.divergentTab"), results.divergent, "#d97706")}
       ${renderSection(t("reconciliation.pendingTab"), results.pending, "#ef4444")}
       <p style="margin-top:30px;text-align:center;font-size:10px;color:#aaa;">${t("reconciliation.generatedBy")}</p>
@@ -221,7 +232,8 @@ export default function Reconciliation() {
     const lines: string[] = [];
     lines.push(`📊 *RecebMed — ${t("reconciliation.title")}*`);
     lines.push("");
-    lines.push(`✅ ${t("reconciliation.reconciledTab")}: ${results.reconciled?.length || 0}`);
+    lines.push(`📋 ${t("reconciliation.verifiedTab")}: ${(results.reconciled?.length || 0) + (results.divergent?.length || 0)}`);
+    lines.push(`✅ ${t("reconciliation.receivedTab")}: ${results.reconciled?.length || 0}`);
     lines.push(`⚠️ ${t("reconciliation.divergentTab")}: ${results.divergent?.length || 0}`);
     lines.push(`🔴 ${t("reconciliation.pendingTab")}: ${results.pending?.length || 0}`);
     lines.push("");
@@ -235,7 +247,7 @@ export default function Reconciliation() {
       lines.push("");
     };
 
-    addSection("✅", t("reconciliation.reconciledTab"), results.reconciled);
+    addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
     addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
     addSection("🔴", t("reconciliation.pendingTab"), results.pending);
 
@@ -429,7 +441,7 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {tabs.map(tab => (
                 <button
                   key={tab.key}

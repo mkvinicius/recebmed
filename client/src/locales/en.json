@@ -376,6 +376,8 @@
     "csvTip3": "Dates in DD/MM/YYYY format — the system converts automatically",
     "csvTip4": "Values with comma (250,00) or dot (250.00) — both work",
     "reconciledTab": "Reconciled",
+    "verifiedTab": "Verified",
+    "receivedTab": "Received",
     "divergentTab": "Divergent",
     "pendingTab": "Pending",
     "noEntriesInCategory": "No entries in this category",
