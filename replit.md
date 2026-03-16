@@ -33,7 +33,7 @@ server/
   index.ts           - Express entry point (50mb body limit)
   routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
   openai.ts          - OpenAI client + image/audio extraction functions
-  reconciliation.ts  - PDF extraction (pdf-parse + OpenAI) + reconciliation engine (Levenshtein matching)
+  reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance)
   storage.ts         - Database storage interface (Drizzle)
   db.ts              - Database connection pool
   replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
@@ -129,7 +129,7 @@ Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 - **Settings**: Profile name edit + password change
 - **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
 - **Reports (Relatórios de Produção)**: Production charts with recharts — stacked bar chart showing procedure count by type (Particular/SUS/Convênio) with period selector (weekly/monthly/yearly), pie chart showing production distribution by insurance. Summary cards: Total Production, Particular, SUS, Convênio counts. Top insurers table sorted by procedure count
-- **Reconciliation**: PDF upload → AI extraction → automatic reconciliation with pending entries
+- **Reconciliation**: PDF/image/CSV upload → AI extraction → AI-powered reconciliation matching entries on 5 fields (nome, data atendimento, nascimento, procedimento, convênio). 4 tabs: Conferidos, Recebidos, Divergentes, Pendentes
 - **EntryDetail**: Detailed view of individual entry with image evidence display
 - **Import (Auditoria Retroativa)**: Historical data import — CSV/Excel template download, spreadsheet upload with year selector, multi-PDF upload for clinic reports with bulk reconciliation
 

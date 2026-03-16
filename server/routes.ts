@@ -455,7 +455,7 @@ export async function registerRoutes(
   app.post("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, procedureDate, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck } = req.body;
+      const { patientName, patientBirthDate, procedureDate, procedureName, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck } = req.body;
 
       if (!patientName || !procedureDate || !insuranceProvider || !description) {
         return res.status(400).json({ message: "Todos os campos são obrigatórios" });
@@ -480,7 +480,9 @@ export async function registerRoutes(
       const entry = await storage.createDoctorEntry({
         doctorId: userId,
         patientName,
+        patientBirthDate: patientBirthDate || null,
         procedureDate: new Date(procedureDate),
+        procedureName: procedureName || null,
         insuranceProvider,
         description,
         procedureValue: procedureValue || null,
@@ -544,7 +546,9 @@ export async function registerRoutes(
               const entry = await storage.createDoctorEntry({
                 doctorId: userId,
                 patientName: item.patientName,
+                patientBirthDate: item.patientBirthDate || null,
                 procedureDate: new Date(item.procedureDate),
+                procedureName: item.procedureName || null,
                 insuranceProvider: item.insuranceProvider,
                 description: item.description,
                 procedureValue: item.procedureValue || null,
@@ -714,14 +718,17 @@ export async function registerRoutes(
   app.post("/api/clinic-reports", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, procedureDate, reportedValue, description } = req.body;
+      const { patientName, patientBirthDate, procedureDate, procedureName, insuranceProvider, reportedValue, description } = req.body;
       if (!patientName || !procedureDate || !reportedValue) {
         return res.status(400).json({ message: "Nome do paciente, data e valor são obrigatórios" });
       }
       const report = await storage.createClinicReport({
         doctorId: userId,
         patientName,
+        patientBirthDate: patientBirthDate || null,
         procedureDate: new Date(procedureDate),
+        procedureName: procedureName || null,
+        insuranceProvider: insuranceProvider || null,
         reportedValue,
         description: description || null,
         sourcePdfUrl: null,
@@ -851,7 +858,10 @@ export async function registerRoutes(
         await storage.createClinicReport({
           doctorId: userId,
           patientName: item.patientName,
+          patientBirthDate: item.patientBirthDate || null,
           procedureDate: new Date(item.procedureDate),
+          procedureName: item.procedureName || null,
+          insuranceProvider: item.insuranceProvider || null,
           reportedValue: item.reportedValue || "0.00",
           description: item.description || null,
           sourcePdfUrl: null,
@@ -1061,8 +1071,10 @@ export async function registerRoutes(
           await storage.createDoctorEntry({
             doctorId: userId,
             patientName: item.patientName,
+            patientBirthDate: item.patientBirthDate || null,
             procedureDate: procDate,
-            insuranceProvider: "Não informado",
+            procedureName: item.procedureName || null,
+            insuranceProvider: item.insuranceProvider || "Não informado",
             description: item.description || "Procedimento importado",
             procedureValue: item.reportedValue && item.reportedValue !== "0.00" ? item.reportedValue : null,
             entryMethod: "manual",
@@ -1145,7 +1157,10 @@ export async function registerRoutes(
             await storage.createClinicReport({
               doctorId: userId,
               patientName: item.patientName,
+              patientBirthDate: item.patientBirthDate || null,
               procedureDate: procDate,
+              procedureName: item.procedureName || null,
+              insuranceProvider: item.insuranceProvider || null,
               reportedValue: item.reportedValue || "0.00",
               description: item.description || null,
               sourcePdfUrl: null,

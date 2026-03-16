@@ -27,7 +27,9 @@ export interface FieldConfidence {
 
 export interface ExtractedEntry {
   patientName: string;
+  patientBirthDate?: string;
   procedureDate: string;
+  procedureName?: string;
   insuranceProvider: string;
   description: string;
   procedureValue?: string;
@@ -74,9 +76,11 @@ export async function extractDataFromImage(base64Image: string, corrections: Cor
 Analise a imagem e extraia TODOS os registros de pacientes encontrados (ignorando etiquetas de materiais).
 Para cada paciente, extraia:
 - patientName: nome completo do paciente
+- patientBirthDate: data de nascimento do paciente no formato YYYY-MM-DD (se disponível, senão omita)
 - procedureDate: data do procedimento no formato YYYY-MM-DD
+- procedureName: nome específico do procedimento (ex: "Consulta cardiológica", "Endoscopia", "Sleeve")
 - insuranceProvider: nome do convênio/plano de saúde
-- description: descrição do procedimento realizado
+- description: descrição/observações do procedimento realizado
 - procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não encontrado, omita o campo.
 - confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente legível/identificado), "medium" (parcialmente legível, possível inferência), "low" (ilegível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
@@ -149,9 +153,11 @@ export async function extractDataFromAudio(base64Audio: string, corrections: Cor
 O médico ditou informações sobre um ou mais procedimentos/consultas. Extraia TODOS os pacientes mencionados.
 Para cada paciente, extraia:
 - patientName: nome completo do paciente
+- patientBirthDate: data de nascimento do paciente no formato YYYY-MM-DD (se mencionada, senão omita)
 - procedureDate: data do procedimento no formato YYYY-MM-DD (se não mencionada, use a data de hoje: ${new Date().toISOString().split("T")[0]})
+- procedureName: nome específico do procedimento (ex: "Consulta", "Endoscopia", "Sleeve")
 - insuranceProvider: nome do convênio/plano de saúde (se não mencionado, use "Particular")
-- description: descrição do procedimento realizado
+- description: descrição/observações do procedimento realizado
 - procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não mencionado, omita o campo.
 - confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente ditado/identificado), "medium" (parcialmente audível, possível inferência), "low" (inaudível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
