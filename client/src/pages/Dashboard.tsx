@@ -254,38 +254,38 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" data-testid="stats-grid">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
+          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-pending">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl"><Clock className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">{pendingCount}</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.pendingLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-pending">{pendingCount}</p>
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
+          </button>
+          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-reconciled">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl"><CreditCard className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">{reconciledCount}</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.reconciledLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-reconciled">{reconciledCount}</p>
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
+          </button>
+          <button onClick={() => setLocation("/reconciliation")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-divergent">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl"><AlertTriangle className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{divergentCount}</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.divergentLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-divergent">{divergentCount}</p>
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]">
+          </button>
+          <button onClick={() => setLocation("/entries")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-total">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><FileText className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2 py-0.5 rounded-full">{entries.length}</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.totalLabel")}</p>
             <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-total-value">{entries.length}</p>
-          </div>
+          </button>
         </div>
 
         <ProjectionsPanel />
