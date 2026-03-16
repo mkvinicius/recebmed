@@ -160,8 +160,8 @@ function datesWithinDays(d1: Date, d2: Date, days: number): boolean {
 }
 
 export interface ReconciliationResult {
-  reconciled: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string }>;
-  divergent: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string }>;
+  reconciled: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string; divergenceReason?: string }>;
+  divergent: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string; divergenceReason: string }>;
   pending: Array<{ entryId: string; patientName: string; procedureDate: string; entryValue: string | null }>;
 }
 
@@ -182,6 +182,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
 
   for (const entry of pendingEntries) {
     let matched = false;
+    let bestPartialMatch: { report: typeof reports[0]; nameDistance: number; dateMatch: boolean } | null = null;
 
     for (const report of reports) {
       if (usedReports.has(report.id)) continue;
@@ -189,42 +190,56 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
       const nameDistance = levenshteinDistance(entry.patientName, report.patientName);
       const entryDate = new Date(entry.procedureDate);
       const reportDate = new Date(report.procedureDate);
+      const nameMatch = nameDistance <= 3;
       const dateMatch = datesWithinDays(entryDate, reportDate, 7);
 
-      if (nameDistance <= 3 && dateMatch) {
+      if (nameMatch && dateMatch) {
         usedReports.add(report.id);
         matched = true;
-
-        const entryVal = entry.procedureValue ? parseFloat(entry.procedureValue) : 0;
-        const reportVal = parseFloat(report.reportedValue);
-        const valuesMatch = Math.abs(entryVal - reportVal) < 0.01;
-
-        if (valuesMatch) {
-          result.reconciled.push({
-            entryId: entry.id,
-            reportId: report.id,
-            patientName: entry.patientName,
-            procedureDate: entry.procedureDate.toISOString(),
-            entryValue: entry.procedureValue,
-            reportValue: report.reportedValue,
-          });
-          statusUpdates.push({ id: entry.id, status: "reconciled" });
-        } else {
-          result.divergent.push({
-            entryId: entry.id,
-            reportId: report.id,
-            patientName: entry.patientName,
-            procedureDate: entry.procedureDate.toISOString(),
-            entryValue: entry.procedureValue,
-            reportValue: report.reportedValue,
-          });
-          statusUpdates.push({ id: entry.id, status: "divergent" });
-        }
+        result.reconciled.push({
+          entryId: entry.id,
+          reportId: report.id,
+          patientName: entry.patientName,
+          procedureDate: entry.procedureDate.toISOString(),
+          entryValue: entry.procedureValue,
+          reportValue: report.reportedValue,
+        });
+        statusUpdates.push({ id: entry.id, status: "reconciled" });
         break;
+      }
+
+      if (nameMatch || (nameDistance <= 6 && dateMatch)) {
+        if (!bestPartialMatch || nameDistance < bestPartialMatch.nameDistance) {
+          bestPartialMatch = { report, nameDistance, dateMatch };
+        }
       }
     }
 
-    if (!matched) {
+    if (!matched && bestPartialMatch) {
+      const { report, nameDistance, dateMatch } = bestPartialMatch;
+      usedReports.add(report.id);
+
+      let reason = "";
+      if (nameDistance > 3) {
+        reason = `Nome diferente: "${entry.patientName}" vs "${report.patientName}"`;
+      }
+      if (!dateMatch) {
+        const entryDate = new Date(entry.procedureDate).toLocaleDateString("pt-BR");
+        const reportDate = new Date(report.procedureDate).toLocaleDateString("pt-BR");
+        reason = reason ? `${reason}; Data diferente: ${entryDate} vs ${reportDate}` : `Data diferente: ${entryDate} vs ${reportDate}`;
+      }
+
+      result.divergent.push({
+        entryId: entry.id,
+        reportId: report.id,
+        patientName: entry.patientName,
+        procedureDate: entry.procedureDate.toISOString(),
+        entryValue: entry.procedureValue,
+        reportValue: report.reportedValue,
+        divergenceReason: reason || "Dados parcialmente diferentes",
+      });
+      statusUpdates.push({ id: entry.id, status: "divergent" });
+    } else if (!matched) {
       result.pending.push({
         entryId: entry.id,
         patientName: entry.patientName,
@@ -238,11 +253,12 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     await storage.batchUpdateDoctorEntryStatus(statusUpdates);
   }
 
+  const verifiedTotal = result.reconciled.length + result.divergent.length;
   await storage.createNotification({
     doctorId,
     type: "reconciliation",
     title: "Conferência concluída",
-    message: `${result.reconciled.length} conferidos, ${result.divergent.length} divergentes, ${result.pending.length} pendentes`,
+    message: `${verifiedTotal} conferidos (${result.reconciled.length} recebidos, ${result.divergent.length} divergentes), ${result.pending.length} pendentes`,
     read: false,
   });
 

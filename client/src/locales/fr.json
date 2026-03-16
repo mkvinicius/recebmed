@@ -385,6 +385,7 @@
     "resultsAfterProcessing": "Les résultats s'afficheront ici après le traitement",
     "loadPrevious": "Charger les résultats précédents",
     "valueDiffers": "La valeur déclarée diffère du rapport de la clinique. Vérifiez les données.",
+    "dataDiffers": "Le nom du patient ou la date diffère du rapport de la clinique. Vérifiez les données.",
     "exportReport": "Exporter le Rapport",
     "downloadPDF": "Télécharger PDF",
     "generatedBy": "Généré par RecebMed"

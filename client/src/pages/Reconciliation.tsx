@@ -465,15 +465,15 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                 activeEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border transition-all ${activeTab === "divergent" ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 cursor-pointer" : "border-slate-100/70 dark:border-slate-700/50"}`}
-                    onClick={() => activeTab === "divergent" && setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
+                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border transition-all ${(activeTab === "divergent" || activeTab === "verified") ? "hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer" : ""} ${entry.status === "divergent" ? "border-amber-200 dark:border-amber-800" : "border-slate-100/70 dark:border-slate-700/50"}`}
+                    onClick={() => (activeTab === "divergent" || activeTab === "verified") && setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
                     data-testid={`entry-card-${entry.id}`}
                   >
                     <div className="p-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-slate-800 dark:text-slate-200 truncate" data-testid={`text-patient-${entry.id}`}>{entry.patientName}</p>
-                          {activeTab === "divergent" && (
+                          {(activeTab === "divergent" || (activeTab === "verified" && entry.status === "divergent")) && (
                             expandedEntry === entry.id ? <ChevronUp className="w-4 h-4 text-amber-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-amber-500 shrink-0" />
                           )}
                         </div>
@@ -483,11 +483,11 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                           <span className="font-semibold text-slate-700 dark:text-slate-300" data-testid={`text-value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${activeTab === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : activeTab === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
-                        {activeTab === "reconciled" ? t("common.reconciled") : activeTab === "divergent" ? t("common.divergent") : t("common.pending")}
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : entry.status === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
+                        {entry.status === "reconciled" ? t("reconciliation.receivedTab") : entry.status === "divergent" ? t("reconciliation.divergentTab") : t("reconciliation.pendingTab")}
                       </div>
                     </div>
-                    {activeTab === "divergent" && expandedEntry === entry.id && (
+                    {(activeTab === "divergent" || (activeTab === "verified" && entry.status === "divergent")) && expandedEntry === entry.id && (
                       <div className="px-4 pb-4 border-t border-amber-100 dark:border-amber-800 pt-3" data-testid={`detail-${entry.id}`}>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
@@ -495,15 +495,11 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                             <p className="font-medium text-slate-700 dark:text-slate-300">{entry.insuranceProvider}</p>
                           </div>
                           <div>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">{t("common.value")}</p>
-                            <p className="font-medium text-slate-700 dark:text-slate-300">{formatCurrency(entry.procedureValue)}</p>
-                          </div>
-                          <div className="col-span-2">
-                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">{t("clinicReports.description")}</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">{t("common.procedure")}</p>
                             <p className="font-medium text-slate-700 dark:text-slate-300">{entry.description}</p>
                           </div>
                         </div>
-                        <p className="mt-3 text-xs text-amber-600 font-semibold">⚠ {t("reconciliation.valueDiffers")}</p>
+                        <p className="mt-3 text-xs text-amber-600 font-semibold">⚠ {t("reconciliation.dataDiffers")}</p>
                       </div>
                     )}
                   </div>
