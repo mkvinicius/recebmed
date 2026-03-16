@@ -270,8 +270,14 @@ Para cada lançamento, responda com:
 NÃO compare valores financeiros. Foque apenas nos 5 campos acima.
 Responda APENAS com um array JSON válido, sem markdown.`;
 
-async function aiReconciliation(entries: any[], reports: any[]): Promise<Array<{ entryIndex: number; reportIndex: number | null; status: string; divergenceReason?: string }>> {
-  if (entries.length === 0) return [];
+const AI_BATCH_SIZE = 30;
+
+async function aiReconciliationBatch(
+  entries: any[],
+  reports: any[],
+  entryOffset: number
+): Promise<Array<{ entryIndex: number; reportIndex: number | null; status: string; divergenceReason?: string }>> {
+  if (entries.length === 0 || reports.length === 0) return [];
 
   const entrySummary = entries.map((e, i) => ({
     idx: i,
@@ -297,25 +303,26 @@ async function aiReconciliation(entries: any[], reports: any[]): Promise<Array<{
       model: "gpt-5-mini",
       messages: [
         { role: "system", content: AI_RECONCILIATION_PROMPT },
-        { role: "user", content: `Lançamentos do médico:\n${JSON.stringify(entrySummary, null, 1)}\n\nRelatório da clínica:\n${JSON.stringify(reportSummary, null, 1)}` },
+        { role: "user", content: `Lançamentos do médico (${entries.length}):\n${JSON.stringify(entrySummary)}\n\nRelatório da clínica (${reports.length}):\n${JSON.stringify(reportSummary)}` },
       ],
       max_completion_tokens: 4000,
     });
 
     const content = response.choices[0]?.message?.content || "[]";
     const cleaned = content.replace(/```json\s*|```\s*/g, "").trim();
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed.map((r: any) => ({ ...r, entryIndex: r.entryIndex + entryOffset })) : [];
   } catch (err) {
-    console.error("AI reconciliation fallback to local matching:", err);
+    console.error("AI reconciliation batch error:", err);
     return [];
   }
 }
 
 export async function runReconciliation(doctorId: string): Promise<ReconciliationResult> {
   const pendingEntries = await storage.getPendingDoctorEntries(doctorId);
-  const sixtyDaysAgo = new Date();
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-  const reports = await storage.getRecentClinicReports(doctorId, sixtyDaysAgo);
+  const twoYearsAgo = new Date();
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+  const reports = await storage.getRecentClinicReports(doctorId, twoYearsAgo);
 
   const result: ReconciliationResult = {
     reconciled: [],
@@ -324,22 +331,34 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
   };
 
   if (pendingEntries.length === 0) return result;
+  if (reports.length === 0) {
+    for (const entry of pendingEntries) {
+      result.pending.push({
+        entryId: entry.id,
+        patientName: entry.patientName,
+        procedureDate: entry.procedureDate.toISOString(),
+        entryValue: entry.procedureValue,
+      });
+    }
+    return result;
+  }
 
   const usedReports = new Set<string>();
   const statusUpdates: Array<{ id: string; status: string }> = [];
 
-  let aiResults: Array<{ entryIndex: number; reportIndex: number | null; status: string; divergenceReason?: string }> = [];
-  if (reports.length > 0) {
-    aiResults = await aiReconciliation(pendingEntries, reports);
-  }
+  for (let batchStart = 0; batchStart < pendingEntries.length; batchStart += AI_BATCH_SIZE) {
+    const entryBatch = pendingEntries.slice(batchStart, batchStart + AI_BATCH_SIZE);
+    const availableReports = reports.filter(r => !usedReports.has(r.id));
+    if (availableReports.length === 0) break;
 
-  if (aiResults.length > 0) {
+    const aiResults = await aiReconciliationBatch(entryBatch, availableReports, batchStart);
+
     for (const aiMatch of aiResults) {
       const entry = pendingEntries[aiMatch.entryIndex];
       if (!entry) continue;
 
       if (aiMatch.status === "received" && aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
-        const report = reports[aiMatch.reportIndex];
+        const report = availableReports[aiMatch.reportIndex];
         if (report && !usedReports.has(report.id)) {
           usedReports.add(report.id);
           result.reconciled.push({
@@ -353,7 +372,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
           statusUpdates.push({ id: entry.id, status: "reconciled" });
         }
       } else if (aiMatch.status === "divergent" && aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
-        const report = reports[aiMatch.reportIndex];
+        const report = availableReports[aiMatch.reportIndex];
         if (report && !usedReports.has(report.id)) {
           usedReports.add(report.id);
           result.divergent.push({
@@ -367,13 +386,6 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
           });
           statusUpdates.push({ id: entry.id, status: "divergent" });
         }
-      } else {
-        result.pending.push({
-          entryId: entry.id,
-          patientName: entry.patientName,
-          procedureDate: entry.procedureDate.toISOString(),
-          entryValue: entry.procedureValue,
-        });
       }
     }
   }
@@ -381,8 +393,8 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
   const processedEntryIds = new Set([
     ...result.reconciled.map(r => r.entryId),
     ...result.divergent.map(r => r.entryId),
-    ...result.pending.map(r => r.entryId),
   ]);
+
   for (const entry of pendingEntries) {
     if (processedEntryIds.has(entry.id)) continue;
 

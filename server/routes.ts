@@ -854,25 +854,38 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Formato não suportado" });
       }
 
+      let savedCount = 0;
       for (const item of extractedData) {
-        await storage.createClinicReport({
-          doctorId: userId,
-          patientName: item.patientName,
-          patientBirthDate: item.patientBirthDate || null,
-          procedureDate: new Date(item.procedureDate),
-          procedureName: item.procedureName || null,
-          insuranceProvider: item.insuranceProvider || null,
-          reportedValue: item.reportedValue || "0.00",
-          description: item.description || null,
-          sourcePdfUrl: null,
-        });
+        try {
+          const procDate = new Date(item.procedureDate);
+          if (isNaN(procDate.getTime())) continue;
+          await storage.createClinicReport({
+            doctorId: userId,
+            patientName: item.patientName,
+            patientBirthDate: item.patientBirthDate || null,
+            procedureDate: procDate,
+            procedureName: item.procedureName || null,
+            insuranceProvider: item.insuranceProvider || null,
+            reportedValue: item.reportedValue || "0.00",
+            description: item.description || null,
+            sourcePdfUrl: null,
+          });
+          savedCount++;
+        } catch (itemErr) {
+          console.error("Error saving clinic report item:", itemErr);
+        }
       }
 
-      await runReconciliation(userId);
+      try {
+        await runReconciliation(userId);
+      } catch (reconcErr) {
+        console.error("Reconciliation error (continuing):", reconcErr);
+      }
+
       const allEntries = await storage.getDoctorEntries(userId);
       return res.json({
         success: true,
-        extractedCount: extractedData.length,
+        extractedCount: savedCount,
         reconciliation: {
           reconciled: allEntries.filter(e => e.status === "reconciled"),
           divergent: allEntries.filter(e => e.status === "divergent"),
