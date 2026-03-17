@@ -394,7 +394,8 @@
     "dataDiffers": "Paciente ou data diverge do relatório da clínica. Verifique os dados.",
     "exportReport": "Exportar Relatório",
     "downloadPDF": "Baixar PDF",
-    "generatedBy": "Gerado por RecebMed"
+    "generatedBy": "Gerado por RecebMed",
+    "uploadNewFile": "Enviar novo arquivo"
   },
   "clinicReports": {
     "title": "Relatórios da Clínica",

@@ -394,7 +394,8 @@
     "dataDiffers": "Le nom du patient ou la date diffère du rapport de la clinique. Vérifiez les données.",
     "exportReport": "Exporter le Rapport",
     "downloadPDF": "Télécharger PDF",
-    "generatedBy": "Généré par RecebMed"
+    "generatedBy": "Généré par RecebMed",
+    "uploadNewFile": "Envoyer un nouveau fichier"
   },
   "clinicReports": {
     "title": "Rapports de la Clinique",

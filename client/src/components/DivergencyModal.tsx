@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   X, Loader2, AlertTriangle, CheckCircle2,
   User, Calendar, Building2, FileText, DollarSign,
-  ArrowLeft, Save
+  ArrowLeft, Save, Camera, Mic
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ interface DoctorEntry {
   createdAt: string;
   matchedReportId?: string | null;
   divergenceReason?: string | null;
+  sourceUrl?: string | null;
 }
 
 interface ClinicReport {
@@ -181,6 +182,26 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
               <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</label>
               <input type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
             </div>
+            {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
+                  {entry.entryMethod === "photo" ? <Camera className="w-3.5 h-3.5 text-[#8855f6]" /> : <Mic className="w-3.5 h-3.5 text-[#8855f6]" />}
+                  {t("entryDetail.originalEvidence")}
+                </label>
+                {entry.entryMethod === "audio" ? (
+                  <audio controls className="w-full" data-testid="manual-evidence-audio">
+                    <source src={entry.sourceUrl} />
+                  </audio>
+                ) : (
+                  <img
+                    src={entry.sourceUrl}
+                    alt={t("entryDetail.originalEvidence")}
+                    className="w-full max-h-48 object-contain rounded-xl border border-slate-200 dark:border-slate-700"
+                    data-testid="manual-evidence-image"
+                  />
+                )}
+              </div>
+            )}
           </div>
           <div className="px-6 pt-3 pb-24 sm:pb-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
             <button onClick={confirmManual} disabled={saving} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-confirm-manual">
@@ -277,6 +298,27 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
                   )}
                 </div>
               </div>
+
+              {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (
+                <div className="mt-4 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    {entry.entryMethod === "photo" ? <Camera className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                    {t("entryDetail.originalEvidence")}
+                  </p>
+                  {entry.entryMethod === "audio" ? (
+                    <audio controls className="w-full" data-testid="divergency-evidence-audio">
+                      <source src={entry.sourceUrl} />
+                    </audio>
+                  ) : (
+                    <img
+                      src={entry.sourceUrl}
+                      alt={t("entryDetail.originalEvidence")}
+                      className="w-full max-h-40 object-contain rounded-lg"
+                      data-testid="divergency-evidence-image"
+                    />
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>

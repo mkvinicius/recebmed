@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import DivergencyModal from "@/components/DivergencyModal";
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -28,6 +29,11 @@ interface EntryResult {
   description: string;
   insuranceProvider: string;
   status: string;
+  entryMethod?: string;
+  createdAt?: string;
+  matchedReportId?: string | null;
+  divergenceReason?: string | null;
+  sourceUrl?: string | null;
 }
 
 interface ReconciliationResults {
@@ -46,6 +52,9 @@ export default function Reconciliation() {
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [divergencyEntry, setDivergencyEntry] = useState<EntryResult | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -136,15 +145,19 @@ export default function Reconciliation() {
 
   const loadResults = useCallback(async () => {
     const token = getToken();
-    if (!token) return;
+    if (!token) { setInitialLoading(false); return; }
     try {
       const res = await fetch("/api/reconciliation/results", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       if (res.ok) {
         const data = await res.json();
         setResults(data);
       }
     } catch {}
-  }, []);
+    finally { setInitialLoading(false); }
+  }, [setLocation]);
+
+  useEffect(() => { loadResults(); }, [loadResults]);
 
   const verifiedCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0);
   const tabs = [
@@ -282,7 +295,7 @@ export default function Reconciliation() {
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
 
-        <div
+        {(showUpload || !results) && <div
           className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
           onClick={() => !isProcessing && fileInputRef.current?.click()}
           onDragOver={handleDragOver}
@@ -332,7 +345,19 @@ export default function Reconciliation() {
               </Button>
             </div>
           )}
-        </div>
+        </div>}
+
+        {results && !showUpload && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={() => setShowUpload(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8855f6]/10 text-[#8855f6] text-sm font-semibold hover:bg-[#8855f6]/20 transition-colors"
+              data-testid="button-show-upload"
+            >
+              <Upload className="w-4 h-4" /> {t("reconciliation.uploadNewFile")}
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-wrap justify-center gap-3 mb-6">
           <button
@@ -466,7 +491,13 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                   <div
                     key={entry.id}
                     className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border transition-all ${(activeTab === "divergent" || activeTab === "verified") ? "hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer" : ""} ${entry.status === "divergent" ? "border-amber-200 dark:border-amber-800" : "border-slate-100/70 dark:border-slate-700/50"}`}
-                    onClick={() => (activeTab === "divergent" || activeTab === "verified") && setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
+                    onClick={() => {
+                      if (entry.status === "divergent") {
+                        setDivergencyEntry(entry);
+                      } else if (activeTab === "verified") {
+                        setExpandedEntry(expandedEntry === entry.id ? null : entry.id);
+                      }
+                    }}
                     data-testid={`entry-card-${entry.id}`}
                   >
                     <div className="p-4 flex items-center justify-between">
@@ -509,15 +540,33 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
           </div>
         )}
 
-        {!results && !isProcessing && (
+        {!results && !isProcessing && !initialLoading && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-8 text-center mb-8">
             <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-no-results">{t("reconciliation.sendPDF")}</p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.resultsAfterProcessing")}</p>
-            <button onClick={loadResults} className="mt-4 text-sm text-[#8855f6] font-semibold hover:underline" data-testid="button-load-previous">
-              {t("reconciliation.loadPrevious")}
-            </button>
           </div>
+        )}
+
+        {initialLoading && (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" />
+          </div>
+        )}
+
+        {divergencyEntry && (
+          <DivergencyModal
+            entry={{
+              ...divergencyEntry,
+              entryMethod: divergencyEntry.entryMethod || "manual",
+              createdAt: divergencyEntry.createdAt || new Date().toISOString(),
+            }}
+            onClose={() => setDivergencyEntry(null)}
+            onResolved={() => {
+              setDivergencyEntry(null);
+              loadResults();
+            }}
+          />
         )}
     </div>
   );

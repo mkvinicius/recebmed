@@ -2,9 +2,12 @@ import { storage } from "./storage";
 import { runReconciliation } from "./reconciliation";
 
 const POST_UPLOAD_DELAY_MS = 5 * 60 * 1000;
+const INTERVAL_MS = 15 * 60 * 1000;
 const SCHEDULED_HOURS_BRT = [13, 22];
 
 let scheduledTimers: ReturnType<typeof setTimeout>[] = [];
+let intervalTimer: ReturnType<typeof setInterval> | null = null;
+let auditRunning = false;
 const pendingAudits = new Map<string, ReturnType<typeof setTimeout>>();
 
 export function schedulePostUploadAudit(doctorId: string) {
@@ -107,24 +110,30 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
   }
 }
 
-async function runScheduledAudit() {
+async function runScheduledAudit(silent = false) {
+  if (auditRunning) {
+    if (!silent) console.log("[Audit] Varredura já em andamento, pulando ciclo");
+    return;
+  }
+  auditRunning = true;
   try {
     const userIds = await storage.getActiveUserIds();
     if (userIds.length === 0) return;
 
-    console.log(`[Audit] Varredura agendada iniciada — ${userIds.length} usuários ativos`);
+    if (!silent) console.log(`[Audit] Varredura iniciada — ${userIds.length} usuários ativos`);
 
     for (const doctorId of userIds) {
       if (pendingAudits.has(doctorId)) {
-        console.log(`[Audit] Pulando usuário ${doctorId} — auditoria pós-upload já agendada`);
         continue;
       }
       await runUserAudit(doctorId, "scheduled");
     }
 
-    console.log(`[Audit] Varredura agendada concluída`);
+    if (!silent) console.log(`[Audit] Varredura concluída`);
   } catch (err) {
-    console.error("[Audit] Erro na varredura agendada:", err);
+    console.error("[Audit] Erro na varredura:", err);
+  } finally {
+    auditRunning = false;
   }
 }
 
@@ -162,11 +171,13 @@ function scheduleNextRun(targetHour: number) {
 }
 
 export function startAuditScheduler() {
-  console.log(`[Audit] Scheduler iniciado — varreduras diárias às ${SCHEDULED_HOURS_BRT.join("h e ")}h BRT + 5min pós-upload`);
+  console.log(`[Audit] Scheduler iniciado — ciclo a cada 15min + horários fixos ${SCHEDULED_HOURS_BRT.join("h e ")}h BRT + 5min pós-upload`);
 
   for (const hour of SCHEDULED_HOURS_BRT) {
     scheduleNextRun(hour);
   }
+
+  intervalTimer = setInterval(() => runScheduledAudit(true), INTERVAL_MS);
 
   setTimeout(runScheduledAudit, 30 * 1000);
 }
@@ -176,6 +187,7 @@ export function stopAuditScheduler() {
     clearTimeout(timer);
   }
   scheduledTimers = [];
+  if (intervalTimer) { clearInterval(intervalTimer); intervalTimer = null; }
   for (const timer of pendingAudits.values()) {
     clearTimeout(timer);
   }

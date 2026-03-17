@@ -41,10 +41,11 @@ PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
 4. insuranceProvider: Convênio ou forma de pagamento.
    REGRAS DE CLASSIFICAÇÃO:
    - Se tem coluna "Convênio" com nome do plano (Unimed, Amil, etc.) → use o nome do convênio
-   - Se tem coluna "Repasse" ou "Espécie" com formas de pagamento (PIX, Dinheiro, Cartão, Redecard, PACOTE) → use "Particular"
+   - Se tem coluna "Repasse" ou "Espécie" com formas de pagamento (PIX, Dinheiro, Cartão, Redecard, PACOTE, "PX - PIX", "DN - DINHEIRO", "CC - CARTAO CREDITO") → use "Particular"
    - Se a coluna diz "SUS" ou "Sistema Único de Saúde" → use "SUS"
    - Se NÃO tem nenhuma informação de convênio → use null
    - NUNCA confunda forma de pagamento (PIX, Redecard) com convênio de saúde
+   - Quando encontrar código de espécie (ex: "PX", "DN", "CC", "RE"), mapeie: qualquer forma de pagamento direto = "Particular"
 
 5. reportedValue: Valor financeiro em formato decimal com ponto.
    Pode estar em: "Valor", "Total", "Repasse", "Valor Pago", "Valor Líquido"
@@ -61,10 +62,13 @@ PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
 
 REGRAS IMPORTANTES:
 - Extraia TODAS as linhas de pacientes, mesmo repetidas ou com dados parciais
-- Ignore SEMPRE: cabeçalhos, rodapés, totais, subtotais, linhas de "Observação:" vazias
+- Ignore SEMPRE: cabeçalhos, rodapés, totais, subtotais, resumos
+- Ignore linhas que começam com "Observação:" ou "Obs:" — NÃO são registros de pacientes
+- Cada linha de paciente/transação é um registro ÚNICO — trate separadamente
 - Se um paciente aparece 2x com valores diferentes → extraia as 2 ocorrências separadas
 - Se o documento tem múltiplas páginas, extraia de TODAS
 - Se uma coluna não existe naquele formato → use null, NUNCA invente dados
+- Em documentos NOTAFLMED ou "Conta Corrente": a coluna "Espécie" indica forma de pagamento, NÃO convênio
 
 Responda APENAS com um array JSON válido. Sem markdown, sem explicações, sem texto antes ou depois do JSON.`;
 
