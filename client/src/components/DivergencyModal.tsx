@@ -182,7 +182,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
               <input type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
             </div>
           </div>
-          <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
+          <div className="px-6 pt-3 pb-24 sm:pb-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
             <button onClick={confirmManual} disabled={saving} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-confirm-manual">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.confirmManual")}</>}
             </button>
@@ -281,15 +281,15 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
           )}
         </div>
 
-        <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-none sm:rounded-b-2xl">
+        <div className="px-6 pt-3 pb-24 sm:pb-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 sm:rounded-b-2xl">
           <div className="flex flex-col gap-2">
-            <button onClick={acceptDoctor} disabled={saving || loading} className="w-full h-12 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-doctor">
+            <button onClick={acceptDoctor} disabled={saving || loading} className="w-full h-11 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-doctor">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.acceptDoctor")}</>}
             </button>
-            <button onClick={acceptClinic} disabled={saving || loading || !clinicReport} className="w-full h-12 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-clinic">
+            <button onClick={acceptClinic} disabled={saving || loading || !clinicReport} className="w-full h-11 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-clinic">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.acceptClinic")}</>}
             </button>
-            <button onClick={() => setShowManual(true)} disabled={loading} className="w-full h-12 border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-[0.97] disabled:opacity-50" data-testid="button-manual-validation">
+            <button onClick={() => setShowManual(true)} disabled={loading} className="w-full h-11 border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-[0.97] disabled:opacity-50" data-testid="button-manual-validation">
               <Save className="w-4 h-4" /> {t("divergency.manualValidation")}
             </button>
           </div>
