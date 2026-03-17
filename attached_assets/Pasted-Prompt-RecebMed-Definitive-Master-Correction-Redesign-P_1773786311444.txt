@@ -1,0 +1,56 @@
+Prompt: RecebMed Definitive Master Correction & Redesign Plan (v3)
+Objective: This is the FINAL and DEFINITIVE plan to overhaul the RecebMed application. It incorporates all previous feedback and adds the critical requirement for an ACTIVE and PARTICIPATIVE AI that runs in the background. This prompt replaces all previous versions.
+
+
+⚙️ PART 1: CRITICAL - Implement an Active AI & Background Processing Engine
+The Core Problem: The AI is currently passive and only triggers on file uploads. This is inefficient and the root of the user’s frustration. The AI must be an active, persistent agent.
+
+The Solution:
+
+	1.	Implement a Background Worker:
+	◦	You must set up a persistent background worker process (e.g., using a cron job, a message queue like RabbitMQ/SQS, or a library like Celery/BullMQ).
+	◦	This worker is the heart of the new “active AI”.
+	2.	Create a Continuous Reconciliation Loop:
+	◦	The background worker must run on a recurring schedule (e.g., every 15 minutes).
+	◦	On each run, the worker will execute the full reconciliation logic defined in Part 2.
+	◦	It will query the database for all entries with `Pending` or `Unmatched` status and attempt to find matches, updating their status to `Reconciled` or `Divergent` accordingly.
+	◦	This makes the AI “participative” and ensures the data is always being processed, not just at the moment of upload.
+	3.	API Abstraction & Claude Option:
+	◦	The current OpenAI API calls are failing on complex documents. We need flexibility.
+	◦	Refactor the code to create an LLM Abstraction Layer.
+	◦	The system should be able to switch between `OpenAI` and `Anthropic Claude` by changing a single environment variable (e.g., `LLM_PROVIDER`).
+	◦	Strongly recommend switching to Claude for the PDF parsing task, as it generally has a larger context window and better performance on complex, structured documents. The prompt for Claude should be optimized for its capabilities.
+
+
+⚠️ PART 2: Redefine the Reconciliation and Divergence Logic
+(This is the same logic as before, but it will now be executed by the background worker)
+
+	1.	Primary Matching (Patient Name): Use fuzzy matching (>0.85 tolerance) on the patient’s full name as the ONLY primary key.
+	2.	Categorize Every Record:
+	◦	✅ Reconciled: Confident name match + key fields match. Value is ignored.
+	◦	⚠️ Divergent: Confident name match, but secondary fields differ. Specify the difference.
+	◦	❓ Unmatched (Clinic): Clinic record has no name match. High-priority for doctor review.
+	◦	⏳ Pending (Doctor): Doctor’s entry has no name match. Normal.
+	3.	User Actions:
+	◦	Divergent: Modal with side-by-side comparison and `Accept Doctor`, `Accept Clinic`, `Validate Manually` buttons.
+	◦	Unmatched Clinic Entry: User can click `Create Entry from Clinic Data` to auto-create and reconcile.
+
+
+🎨 PART 3: UI/UX Redesign and Flow Correction
+	1.	Clinic Statements Page (`Extratos de Produção`): Redesign to a file-centric view with File Cards (Filename, Upload Date, Record Count). Clicking a card shows records from that file.
+	2.	Reconciliation Page (`Conferir Produção`): Remove the useless “Envie um arquivo” card and “Carregar resultados” button. Data loads automatically. Clicking a divergent item opens the comparison modal directly.
+	3.	General UI Consistency: Fix dashboard counts, unify naming (`Lançamentos` vs. `Produção`), and ensure page titles are always correct.
+
+
+📄 PART 4: Robust PDF Parser for `NOTAFLMED.pdf`
+Update the PDF extraction logic to:
+
+	1.	Ignore “Observação:” lines.
+	2.	Handle headers/footers correctly.
+	3.	Map `Espécie` (e.g., “PX - PIX”) to `payment_method`.
+	4.	Treat each line as a unique transaction.
+
+
+✅ PART 5: Final Polish - Implement Missing Features
+	1.	Add Evidence to Manual Validation Modal: The `Original Evidence` (photo/audio) must be visible in the manual validation modal.
+	2.	Fix Reports Dashboard: Connect the charts to the production database so they show real data.
