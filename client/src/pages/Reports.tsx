@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity, ChevronDown, ChevronUp, User
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity, ChevronDown, ChevronUp, User, History
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -328,7 +328,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <button
             onClick={() => setLocation("/reconciliation")}
             className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
@@ -366,6 +366,19 @@ export default function Reports() {
             <div>
               <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("reports.retroactiveAudit")}</p>
               <p className="text-xs text-slate-400 dark:text-slate-500">{t("reports.importHistorical")}</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setLocation("/reports/history")}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
+            data-testid="link-report-history"
+          >
+            <div className="size-10 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("reportHistory.title")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reportHistory.subtitle")}</p>
             </div>
           </button>
         </div>

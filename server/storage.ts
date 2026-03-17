@@ -5,6 +5,7 @@ import {
   type Notification, type InsertNotification, notifications,
   type AiCorrection, type InsertAiCorrection, aiCorrections,
   type AuditLog, type InsertAuditLog, auditLogs,
+  type UploadedReport, type InsertUploadedReport, uploadedReports,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
@@ -51,6 +52,9 @@ export interface IStorage {
   getActiveUserIds(): Promise<string[]>;
   getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
+  createUploadedReport(report: InsertUploadedReport): Promise<UploadedReport>;
+  getUploadedReports(userId: string): Promise<UploadedReport[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -272,6 +276,15 @@ export class DatabaseStorage implements IStorage {
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     const [result] = await db.insert(auditLogs).values(log).returning();
     return result;
+  }
+
+  async createUploadedReport(report: InsertUploadedReport): Promise<UploadedReport> {
+    const [result] = await db.insert(uploadedReports).values(report).returning();
+    return result;
+  }
+
+  async getUploadedReports(userId: string): Promise<UploadedReport[]> {
+    return db.select().from(uploadedReports).where(eq(uploadedReports.userId, userId)).orderBy(desc(uploadedReports.uploadDate));
   }
 }
 

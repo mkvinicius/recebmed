@@ -528,5 +528,16 @@
     "skip": "Pular",
     "next": "Próximo",
     "finish": "Entendi!"
+  },
+  "reportHistory": {
+    "title": "Histórico de Relatórios",
+    "subtitle": "Todos os relatórios de clínica enviados",
+    "fileName": "Nome do Arquivo",
+    "uploadDate": "Data do Upload",
+    "recordCount": "Registros Extraídos",
+    "download": "Baixar Original",
+    "empty": "Nenhum relatório enviado ainda",
+    "emptyDesc": "Os relatórios aparecerão aqui após o upload na página de Conciliação.",
+    "records": "{{count}} registro(s)"
   }
 }

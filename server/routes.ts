@@ -841,9 +841,15 @@ export async function registerRoutes(
       if (!pdf) return res.status(400).json({ message: "PDF não enviado" });
       const base64Data = pdf.replace(/^data:[^;]+;base64,/, "");
       const pdfBuffer = Buffer.from(base64Data, "base64");
-      const extractedData = await extractPdfData(pdfBuffer);
+      const [extractedData, originalFileUrl] = await Promise.all([
+        extractPdfData(pdfBuffer),
+        mediaStorage.uploadBuffer(pdfBuffer, "application/pdf").catch(err => { console.error("Report upload error:", err); return null; }),
+      ]);
       for (const item of extractedData) {
         await storage.createClinicReport({ doctorId: userId, patientName: item.patientName, procedureDate: new Date(item.procedureDate), reportedValue: item.reportedValue || "0.00", description: item.description || null, sourcePdfUrl: null });
+      }
+      if (originalFileUrl) {
+        await storage.createUploadedReport({ userId, fileName: "relatorio.pdf", originalFileUrl, extractedRecordCount: extractedData.length });
       }
       await runReconciliation(userId);
       schedulePostUploadAudit(userId);
@@ -884,6 +890,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Nenhum registro encontrado no arquivo. Verifique se o arquivo contém dados de pacientes e procedimentos." });
       }
 
+      const mimeMap: Record<string, string> = { pdf: "application/pdf", image: "image/jpeg", csv: "text/csv" };
+      const originalFileUrl = await mediaStorage.uploadBuffer(Buffer.from(base64Data, "base64"), mimeMap[fileType] || "application/octet-stream").catch(err => { console.error("Report upload error:", err); return null; });
+
       let savedCount = 0;
       let skipCount = 0;
       for (const item of extractedData) {
@@ -909,6 +918,10 @@ export async function registerRoutes(
         }
       }
 
+      if (originalFileUrl) {
+        await storage.createUploadedReport({ userId, fileName: fileName || `relatorio.${fileType}`, originalFileUrl, extractedRecordCount: savedCount });
+      }
+
       console.log(`Reconciliation upload: ${savedCount} saved, ${skipCount} skipped from ${extractedData.length} extracted`);
 
       try {
@@ -932,6 +945,17 @@ export async function registerRoutes(
       console.error("File reconciliation error:", error);
       const msg = error?.message || "Erro ao processar arquivo";
       return res.status(500).json({ message: msg });
+    }
+  });
+
+  app.get("/api/uploaded-reports", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const reports = await storage.getUploadedReports(userId);
+      return res.json({ reports });
+    } catch (error) {
+      console.error("Get uploaded reports error:", error);
+      return res.status(500).json({ message: "Erro ao buscar relatórios" });
     }
   });
 

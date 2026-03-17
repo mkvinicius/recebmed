@@ -19,6 +19,7 @@ import Entries from "@/pages/Entries";
 import Capture from "@/pages/Capture";
 import Profile from "@/pages/Profile";
 import Import from "@/pages/Import";
+import ReportHistory from "@/pages/ReportHistory";
 import ForgotPassword from "@/pages/ForgotPassword";
 import AppLayout from "@/components/AppLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -45,6 +46,7 @@ function AppRoutes() {
         <Route path="/reconciliation" component={Reconciliation} />
         <Route path="/entry/:id" component={EntryDetail} />
         <Route path="/import" component={Import} />
+        <Route path="/reports/history" component={ReportHistory} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

@@ -528,5 +528,16 @@
     "skip": "Passer",
     "next": "Suivant",
     "finish": "Compris !"
+  },
+  "reportHistory": {
+    "title": "Historique des Rapports",
+    "subtitle": "Tous les rapports cliniques envoyés",
+    "fileName": "Nom du Fichier",
+    "uploadDate": "Date d'envoi",
+    "recordCount": "Enregistrements Extraits",
+    "download": "Télécharger l'original",
+    "empty": "Aucun rapport envoyé pour le moment",
+    "emptyDesc": "Les rapports apparaîtront ici après le téléchargement sur la page Réconciliation.",
+    "records": "{{count}} enregistrement(s)"
   }
 }

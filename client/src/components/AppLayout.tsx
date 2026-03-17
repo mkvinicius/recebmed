@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {tabs.map((tab) => {
             const label = t(tab.labelKey);
             const isActive = location === tab.path
-              || (tab.path === "/reports" && (location === "/reconciliation" || location === "/clinic-reports" || location === "/import"))
+              || (tab.path === "/reports" && (location === "/reconciliation" || location === "/clinic-reports" || location === "/import" || location === "/reports/history"))
               || (tab.path === "/profile" && (location === "/settings"))
               || (tab.path === "/entries" && location.startsWith("/entry/"));
             const isCapture = tab.path === "/capture";

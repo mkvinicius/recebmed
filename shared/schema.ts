@@ -120,6 +120,19 @@ export const insertAiCorrectionSchema = createInsertSchema(aiCorrections).omit({
 export type AiCorrection = typeof aiCorrections.$inferSelect;
 export type InsertAiCorrection = z.infer<typeof insertAiCorrectionSchema>;
 
+export const uploadedReports = pgTable("uploaded_reports", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  fileName: text("file_name").notNull(),
+  originalFileUrl: text("original_file_url").notNull(),
+  extractedRecordCount: integer("extracted_record_count").notNull().default(0),
+  uploadDate: timestamp("upload_date").defaultNow().notNull(),
+});
+
+export const insertUploadedReportSchema = createInsertSchema(uploadedReports).omit({ id: true, uploadDate: true });
+export type UploadedReport = typeof uploadedReports.$inferSelect;
+export type InsertUploadedReport = z.infer<typeof insertUploadedReportSchema>;
+
 export const auditLogs = pgTable("audit_logs", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   doctorId: varchar("doctor_id", { length: 36 }).notNull(),

@@ -16,7 +16,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 
 ```
 client/src/
-  pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import
+  pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import, ReportHistory
   components/ui/     - shadcn/ui components
   components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
   components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
@@ -51,6 +51,7 @@ shared/
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
+- **uploaded_reports**: id, userId, fileName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage
 - **audit_logs**: id, doctorId, triggerType (scheduled/post-upload), startedAt, endedAt, reconciledCount, divergentAfter, errorMessage — persists every audit run for traceability
 - **conversations**: id, title, createdAt (AI integration)
 - **messages**: id, conversationId, role, content, createdAt (AI integration)
@@ -85,7 +86,9 @@ shared/
 
 ### Reconciliation
 - `POST /api/reconciliation/upload-pdf` - Upload PDF, extract data with AI, auto-reconcile entries
+- `POST /api/reconciliation/upload` - Upload PDF/image/CSV, extract data, auto-reconcile (stores original file + creates uploaded_reports record)
 - `GET /api/reconciliation/results` - Get entries grouped by reconciliation status
+- `GET /api/uploaded-reports` - List all uploaded report files for the current user (ordered by upload_date desc)
 
 ### Historical Import
 - `POST /api/import/doctor-entries` - Import entries from CSV/Excel spreadsheet (papaparse + xlsx)

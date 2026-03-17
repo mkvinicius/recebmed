@@ -528,5 +528,16 @@
     "skip": "Saltar",
     "next": "Siguiente",
     "finish": "¡Entendido!"
+  },
+  "reportHistory": {
+    "title": "Historial de Informes",
+    "subtitle": "Todos los informes clínicos enviados",
+    "fileName": "Nombre del Archivo",
+    "uploadDate": "Fecha de Carga",
+    "recordCount": "Registros Extraídos",
+    "download": "Descargar Original",
+    "empty": "Ningún informe cargado aún",
+    "emptyDesc": "Los informes aparecerán aquí después de subirlos en la página de Conciliación.",
+    "records": "{{count}} registro(s)"
   }
 }

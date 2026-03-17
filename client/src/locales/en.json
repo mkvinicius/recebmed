@@ -528,5 +528,16 @@
     "skip": "Skip",
     "next": "Next",
     "finish": "Got it!"
+  },
+  "reportHistory": {
+    "title": "Report History",
+    "subtitle": "All uploaded clinic reports",
+    "fileName": "File Name",
+    "uploadDate": "Upload Date",
+    "recordCount": "Extracted Records",
+    "download": "Download Original",
+    "empty": "No reports uploaded yet",
+    "emptyDesc": "Reports will appear here after uploading on the Reconciliation page.",
+    "records": "{{count}} record(s)"
   }
 }
