@@ -146,8 +146,8 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
 
   if (showManual) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowManual(false); }} data-testid="modal-manual-validation">
-        <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4 fixed bottom-0 sm:relative sm:bottom-auto">
+      <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowManual(false); }} data-testid="modal-manual-validation">
+        <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4">
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
             <div className="flex items-center gap-3">
               <button onClick={() => setShowManual(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-back-to-divergency">
@@ -182,7 +182,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
               <input type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
+          <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
             <button onClick={confirmManual} disabled={saving} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-confirm-manual">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.confirmManual")}</>}
             </button>
@@ -193,8 +193,8 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }} data-testid="modal-divergency">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4 fixed bottom-0 sm:relative sm:bottom-auto">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }} data-testid="modal-divergency">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4">
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
@@ -207,7 +207,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
           </button>
         </div>
 
-        <div className="px-6 py-4 overflow-y-auto flex-1">
+        <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0">
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
           ) : (
@@ -281,15 +281,15 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button onClick={acceptDoctor} disabled={saving || loading} className="flex-1 h-11 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-doctor">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("divergency.acceptDoctor")}
+        <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-none sm:rounded-b-2xl">
+          <div className="flex flex-col gap-2">
+            <button onClick={acceptDoctor} disabled={saving || loading} className="w-full h-12 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-doctor">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.acceptDoctor")}</>}
             </button>
-            <button onClick={acceptClinic} disabled={saving || loading || !clinicReport} className="flex-1 h-11 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-clinic">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("divergency.acceptClinic")}
+            <button onClick={acceptClinic} disabled={saving || loading || !clinicReport} className="w-full h-12 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50" data-testid="button-accept-clinic">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> {t("divergency.acceptClinic")}</>}
             </button>
-            <button onClick={() => setShowManual(true)} disabled={loading} className="flex-1 h-11 border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-[0.97] disabled:opacity-50" data-testid="button-manual-validation">
+            <button onClick={() => setShowManual(true)} disabled={loading} className="w-full h-12 border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-[0.97] disabled:opacity-50" data-testid="button-manual-validation">
               <Save className="w-4 h-4" /> {t("divergency.manualValidation")}
             </button>
           </div>
