@@ -45,10 +45,8 @@ export default function Reports() {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
   const now = new Date();
-  const defaultFrom = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split("T")[0];
-  const defaultTo = now.toISOString().split("T")[0];
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
 
   const applyQuickFilter = (key: string) => {
@@ -69,8 +67,8 @@ export default function Reports() {
       return;
     }
     if (quickFilter === key) {
-      setDateFrom(defaultFrom);
-      setDateTo(defaultTo);
+      setDateFrom("");
+      setDateTo("");
       setQuickFilter(null);
     } else {
       setDateFrom(fromDate.toISOString().split("T")[0]);
@@ -146,7 +144,15 @@ export default function Reports() {
   );
 
   const productionData = useMemo(() => {
-    const startDate = dateFrom ? new Date(dateFrom + "T00:00:00") : new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    let startDate: Date;
+    if (dateFrom) {
+      startDate = new Date(dateFrom + "T00:00:00");
+    } else if (filteredEntries.length > 0) {
+      const dates = filteredEntries.map(e => new Date(e.procedureDate || e.createdAt).getTime());
+      startDate = new Date(Math.min(...dates));
+    } else {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    }
     const endDate = dateTo ? new Date(dateTo + "T23:59:59") : new Date();
 
     if (periodMode === "weekly") {

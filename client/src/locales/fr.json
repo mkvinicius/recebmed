@@ -423,7 +423,13 @@
     "deleteError": "Impossible de supprimer.",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce rapport ?",
     "requiredFields": "Remplissez tous les champs obligatoires.",
-    "connectionError": "Échec de la connexion."
+    "connectionError": "Échec de la connexion.",
+    "fileLabel": "fichier",
+    "filesLabel": "fichiers",
+    "totalRecords": "enregistrements",
+    "records": "enregistrements",
+    "manualEntries": "Entrées manuelles",
+    "noDescription": "Pas de description"
   },
   "import": {
     "title": "Audit Rétroactif",

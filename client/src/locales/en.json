@@ -423,6 +423,12 @@
     "deleteError": "Could not delete.",
     "confirmDelete": "Are you sure you want to delete this report?",
     "requiredFields": "Fill in all required fields.",
+    "fileLabel": "file",
+    "filesLabel": "files",
+    "totalRecords": "records",
+    "records": "records",
+    "manualEntries": "Manual entries",
+    "noDescription": "No description",
     "connectionError": "Connection failed."
   },
   "import": {

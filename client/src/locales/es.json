@@ -423,7 +423,13 @@
     "deleteError": "No se pudo eliminar.",
     "confirmDelete": "¿Está seguro de que desea eliminar este informe?",
     "requiredFields": "Complete todos los campos obligatorios.",
-    "connectionError": "Fallo en la conexión."
+    "connectionError": "Fallo en la conexión.",
+    "fileLabel": "archivo",
+    "filesLabel": "archivos",
+    "totalRecords": "registros",
+    "records": "registros",
+    "manualEntries": "Entradas manuales",
+    "noDescription": "Sin descripción"
   },
   "import": {
     "title": "Auditoría Retroactiva",

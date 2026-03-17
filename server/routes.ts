@@ -909,7 +909,7 @@ export async function registerRoutes(
             insuranceProvider: item.insuranceProvider || null,
             reportedValue: item.reportedValue || "0.00",
             description: item.description || null,
-            sourcePdfUrl: null,
+            sourcePdfUrl: originalFileUrl || null,
           });
           savedCount++;
         } catch (itemErr) {

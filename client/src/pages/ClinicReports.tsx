@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
-  Trash2, Loader2, FileText, Calendar
+  Trash2, Loader2, FileText, Calendar, ChevronDown, ChevronUp, File, Upload
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,16 @@ interface ClinicReport {
   procedureDate: string;
   reportedValue: string;
   description: string | null;
+  sourcePdfUrl: string | null;
   createdAt: string;
+}
+
+interface FileGroup {
+  sourceKey: string;
+  label: string;
+  date: string;
+  records: ClinicReport[];
+  totalValue: number;
 }
 
 export default function ClinicReports() {
@@ -23,6 +32,7 @@ export default function ClinicReports() {
   const [reports, setReports] = useState<ClinicReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedFile, setExpandedFile] = useState<string | null>(null);
   const { toast } = useToast();
 
   const locale = getLocale();
@@ -42,7 +52,7 @@ export default function ClinicReports() {
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       const data = await res.json();
       if (res.ok) setReports(data.reports || []);
-    } catch { /* ignore */ }
+    } catch {}
     finally { setLoading(false); }
   };
 
@@ -67,8 +77,8 @@ export default function ClinicReports() {
     } finally { setDeletingId(null); }
   };
 
-  const formatCurrency = (value: string) => {
-    const num = parseFloat(value);
+  const formatCurrency = (value: string | number) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
     if (isNaN(num)) return (0).toLocaleString(locale, { style: "currency", currency });
     return num.toLocaleString(locale, { style: "currency", currency });
   };
@@ -78,6 +88,39 @@ export default function ClinicReports() {
     return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  const formatDateShort = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const fileGroups: FileGroup[] = useMemo(() => {
+    const groups = new Map<string, ClinicReport[]>();
+
+    reports.forEach(r => {
+      const key = r.sourcePdfUrl || `manual_${r.createdAt.split("T")[0]}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    });
+
+    return Array.from(groups.entries()).map(([sourceKey, records]) => {
+      const isManual = sourceKey.startsWith("manual_");
+      const sortedRecords = [...records].sort((a, b) => new Date(b.procedureDate).getTime() - new Date(a.procedureDate).getTime());
+      const oldestDate = sortedRecords.length > 0 ? sortedRecords[sortedRecords.length - 1].createdAt : new Date().toISOString();
+      const totalValue = records.reduce((sum, r) => sum + parseFloat(r.reportedValue || "0"), 0);
+
+      let label: string;
+      if (isManual) {
+        label = t("clinicReports.manualEntries");
+      } else {
+        const urlParts = sourceKey.split("/");
+        const fileName = urlParts[urlParts.length - 1] || sourceKey;
+        label = decodeURIComponent(fileName.replace(/^\d+_/, ""));
+      }
+
+      return { sourceKey, label, date: oldestDate, records: sortedRecords, totalValue };
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [reports, t]);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
@@ -85,72 +128,121 @@ export default function ClinicReports() {
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>
 
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-3 px-1">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("clinicReports.registeredReports")}</h3>
-            <span className="text-[#8855f6] text-sm font-bold" data-testid="text-report-count">
-              {reports.length === 1 ? t("clinicReports.reportCount", { count: reports.length }) : t("clinicReports.reportCountPlural", { count: reports.length })}
+        <div className="mb-4 flex items-center justify-between px-1">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+              {fileGroups.length} {fileGroups.length === 1 ? t("clinicReports.fileLabel") : t("clinicReports.filesLabel")}
+            </span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">•</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400" data-testid="text-report-count">
+              {reports.length} {t("clinicReports.totalRecords")}
             </span>
           </div>
-          <div className="space-y-3">
-            {loading ? (
-              <div className="card-float px-6 py-12 flex justify-center">
-                <Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" />
-              </div>
-            ) : reports.length === 0 ? (
-              <div className="card-float px-6 py-12 text-center">
-                <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">{t("clinicReports.noReports")}</p>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("clinicReports.noReportsHint")}</p>
-              </div>
-            ) : (
-              reports.map((report) => (
-                <div
-                  key={report.id}
-                  className="card-float px-4 py-4 flex items-center justify-between"
-                  data-testid={`report-row-${report.id}`}
+          <button
+            onClick={() => setLocation("/reconciliation")}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#8855f6]/10 text-[#8855f6] text-xs font-semibold hover:bg-[#8855f6]/20 transition-colors"
+            data-testid="button-upload-new"
+          >
+            <Upload className="w-3.5 h-3.5" /> {t("reconciliation.uploadNewFile")}
+          </button>
+        </div>
+
+        <div className="mb-12 space-y-3">
+          {loading ? (
+            <div className="card-float px-6 py-12 flex justify-center">
+              <Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" />
+            </div>
+          ) : fileGroups.length === 0 ? (
+            <div className="card-float px-6 py-12 text-center">
+              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-500 dark:text-slate-400 font-medium">{t("clinicReports.noReports")}</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("clinicReports.noReportsHint")}</p>
+            </div>
+          ) : (
+            fileGroups.map((group) => (
+              <div
+                key={group.sourceKey}
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden"
+                data-testid={`file-group-${group.sourceKey.slice(0, 8)}`}
+              >
+                <button
+                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+                  onClick={() => setExpandedFile(expandedFile === group.sourceKey ? null : group.sourceKey)}
+                  data-testid={`button-expand-${group.sourceKey.slice(0, 8)}`}
                 >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div className="size-11 rounded-2xl flex items-center justify-center bg-[#8855f6]/10 text-[#8855f6] shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-[15px] text-slate-800 dark:text-slate-200 truncate">
-                        {report.patientName}
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        {report.description || t("clinicReports.noDescription")}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(report.procedureDate)}
-                        </span>
-                      </div>
+                  <div className="size-11 rounded-2xl flex items-center justify-center bg-[#8855f6]/10 text-[#8855f6] shrink-0">
+                    <File className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[15px] text-slate-800 dark:text-slate-200 truncate">
+                      {group.label}
+                    </p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDateShort(group.date)}
+                      </span>
+                      <span>{group.records.length} {t("clinicReports.records")}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
+                  <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {formatCurrency(report.reportedValue)}
+                      {formatCurrency(group.totalValue)}
                     </span>
-                    <button
-                      onClick={() => handleDelete(report.id)}
-                      disabled={deletingId === report.id}
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                      data-testid={`button-delete-report-${report.id}`}
-                      title={t("common.delete")}
-                    >
-                      {deletingId === report.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
+                    {expandedFile === group.sourceKey
+                      ? <ChevronUp className="w-4 h-4 text-slate-400" />
+                      : <ChevronDown className="w-4 h-4 text-slate-400" />
+                    }
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                </button>
+
+                {expandedFile === group.sourceKey && (
+                  <div className="border-t border-slate-100 dark:border-slate-800 divide-y divide-slate-50 dark:divide-slate-800">
+                    {group.records.map((report) => (
+                      <div
+                        key={report.id}
+                        className="px-5 py-3 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                        data-testid={`report-row-${report.id}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-slate-700 dark:text-slate-200 truncate">
+                            {report.patientName}
+                          </p>
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                            <span>{formatDate(report.procedureDate)}</span>
+                            {report.description && (
+                              <>
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+                                <span className="truncate">{report.description}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                          <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                            {formatCurrency(report.reportedValue)}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(report.id); }}
+                            disabled={deletingId === report.id}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            data-testid={`button-delete-report-${report.id}`}
+                            title={t("common.delete")}
+                          >
+                            {deletingId === report.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
     </div>
   );
