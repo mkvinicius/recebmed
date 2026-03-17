@@ -498,6 +498,20 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist."
   },
+  "divergency": {
+    "title": "Divergence Details",
+    "doctorData": "Doctor Data (RecebMed)",
+    "clinicData": "Clinic Data (Report)",
+    "noClinicData": "Clinic report not found",
+    "reason": "Divergence reason",
+    "acceptDoctor": "Accept Doctor Data",
+    "acceptClinic": "Accept Clinic Data",
+    "manualValidation": "Validate Manually",
+    "manualTitle": "Manual Validation",
+    "manualDesc": "Edit the fields below and confirm to mark as reconciled.",
+    "confirmManual": "Confirm and Reconcile",
+    "fieldDiffers": "Differs"
+  },
   "guidedFlow": {
     "title": "Next Step: Reconciliation",
     "message": "You have pending entries. To automatically check which procedures were received, upload your clinic report now.",

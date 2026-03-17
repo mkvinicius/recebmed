@@ -36,7 +36,7 @@ export interface IStorage {
 
   getPendingDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   getRecentClinicReports(doctorId: string, since: Date): Promise<ClinicReport[]>;
-  batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void>;
+  batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null }>): Promise<void>;
   getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]>;
   searchDoctorEntries(doctorId: string, query: string): Promise<DoctorEntry[]>;
 
@@ -157,9 +157,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(clinicReports).where(and(eq(clinicReports.doctorId, doctorId), gte(clinicReports.createdAt, since))).orderBy(desc(clinicReports.createdAt));
   }
 
-  async batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string }>): Promise<void> {
+  async batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null }>): Promise<void> {
     for (const update of updates) {
-      await db.update(doctorEntries).set({ status: update.status as any }).where(eq(doctorEntries.id, update.id));
+      const setData: any = { status: update.status as any };
+      if (update.matchedReportId !== undefined) setData.matchedReportId = update.matchedReportId;
+      if (update.divergenceReason !== undefined) setData.divergenceReason = update.divergenceReason;
+      await db.update(doctorEntries).set(setData).where(eq(doctorEntries.id, update.id));
     }
   }
 

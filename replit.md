@@ -21,6 +21,7 @@ client/src/
   components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
   components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
+  components/DivergencyModal.tsx  - Side-by-side divergency comparison modal (doctor vs clinic data), with accept/manual validation actions
   components/AppTour.tsx          - Custom guided tour for first-time users (3 steps: capture, reports, stats)
   components/ObjectUploader.tsx   - Uppy-based file upload component
   hooks/use-upload.ts             - Upload hook for presigned URL flow
@@ -34,7 +35,7 @@ server/
   routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
   openai.ts          - OpenAI client + image/audio extraction functions
   reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance)
-  audit.ts           - Background AI auditor: runs every 5min scanning all users; also triggers 2min after any upload; re-analyzes divergent+pending entries, auto-reconciles, sends notifications
+  audit.ts           - Background AI auditor: runs twice daily (13:00 + 22:00 BRT) scanning all users; also triggers 5min after any upload; re-analyzes divergent+pending entries, auto-reconciles, sends notifications
   storage.ts         - Database storage interface (Drizzle)
   db.ts              - Database connection pool
   replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
@@ -46,7 +47,7 @@ shared/
 ## Database Tables
 
 - **users**: id, name, email, password, profilePhotoUrl
-- **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, imageHash (SHA-256 for duplicate detection), status (pending/reconciled/divergent), createdAt
+- **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, imageHash (SHA-256 for duplicate detection), matchedReportId (FK to clinic_reports.id when reconciled/divergent), divergenceReason (text), status (pending/reconciled/divergent), createdAt
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning

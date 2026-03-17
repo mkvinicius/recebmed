@@ -498,6 +498,20 @@
     "title": "Page non trouvée",
     "description": "La page que vous recherchez n'existe pas."
   },
+  "divergency": {
+    "title": "Détails de la divergence",
+    "doctorData": "Données du médecin (RecebMed)",
+    "clinicData": "Données de la clinique (Rapport)",
+    "noClinicData": "Rapport de la clinique introuvable",
+    "reason": "Raison de la divergence",
+    "acceptDoctor": "Accepter les données du médecin",
+    "acceptClinic": "Accepter les données de la clinique",
+    "manualValidation": "Valider manuellement",
+    "manualTitle": "Validation manuelle",
+    "manualDesc": "Modifiez les champs ci-dessous et confirmez pour marquer comme rapproché.",
+    "confirmManual": "Confirmer et rapprocher",
+    "fieldDiffers": "Différent"
+  },
   "guidedFlow": {
     "title": "Prochaine étape : Rapprochement",
     "message": "Vous avez des entrées en attente. Pour vérifier automatiquement quels actes ont été reçus, téléchargez maintenant le rapport de votre clinique.",

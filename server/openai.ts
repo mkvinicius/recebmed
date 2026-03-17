@@ -69,32 +69,31 @@ export async function extractDataFromImage(base64Image: string, corrections: Cor
     messages: [
       {
         role: "system",
-        content: `Você é um assistente especializado em extrair dados de documentos médicos.
+        content: `Você é um assistente especializado em extrair dados de etiquetas hospitalares e documentos médicos.
 
-**REGRA CRÍTICA DE FILTRAGEM:** Sua tarefa é extrair dados APENAS de etiquetas e registros de PACIENTES. Você deve IGNORAR completamente qualquer etiqueta que seja de um produto, material ou dispositivo médico. Uma etiqueta de material tipicamente contém palavras como "REF", "LOT", "SN", "Anvisa", "System", "Device", "Sterile", "Fabricante", o nome de uma empresa fabricante (ex: "Spatz FGIA Inc.", "Medtronic", "Boston Scientific") e NÃO contém palavras como "Paciente", "Médico", "Convênio" ou "Plano de Saúde". Se uma etiqueta for de um material, não extraia NADA dela e simplesmente passe para a próxima etiqueta de paciente na imagem. Como exemplo: se você vir uma etiqueta como a do "Spatz3 Adjustable Balloon System" com REF/LOT/SN, você deve ignorá-la completamente. Se vir uma etiqueta com "Paciente: Matheus Henrique", você deve processá-la.
+**REGRA CRÍTICA DE FILTRAGEM:** Extraia dados APENAS de etiquetas e registros de PACIENTES. IGNORE completamente etiquetas de produtos, materiais ou dispositivos médicos (contêm "REF", "LOT", "SN", "Anvisa", "System", "Device", "Sterile", nome de fabricante). Se uma etiqueta for de material, passe para a próxima.
 
-Analise a imagem e extraia TODOS os registros de pacientes encontrados (ignorando etiquetas de materiais).
-Para cada paciente, extraia:
-- patientName: nome completo do paciente
-- patientBirthDate: data de nascimento do paciente no formato YYYY-MM-DD (se disponível, senão omita)
-- procedureDate: data do procedimento no formato YYYY-MM-DD
-- procedureName: nome específico do procedimento (ex: "Consulta cardiológica", "Endoscopia", "Sleeve")
-- insuranceProvider: nome do convênio/plano de saúde
-- description: descrição/observações do procedimento realizado
-- procedureValue: valor do procedimento em reais (apenas números com ponto decimal, ex: "150.00"). Se não encontrado, omita o campo.
-- confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente legível/identificado), "medium" (parcialmente legível, possível inferência), "low" (ilegível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
+Analise a imagem e extraia TODOS os registros de pacientes encontrados.
+Para cada paciente, extraia APENAS estes campos:
+1. patientName: nome completo do paciente. Se não visível, retorne null.
+2. patientBirthDate: data de nascimento no formato YYYY-MM-DD. Se não visível, retorne null.
+3. procedureDate: data do procedimento no formato YYYY-MM-DD. Se não visível, retorne null.
+4. procedureName: nome específico do procedimento (ex: "Endoscopia", "Sleeve"). Se não visível, retorne null.
+5. insuranceProvider: nome do convênio/plano de saúde. Se não visível, retorne null.
+6. description: descrição/observações do procedimento. Se não visível, retorne null.
+7. procedureValue: valor em reais (apenas números com ponto decimal, ex: "150.00"). Se não visível, retorne null.
+8. confidence: objeto com nível de confiança de CADA campo ("high", "medium", "low"). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
-A imagem pode conter UM ou VÁRIOS pacientes (por exemplo, uma agenda médica com múltiplos atendimentos).
+**REGRAS IMPORTANTES:**
+- Se um campo NÃO estiver visível na imagem, retorne null para ele — NUNCA use "Não identificado".
+- Se insuranceProvider for "PACOTE", mapeie para "Particular".
+- A imagem pode conter UM ou VÁRIOS pacientes.
 
-Responda APENAS com um JSON válido, sem markdown, sem explicações.
-Se houver apenas 1 paciente, retorne um array com 1 objeto.
-Se houver múltiplos pacientes, retorne um array com todos.
-Se a imagem contiver APENAS etiquetas de materiais e NENHUM dado de paciente, retorne um array vazio: []
+Responda APENAS com um array JSON válido, sem markdown, sem explicações.
+Se a imagem contiver APENAS etiquetas de materiais e NENHUM dado de paciente, retorne: []
 
 Exemplo:
-[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]
-
-Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".${correctionContext}`,
+[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]${correctionContext}`,
       },
       {
         role: "user",
@@ -119,13 +118,7 @@ Se não conseguir identificar algum campo, use "Não identificado" como valor e 
     if (Array.isArray(parsed)) return parsed;
     return [parsed];
   } catch {
-    return [{
-      patientName: "Não identificado",
-      procedureDate: new Date().toISOString().split("T")[0],
-      insuranceProvider: "Não identificado",
-      description: "Não identificado",
-      confidence: { patientName: "low", procedureDate: "low", insuranceProvider: "low", description: "low", procedureValue: "low" },
-    }];
+    return [];
   }
 }
 

@@ -27,6 +27,8 @@ export const doctorEntries = pgTable("doctor_entries", {
   entryMethod: entryMethodEnum("entry_method").notNull().default("manual"),
   sourceUrl: text("source_url"),
   imageHash: varchar("image_hash", { length: 64 }),
+  matchedReportId: varchar("matched_report_id", { length: 36 }),
+  divergenceReason: text("divergence_reason"),
   status: entryStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

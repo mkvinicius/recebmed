@@ -526,12 +526,13 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             entryValue: entry.procedureValue,
             reportValue: report.reportedValue,
           });
-          statusUpdates.push({ id: entry.id, status: "reconciled" });
+          statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null });
         }
       } else if (aiMatch.status === "divergent" && aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
         const report = availableReports[aiMatch.reportIndex];
         if (report && !usedReports.has(report.id)) {
           usedReports.add(report.id);
+          const reason = aiMatch.divergenceReason || "Dados parcialmente diferentes";
           result.divergent.push({
             entryId: entry.id,
             reportId: report.id,
@@ -539,9 +540,9 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             procedureDate: entry.procedureDate.toISOString(),
             entryValue: entry.procedureValue,
             reportValue: report.reportedValue,
-            divergenceReason: aiMatch.divergenceReason || "Dados parcialmente diferentes",
+            divergenceReason: reason,
           });
-          statusUpdates.push({ id: entry.id, status: "divergent" });
+          statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: reason });
         }
       }
     }
@@ -575,9 +576,10 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         reportValue: bestMatch.report.reportedValue,
         matchDetails: bestMatch.matchedFields.join(", "),
       });
-      statusUpdates.push({ id: entry.id, status: "reconciled" });
+      statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null });
     } else if (bestMatch && bestMatch.score >= 2) {
       usedReports.add(bestMatch.report.id);
+      const reason = bestMatch.divergentFields.join("; ");
       result.divergent.push({
         entryId: entry.id,
         reportId: bestMatch.report.id,
@@ -585,9 +587,9 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         procedureDate: entry.procedureDate.toISOString(),
         entryValue: entry.procedureValue,
         reportValue: bestMatch.report.reportedValue,
-        divergenceReason: bestMatch.divergentFields.join("; "),
+        divergenceReason: reason,
       });
-      statusUpdates.push({ id: entry.id, status: "divergent" });
+      statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason });
     } else {
       result.pending.push({
         entryId: entry.id,

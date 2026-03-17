@@ -809,6 +809,29 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/entries/:id/divergence", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const entry = await storage.getDoctorEntry(id);
+      if (!entry || entry.doctorId !== userId) {
+        return res.status(404).json({ message: "Lançamento não encontrado" });
+      }
+      let clinicReport = null;
+      if (entry.matchedReportId) {
+        clinicReport = await storage.getClinicReport(entry.matchedReportId);
+      }
+      return res.json({
+        entry,
+        clinicReport: clinicReport || null,
+        divergenceReason: entry.divergenceReason || null,
+      });
+    } catch (error) {
+      console.error("Get divergence details error:", error);
+      return res.status(500).json({ message: "Erro ao buscar detalhes da divergência" });
+    }
+  });
+
   // ── File Reconciliation (PDF, Image, CSV) ──
 
   app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import ProjectionsPanel from "@/components/ProjectionsPanel";
 import EditEntryModal from "@/components/EditEntryModal";
+import DivergencyModal from "@/components/DivergencyModal";
 import AppTour from "@/components/AppTour";
 
 interface DoctorEntry {
@@ -62,6 +63,7 @@ export default function Dashboard() {
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
+  const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -151,7 +153,11 @@ export default function Dashboard() {
   };
 
   const openEditModal = (entry: DoctorEntry) => {
-    setEditingEntry(entry);
+    if (entry.status === "divergent") {
+      setDivergentEntry(entry);
+    } else {
+      setEditingEntry(entry);
+    }
   };
 
   const pendingCount = entries.filter(e => e.status === "pending").length;
@@ -370,6 +376,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {divergentEntry && (
+        <DivergencyModal
+          entry={divergentEntry}
+          onClose={() => setDivergentEntry(null)}
+          onResolved={(updated) => { setEntries(prev => prev.map(e => e.id === updated.id ? updated : e)); setDivergentEntry(null); }}
+        />
       )}
 
       {editingEntry && (

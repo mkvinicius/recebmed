@@ -498,6 +498,20 @@
     "title": "Página no encontrada",
     "description": "La página que busca no existe."
   },
+  "divergency": {
+    "title": "Detalles de la Divergencia",
+    "doctorData": "Datos del Médico (RecebMed)",
+    "clinicData": "Datos de la Clínica (Informe)",
+    "noClinicData": "Informe de la clínica no encontrado",
+    "reason": "Motivo de la divergencia",
+    "acceptDoctor": "Aceptar Datos del Médico",
+    "acceptClinic": "Aceptar Datos de la Clínica",
+    "manualValidation": "Validar Manualmente",
+    "manualTitle": "Validación Manual",
+    "manualDesc": "Edite los campos a continuación y confirme para marcar como conciliado.",
+    "confirmManual": "Confirmar y Conciliar",
+    "fieldDiffers": "Divergente"
+  },
   "guidedFlow": {
     "title": "Próximo Paso: Conciliación",
     "message": "Tiene lanzamientos pendientes. Para que el sistema verifique automáticamente qué procedimientos fueron recibidos, suba ahora el informe de su clínica.",

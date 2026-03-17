@@ -10,6 +10,7 @@ import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import EditEntryModal from "@/components/EditEntryModal";
+import DivergencyModal from "@/components/DivergencyModal";
 
 interface DoctorEntry {
   id: string;
@@ -44,6 +45,7 @@ export default function Entries() {
   const [dateTo, setDateTo] = useState("");
   const [insuranceFilter, setInsuranceFilter] = useState("all");
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
+  const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -91,7 +93,11 @@ export default function Entries() {
   };
 
   const openEditModal = (entry: DoctorEntry) => {
-    setEditingEntry(entry);
+    if (entry.status === "divergent") {
+      setDivergentEntry(entry);
+    } else {
+      setEditingEntry(entry);
+    }
   };
 
   const handleQuickStatusChange = async (entryId: string, newStatus: string, e: React.MouseEvent) => {
@@ -251,6 +257,14 @@ export default function Entries() {
             )}
           </div>
         </div>
+
+      {divergentEntry && (
+        <DivergencyModal
+          entry={divergentEntry}
+          onClose={() => setDivergentEntry(null)}
+          onResolved={(updated) => { setEntries(prev => prev.map(e => e.id === updated.id ? updated : e)); setDivergentEntry(null); }}
+        />
+      )}
 
       {editingEntry && (
         <EditEntryModal
