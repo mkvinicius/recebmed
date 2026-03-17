@@ -13,20 +13,31 @@ export interface PdfExtractedEntry {
   description?: string;
 }
 
-const EXTRACTION_PROMPT = `Você é um assistente especializado em extrair dados de relatórios de clínicas médicas.
+const EXTRACTION_PROMPT = `Você é um assistente especializado em extrair dados de relatórios de clínicas médicas e hospitais brasileiros.
 Analise o conteúdo e extraia TODOS os registros de pacientes/procedimentos encontrados.
-Para cada registro, extraia:
-- patientName: nome completo do paciente
-- patientBirthDate: data de nascimento do paciente no formato YYYY-MM-DD (se disponível)
-- procedureDate: data do procedimento/atendimento no formato YYYY-MM-DD
-- procedureName: nome do procedimento realizado (consulta, cirurgia, exame, etc.)
-- insuranceProvider: nome do convênio/plano de saúde (se disponível)
-- reportedValue: valor reportado do procedimento (apenas números com ponto decimal, ex: "150.00")
+
+IMPORTANTE: Esses PDFs podem vir em vários formatos:
+- Relatórios tabulares de hospitais (ex: "Conta Corrente Equipe Médica" com colunas Data, Paciente, Valor, etc.)
+- Guias TISS de convênios
+- Extratos de produção médica
+- Notas fiscais de serviços médicos
+
+Para cada registro/linha de paciente, extraia:
+- patientName: nome completo do paciente (OBRIGATÓRIO)
+- patientBirthDate: data de nascimento no formato YYYY-MM-DD (se disponível, senão null)
+- procedureDate: data do procedimento/atendimento no formato YYYY-MM-DD (OBRIGATÓRIO)
+- procedureName: nome do procedimento, espécie de pagamento ou tipo de serviço (se disponível)
+- insuranceProvider: nome do convênio/plano de saúde. Se for pagamento particular (PIX, Dinheiro, Cartão, Redecard, etc.), use "Particular"
+- reportedValue: valor em formato decimal com ponto (ex: "600.00"). Converta valores brasileiros: "1.000,00" → "1000.00", "600,00" → "600.00"
 - description: observações adicionais (se disponível)
 
-Responda APENAS com um array JSON válido, sem markdown, sem explicações.
-Se não conseguir identificar algum campo, use null.
-Se o valor não for encontrado, use "0.00".`;
+REGRAS:
+- Extraia TODAS as linhas, mesmo que tenham dados repetidos ou parciais
+- Ignore linhas de cabeçalho, totais e rodapé
+- Se o mesmo paciente aparece múltiplas vezes com valores diferentes, extraia cada ocorrência separadamente
+- Valores com formato brasileiro (vírgula decimal, ponto milhar) devem ser convertidos: "4.702,00" → "4702.00"
+
+Responda APENAS com um array JSON válido, sem markdown, sem explicações.`;
 
 function parseAIResponse(content: string): PdfExtractedEntry[] {
   try {
@@ -40,20 +51,48 @@ function parseAIResponse(content: string): PdfExtractedEntry[] {
 }
 
 export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEntry[]> {
-  const pdfData = await pdfParse(pdfBuffer);
-  const text = pdfData.text;
+  let text: string;
+  try {
+    const pdfData = await pdfParse(pdfBuffer);
+    text = pdfData.text;
+  } catch (pdfErr) {
+    console.error("PDF parse error:", pdfErr);
+    throw new Error("Não foi possível ler o PDF. O arquivo pode estar corrompido ou protegido por senha.");
+  }
+
+  if (!text || text.trim().length < 20) {
+    throw new Error("O PDF não contém texto extraível. Tente enviar como imagem (foto/screenshot).");
+  }
+
+  console.log(`PDF text extracted: ${text.length} chars, first 200: ${text.substring(0, 200)}`);
 
   const client = getOpenAIClient();
-  const response = await client.chat.completions.create({
-    model: "gpt-5-mini",
-    messages: [
-      { role: "system", content: EXTRACTION_PROMPT },
-      { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
-    ],
-    max_completion_tokens: 4000,
-  });
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT },
+        { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
+      ],
+      max_completion_tokens: 16000,
+    });
 
-  return parseAIResponse(response.choices[0]?.message?.content || "[]");
+    const content = response.choices[0]?.message?.content || "[]";
+    const results = parseAIResponse(content);
+    console.log(`PDF AI extraction: ${results.length} entries from ${text.length} chars`);
+
+    if (results.length === 0 && text.length > 100) {
+      console.warn("AI returned 0 entries from non-empty PDF. Response:", content.substring(0, 500));
+    }
+
+    return results;
+  } catch (aiErr: any) {
+    console.error("AI extraction error:", aiErr?.message || aiErr);
+    if (aiErr?.status === 429 || aiErr?.message?.includes("rate")) {
+      throw new Error("Limite de requisições atingido. Aguarde alguns segundos e tente novamente.");
+    }
+    throw new Error("Erro na extração com IA. Tente novamente em alguns instantes.");
+  }
 }
 
 export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {

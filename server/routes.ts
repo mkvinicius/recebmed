@@ -892,9 +892,10 @@ export async function registerRoutes(
           pending: allEntries.filter(e => e.status === "pending"),
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("File reconciliation error:", error);
-      return res.status(500).json({ message: "Erro ao processar arquivo" });
+      const msg = error?.message || "Erro ao processar arquivo";
+      return res.status(500).json({ message: msg });
     }
   });
 
