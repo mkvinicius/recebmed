@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
-import { extractPdfData, extractImageData, extractCsvData, generateCsvTemplate, runReconciliation } from "./reconciliation";
+import { extractPdfData, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
@@ -848,17 +848,24 @@ export async function registerRoutes(
         const csvText = Buffer.from(base64Data, "base64").toString("utf-8");
         extractedData = extractCsvData(csvText);
         if (extractedData.length === 0) {
-          return res.status(400).json({ message: "CSV inválido. Baixe o modelo e tente novamente." });
+          console.log("CSV local parsing returned 0 results, trying AI fallback...");
+          extractedData = await extractCsvWithAI(csvText);
         }
       } else {
         return res.status(400).json({ message: "Formato não suportado" });
       }
 
+      if (extractedData.length === 0) {
+        return res.status(400).json({ message: "Nenhum registro encontrado no arquivo. Verifique se o arquivo contém dados de pacientes e procedimentos." });
+      }
+
       let savedCount = 0;
+      let skipCount = 0;
       for (const item of extractedData) {
         try {
-          const procDate = new Date(item.procedureDate);
-          if (isNaN(procDate.getTime())) continue;
+          if (!item.patientName || item.patientName.length < 2) { skipCount++; continue; }
+          const procDate = new Date(item.procedureDate + "T00:00:00");
+          if (isNaN(procDate.getTime())) { skipCount++; continue; }
           await storage.createClinicReport({
             doctorId: userId,
             patientName: item.patientName,
@@ -873,8 +880,11 @@ export async function registerRoutes(
           savedCount++;
         } catch (itemErr) {
           console.error("Error saving clinic report item:", itemErr);
+          skipCount++;
         }
       }
+
+      console.log(`Reconciliation upload: ${savedCount} saved, ${skipCount} skipped from ${extractedData.length} extracted`);
 
       try {
         await runReconciliation(userId);
@@ -1020,11 +1030,11 @@ export async function registerRoutes(
       return true;
     }) || null;
 
-    const dateKey = findKey(["data_procedimento", "data_", "date"], ["descricao"]) || findKey(["data"], ["descricao"]);
-    const nameKey = findKey(["nome_paciente", "paciente", "nome", "patient"]);
-    const insuranceKey = findKey(["convenio", "convênio", "plano", "insurance"]);
-    const descKey = findKey(["descricao", "descrição", "description"]);
-    const valueKey = findKey(["valor", "value", "preco", "preço"], ["nome", "paciente", "data"]);
+    const dateKey = findKey(["data_procedimento", "data_atendimento", "dt_atendimento", "dt_procedimento", "data_", "date"], ["descricao", "nascimento"]) || findKey(["data"], ["descricao", "nascimento"]);
+    const nameKey = findKey(["nome_paciente", "paciente", "beneficiario", "cliente", "nome", "patient"]);
+    const insuranceKey = findKey(["convenio", "convênio", "plano", "insurance", "operadora", "repasse", "forma_pagamento", "especie"]);
+    const descKey = findKey(["descricao", "descrição", "description", "procedimento", "servico", "tipo", "observacao"]);
+    const valueKey = findKey(["valor", "value", "preco", "preço", "total", "valor_total", "valor_pago"], ["nome", "paciente", "data"]);
 
     const patientName = nameKey ? String(row[nameKey] || "").trim() : "";
     const insuranceProvider = insuranceKey ? String(row[insuranceKey] || "").trim() : "";

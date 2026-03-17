@@ -39,13 +39,82 @@ REGRAS:
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.`;
 
+function sanitizeValue(val: string | undefined | null): string {
+  if (!val) return "0.00";
+  let v = val.toString().replace(/[R$\s€£¥]/g, "").trim();
+  if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(v)) {
+    v = v.replace(/\./g, "").replace(",", ".");
+  } else {
+    v = v.replace(",", ".");
+  }
+  const num = parseFloat(v);
+  return isNaN(num) ? "0.00" : num.toFixed(2);
+}
+
+function sanitizeDate(dateStr: string | undefined | null): string | null {
+  if (!dateStr) return null;
+  const d = dateStr.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const parsed = new Date(d + "T00:00:00");
+    return isNaN(parsed.getTime()) ? null : d;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+    const [day, month, year] = d.split("/");
+    const iso = `${year}-${month}-${day}`;
+    const parsed = new Date(iso + "T00:00:00");
+    return isNaN(parsed.getTime()) ? null : iso;
+  }
+  if (/^\d{2}-\d{2}-\d{4}$/.test(d)) {
+    const [day, month, year] = d.split("-");
+    const iso = `${year}-${month}-${day}`;
+    const parsed = new Date(iso + "T00:00:00");
+    return isNaN(parsed.getTime()) ? null : iso;
+  }
+  const parsed = new Date(d);
+  if (!isNaN(parsed.getTime())) return parsed.toISOString().split("T")[0];
+  return null;
+}
+
+function sanitizeEntry(raw: any): PdfExtractedEntry | null {
+  if (!raw || typeof raw !== "object") return null;
+  const name = (raw.patientName || raw.patient_name || raw.nome || raw.paciente || "").toString().trim();
+  if (!name || name.length < 2) return null;
+
+  const procDate = sanitizeDate(raw.procedureDate || raw.procedure_date || raw.data || raw.date);
+  if (!procDate) return null;
+
+  return {
+    patientName: name,
+    patientBirthDate: sanitizeDate(raw.patientBirthDate || raw.patient_birth_date || raw.nascimento || raw.birthdate) || undefined,
+    procedureDate: procDate,
+    procedureName: (raw.procedureName || raw.procedure_name || raw.procedimento || raw.procedure || "").toString().trim() || undefined,
+    insuranceProvider: (raw.insuranceProvider || raw.insurance_provider || raw.convenio || raw.convênio || raw.insurance || "").toString().trim() || undefined,
+    reportedValue: sanitizeValue(raw.reportedValue || raw.reported_value || raw.valor || raw.value),
+    description: (raw.description || raw.descricao || raw.descrição || raw.observacao || raw.obs || "").toString().trim() || undefined,
+  };
+}
+
 function parseAIResponse(content: string): PdfExtractedEntry[] {
   try {
-    const cleaned = content.replace(/```json\s*|```\s*/g, "").trim();
+    let cleaned = content.replace(/```json\s*|```\s*/g, "").trim();
+    const firstBracket = cleaned.indexOf("[");
+    if (firstBracket > 0) cleaned = cleaned.substring(firstBracket);
+    const lastBracket = cleaned.lastIndexOf("]");
+    if (lastBracket > 0) cleaned = cleaned.substring(0, lastBracket + 1);
+
     const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) return parsed;
-    return [parsed];
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    return items.map(sanitizeEntry).filter((e): e is PdfExtractedEntry => e !== null);
   } catch {
+    try {
+      const objectPattern = /\{[^{}]+\}/g;
+      const matches = content.match(objectPattern);
+      if (matches && matches.length > 0) {
+        return matches
+          .map(m => { try { return sanitizeEntry(JSON.parse(m)); } catch { return null; } })
+          .filter((e): e is PdfExtractedEntry => e !== null);
+      }
+    } catch {}
     return [];
   }
 }
@@ -97,22 +166,33 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
 
 export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {
   const client = getOpenAIClient();
-  const response = await client.chat.completions.create({
-    model: "gpt-5-mini",
-    messages: [
-      { role: "system", content: EXTRACTION_PROMPT },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Analise esta imagem de relatório de clínica médica e extraia todos os registros:" },
-          { type: "image_url", image_url: { url: base64Image } },
-        ],
-      },
-    ],
-    max_completion_tokens: 4000,
-  });
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Analise esta imagem de relatório de clínica médica e extraia todos os registros:" },
+            { type: "image_url", image_url: { url: base64Image } },
+          ],
+        },
+      ],
+      max_completion_tokens: 16000,
+    });
 
-  return parseAIResponse(response.choices[0]?.message?.content || "[]");
+    const content = response.choices[0]?.message?.content || "[]";
+    const results = parseAIResponse(content);
+    console.log(`Image AI extraction: ${results.length} entries`);
+    return results;
+  } catch (aiErr: any) {
+    console.error("Image AI extraction error:", aiErr?.message || aiErr);
+    if (aiErr?.status === 429 || aiErr?.message?.includes("rate")) {
+      throw new Error("Limite de requisições atingido. Aguarde alguns segundos e tente novamente.");
+    }
+    throw new Error("Erro na extração da imagem com IA. Tente novamente em alguns instantes.");
+  }
 }
 
 export function extractCsvData(csvText: string): PdfExtractedEntry[] {
@@ -121,15 +201,17 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
 
   const headerLine = lines[0].toLowerCase();
   const separator = headerLine.includes(";") ? ";" : ",";
-  const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+  const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
 
-  const patientIdx = headers.findIndex(h => ["paciente", "patient", "patientname", "patient_name", "nome", "nome_paciente", "nome do paciente"].includes(h));
-  const dateIdx = headers.findIndex(h => ["data", "date", "proceduredate", "procedure_date", "data_procedimento", "data do procedimento", "data_atendimento", "data atendimento"].includes(h));
-  const birthIdx = headers.findIndex(h => ["nascimento", "data_nascimento", "data de nascimento", "birth", "birthdate", "birth_date", "dt_nascimento"].includes(h));
-  const procedureIdx = headers.findIndex(h => ["procedimento", "procedure", "procedurename", "procedure_name", "nome_procedimento"].includes(h));
-  const insuranceIdx = headers.findIndex(h => ["convenio", "convênio", "insurance", "insuranceprovider", "insurance_provider", "plano", "operadora"].includes(h));
-  const descIdx = headers.findIndex(h => ["descricao", "descrição", "description", "observacao", "observação", "obs"].includes(h));
-  const valueIdx = headers.findIndex(h => ["valor", "value", "reportedvalue", "reported_value", "valor_reportado", "valor reportado", "preco", "preço", "price"].includes(h));
+  const findCol = (aliases: string[]) => headers.findIndex(h => aliases.some(a => h === a || h.includes(a)));
+
+  const patientIdx = findCol(["paciente", "patient", "patientname", "patient_name", "nome", "nome_paciente", "nome do paciente", "beneficiario", "cliente"]);
+  const dateIdx = findCol(["data", "date", "proceduredate", "procedure_date", "data_procedimento", "data_atendimento", "dt_atendimento", "data atendimento", "data do procedimento", "dt_procedimento"]);
+  const birthIdx = findCol(["nascimento", "data_nascimento", "data de nascimento", "birth", "birthdate", "birth_date", "dt_nascimento"]);
+  const procedureIdx = findCol(["procedimento", "procedure", "procedurename", "procedure_name", "nome_procedimento", "servico", "tipo_servico", "especie"]);
+  const insuranceIdx = findCol(["convenio", "convênio", "insurance", "insuranceprovider", "insurance_provider", "plano", "operadora", "repasse", "forma_pagamento"]);
+  const descIdx = findCol(["descricao", "descricão", "description", "observacao", "observação", "obs", "nota"]);
+  const valueIdx = findCol(["valor", "value", "reportedvalue", "reported_value", "valor_reportado", "preco", "preço", "price", "total", "valor_total", "valor_pago"]);
 
   if (patientIdx === -1 || dateIdx === -1) return [];
 
@@ -141,35 +223,42 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
     const patientName = cols[patientIdx] || "";
     if (!patientName) continue;
 
-    let procedureDate = cols[dateIdx] || "";
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(procedureDate)) {
-      const [d, m, y] = procedureDate.split("/");
-      procedureDate = `${y}-${m}-${d}`;
-    }
+    const procedureDate = sanitizeDate(cols[dateIdx]) || "";
+    if (!procedureDate) continue;
 
-    let patientBirthDate: string | undefined;
-    if (birthIdx >= 0 && cols[birthIdx]) {
-      patientBirthDate = cols[birthIdx];
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(patientBirthDate)) {
-        const [d, m, y] = patientBirthDate.split("/");
-        patientBirthDate = `${y}-${m}-${d}`;
-      }
-    }
-
-    let reportedValue = cols[valueIdx] || "0.00";
-    reportedValue = reportedValue.replace(/[R$\s]/g, "").replace(",", ".");
-
-    results.push({
+    const entry = sanitizeEntry({
       patientName,
-      patientBirthDate,
       procedureDate,
+      patientBirthDate: birthIdx >= 0 ? cols[birthIdx] : undefined,
       procedureName: procedureIdx >= 0 ? cols[procedureIdx] : undefined,
       insuranceProvider: insuranceIdx >= 0 ? cols[insuranceIdx] : undefined,
-      reportedValue,
+      reportedValue: valueIdx >= 0 ? cols[valueIdx] : "0.00",
       description: descIdx >= 0 ? cols[descIdx] : undefined,
     });
+    if (entry) results.push(entry);
   }
   return results;
+}
+
+export async function extractCsvWithAI(csvText: string): Promise<PdfExtractedEntry[]> {
+  const preview = csvText.substring(0, 5000);
+  const client = getOpenAIClient();
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT },
+        { role: "user", content: `Conteúdo de planilha CSV/Excel exportada de sistema de clínica. Identifique as colunas automaticamente e extraia os registros:\n\n${preview}` },
+      ],
+      max_completion_tokens: 16000,
+    });
+    const results = parseAIResponse(response.choices[0]?.message?.content || "[]");
+    console.log(`CSV AI fallback extraction: ${results.length} entries`);
+    return results;
+  } catch (aiErr: any) {
+    console.error("CSV AI extraction error:", aiErr?.message || aiErr);
+    throw new Error("Não foi possível interpretar o formato da planilha. Tente usar o modelo CSV padrão.");
+  }
 }
 
 export function generateCsvTemplate(): string {
