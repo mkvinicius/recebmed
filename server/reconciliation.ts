@@ -13,31 +13,60 @@ export interface PdfExtractedEntry {
   description?: string;
 }
 
-const EXTRACTION_PROMPT = `Você é um assistente especializado em extrair dados de relatórios de clínicas médicas e hospitais brasileiros.
-Analise o conteúdo e extraia TODOS os registros de pacientes/procedimentos encontrados.
+const EXTRACTION_PROMPT = `Você é um assistente especializado em extrair dados de relatórios financeiros de clínicas médicas e hospitais brasileiros.
+Cada clínica/hospital tem SEU PRÓPRIO formato de relatório — colunas, nomes e disposição variam muito.
+Sua tarefa: analisar o conteúdo, entender a estrutura daquele relatório específico, e extrair TODOS os registros.
 
-IMPORTANTE: Esses PDFs podem vir em vários formatos:
-- Relatórios tabulares de hospitais (ex: "Conta Corrente Equipe Médica" com colunas Data, Paciente, Valor, etc.)
-- Guias TISS de convênios
-- Extratos de produção médica
-- Notas fiscais de serviços médicos
+FORMATOS COMUNS QUE VOCÊ VAI ENCONTRAR:
+- "Conta Corrente Equipe Médica" (hospitais): colunas Data, Paciente, Espécie, Repasse, Valor, Status
+- Guias TISS (convênios): número da guia, beneficiário, procedimento, código, valor
+- Extratos de produção: médico, paciente, data, procedimento, valor
+- Notas fiscais de serviços médicos: tomador, serviço, valor
+- Relatórios de repasse: profissional, paciente, convênio, procedimento, valor pago
+- Planilhas exportadas de sistemas hospitalares (qualquer formato)
 
-Para cada registro/linha de paciente, extraia:
-- patientName: nome completo do paciente (OBRIGATÓRIO)
-- patientBirthDate: data de nascimento no formato YYYY-MM-DD (se disponível, senão null)
-- procedureDate: data do procedimento/atendimento no formato YYYY-MM-DD (OBRIGATÓRIO)
-- procedureName: nome do procedimento, espécie de pagamento ou tipo de serviço (se disponível)
-- insuranceProvider: nome do convênio/plano de saúde. Se for pagamento particular (PIX, Dinheiro, Cartão, Redecard, etc.), use "Particular"
-- reportedValue: valor em formato decimal com ponto (ex: "600.00"). Converta valores brasileiros: "1.000,00" → "1000.00", "600,00" → "600.00"
-- description: observações adicionais (se disponível)
+PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
 
-REGRAS:
-- Extraia TODAS as linhas, mesmo que tenham dados repetidos ou parciais
-- Ignore linhas de cabeçalho, totais e rodapé
-- Se o mesmo paciente aparece múltiplas vezes com valores diferentes, extraia cada ocorrência separadamente
-- Valores com formato brasileiro (vírgula decimal, ponto milhar) devem ser convertidos: "4.702,00" → "4702.00"
+1. patientName (OBRIGATÓRIO): Nome do paciente/beneficiário/cliente.
+   Pode estar em colunas como: "Paciente", "Beneficiário", "Cliente", "Nome", "Tomador"
 
-Responda APENAS com um array JSON válido, sem markdown, sem explicações.`;
+2. procedureDate (OBRIGATÓRIO): Data do procedimento no formato YYYY-MM-DD.
+   Pode estar em: "Data", "Dt. Atendimento", "Data Procedimento", "Competência"
+   Se o relatório tem UMA data no cabeçalho para TODOS os registros, use essa data para todos.
+
+3. procedureName: Nome/tipo do procedimento realizado.
+   Pode estar em: "Procedimento", "Serviço", "Tipo", "Descrição", "Código"
+   Se NÃO existir coluna de procedimento, use null — NÃO invente.
+
+4. insuranceProvider: Convênio ou forma de pagamento.
+   REGRAS DE CLASSIFICAÇÃO:
+   - Se tem coluna "Convênio" com nome do plano (Unimed, Amil, etc.) → use o nome do convênio
+   - Se tem coluna "Repasse" ou "Espécie" com formas de pagamento (PIX, Dinheiro, Cartão, Redecard, PACOTE) → use "Particular"
+   - Se a coluna diz "SUS" ou "Sistema Único de Saúde" → use "SUS"
+   - Se NÃO tem nenhuma informação de convênio → use null
+   - NUNCA confunda forma de pagamento (PIX, Redecard) com convênio de saúde
+
+5. reportedValue: Valor financeiro em formato decimal com ponto.
+   Pode estar em: "Valor", "Total", "Repasse", "Valor Pago", "Valor Líquido"
+   CONVERSÃO DE VALORES BRASILEIROS:
+   - "600,00" → "600.00"
+   - "4.702,00" → "4702.00"
+   - "1.000,00" → "1000.00"
+   - "R$ 350,00" → "350.00"
+   Se NÃO tem valor → use "0.00"
+
+6. patientBirthDate: Data de nascimento no formato YYYY-MM-DD. Se não disponível → null
+
+7. description: Observações/notas adicionais. Se não disponível → null
+
+REGRAS IMPORTANTES:
+- Extraia TODAS as linhas de pacientes, mesmo repetidas ou com dados parciais
+- Ignore SEMPRE: cabeçalhos, rodapés, totais, subtotais, linhas de "Observação:" vazias
+- Se um paciente aparece 2x com valores diferentes → extraia as 2 ocorrências separadas
+- Se o documento tem múltiplas páginas, extraia de TODAS
+- Se uma coluna não existe naquele formato → use null, NUNCA invente dados
+
+Responda APENAS com um array JSON válido. Sem markdown, sem explicações, sem texto antes ou depois do JSON.`;
 
 function sanitizeValue(val: string | undefined | null): string {
   if (!val) return "0.00";
