@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { startAuditScheduler } from "./audit";
 
 const app = express();
 const httpServer = createServer(app);
@@ -96,5 +97,6 @@ app.use((req, res, next) => {
   const port = 5000;
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
+    startAuditScheduler();
   });
 })();

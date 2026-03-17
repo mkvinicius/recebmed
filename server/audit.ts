@@ -1,0 +1,116 @@
+import { storage } from "./storage";
+import { runReconciliation } from "./reconciliation";
+
+const AUDIT_INTERVAL_MS = 5 * 60 * 1000;
+const POST_UPLOAD_DELAY_MS = 2 * 60 * 1000;
+
+let auditInterval: ReturnType<typeof setInterval> | null = null;
+const pendingAudits = new Map<string, ReturnType<typeof setTimeout>>();
+
+export function schedulePostUploadAudit(doctorId: string) {
+  if (pendingAudits.has(doctorId)) {
+    clearTimeout(pendingAudits.get(doctorId)!);
+  }
+
+  console.log(`[Audit] Agendando auditoria pós-upload para usuário ${doctorId} em ${POST_UPLOAD_DELAY_MS / 1000}s`);
+
+  const timer = setTimeout(async () => {
+    pendingAudits.delete(doctorId);
+    await runUserAudit(doctorId, "post-upload");
+  }, POST_UPLOAD_DELAY_MS);
+
+  pendingAudits.set(doctorId, timer);
+}
+
+async function runUserAudit(doctorId: string, trigger: "periodic" | "post-upload") {
+  try {
+    const pending = await storage.getPendingDoctorEntries(doctorId);
+    const divergent = await storage.getDivergentDoctorEntries(doctorId);
+
+    if (pending.length === 0 && divergent.length === 0) {
+      return;
+    }
+
+    console.log(`[Audit] ${trigger}: Usuário ${doctorId} — ${pending.length} pendentes, ${divergent.length} divergentes. Iniciando re-análise...`);
+
+    if (divergent.length > 0) {
+      const resets: Array<{ id: string; status: string }> = divergent.map(e => ({ id: e.id, status: "pending" }));
+      await storage.batchUpdateDoctorEntryStatus(resets);
+      console.log(`[Audit] ${divergent.length} entradas divergentes resetadas para pendente para re-análise`);
+    }
+
+    const result = await runReconciliation(doctorId);
+
+    const totalFixed = result.reconciled.length;
+    const stillDivergent = result.divergent.length;
+    const stillPending = result.pending.length;
+
+    console.log(`[Audit] ${trigger}: Resultado — ${totalFixed} reconciliados, ${stillDivergent} divergentes, ${stillPending} pendentes`);
+
+    if (totalFixed > 0 || (trigger === "post-upload" && (stillDivergent > 0 || stillPending > 0))) {
+      let message = "";
+      if (totalFixed > 0) {
+        message += `${totalFixed} registros foram reconciliados automaticamente. `;
+      }
+      if (stillDivergent > 0) {
+        message += `${stillDivergent} registros com divergência precisam de atenção. `;
+      }
+      if (stillPending > 0) {
+        message += `${stillPending} registros ainda pendentes de conferência.`;
+      }
+
+      await storage.createNotification({
+        doctorId,
+        type: "reconciliation",
+        title: "Auditoria automática concluída",
+        message: message.trim(),
+        read: false,
+      });
+    }
+  } catch (err) {
+    console.error(`[Audit] Erro na auditoria do usuário ${doctorId}:`, err);
+  }
+}
+
+async function runPeriodicAudit() {
+  try {
+    const userIds = await storage.getActiveUserIds();
+    if (userIds.length === 0) return;
+
+    console.log(`[Audit] Varredura periódica iniciada — ${userIds.length} usuários ativos`);
+
+    for (const doctorId of userIds) {
+      if (pendingAudits.has(doctorId)) {
+        console.log(`[Audit] Pulando usuário ${doctorId} — auditoria pós-upload já agendada`);
+        continue;
+      }
+      await runUserAudit(doctorId, "periodic");
+    }
+
+    console.log(`[Audit] Varredura periódica concluída`);
+  } catch (err) {
+    console.error("[Audit] Erro na varredura periódica:", err);
+  }
+}
+
+export function startAuditScheduler() {
+  if (auditInterval) return;
+
+  console.log(`[Audit] Scheduler iniciado — varredura a cada ${AUDIT_INTERVAL_MS / 1000 / 60} minutos`);
+
+  auditInterval = setInterval(runPeriodicAudit, AUDIT_INTERVAL_MS);
+
+  setTimeout(runPeriodicAudit, 30 * 1000);
+}
+
+export function stopAuditScheduler() {
+  if (auditInterval) {
+    clearInterval(auditInterval);
+    auditInterval = null;
+  }
+  for (const timer of pendingAudits.values()) {
+    clearTimeout(timer);
+  }
+  pendingAudits.clear();
+  console.log("[Audit] Scheduler parado");
+}

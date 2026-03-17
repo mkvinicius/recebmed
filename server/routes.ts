@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
 import { extractPdfData, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
+import { schedulePostUploadAudit } from "./audit";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
@@ -822,6 +823,7 @@ export async function registerRoutes(
         await storage.createClinicReport({ doctorId: userId, patientName: item.patientName, procedureDate: new Date(item.procedureDate), reportedValue: item.reportedValue || "0.00", description: item.description || null, sourcePdfUrl: null });
       }
       await runReconciliation(userId);
+      schedulePostUploadAudit(userId);
       const allEntries = await storage.getDoctorEntries(userId);
       return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending") } });
     } catch (error) {
@@ -888,6 +890,7 @@ export async function registerRoutes(
 
       try {
         await runReconciliation(userId);
+        schedulePostUploadAudit(userId);
       } catch (reconcErr) {
         console.error("Reconciliation error (continuing):", reconcErr);
       }
@@ -1143,6 +1146,7 @@ export async function registerRoutes(
           message: `${imported} lançamentos de ${targetYear} importados via ${ext === "pdf" ? "PDF" : "planilha"}`,
           read: false,
         });
+        schedulePostUploadAudit(userId);
       }
 
       return res.json({ success: true, imported, skipped, year: targetYear, totalRows });
@@ -1203,6 +1207,7 @@ export async function registerRoutes(
       }
 
       const reconciliationResult = await runReconciliation(userId);
+      schedulePostUploadAudit(userId);
 
       await storage.createNotification({
         doctorId: userId,

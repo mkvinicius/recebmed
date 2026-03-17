@@ -47,6 +47,8 @@ export interface IStorage {
   findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
   findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]>;
   getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
+  getActiveUserIds(): Promise<string[]>;
+  getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -251,6 +253,15 @@ export class DatabaseStorage implements IStorage {
     }
 
     return allNames.slice(0, 20);
+  }
+
+  async getActiveUserIds(): Promise<string[]> {
+    const result = await db.selectDistinct({ doctorId: doctorEntries.doctorId }).from(doctorEntries);
+    return result.map(r => r.doctorId);
+  }
+
+  async getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
+    return db.select().from(doctorEntries).where(and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.status, "divergent"))).orderBy(desc(doctorEntries.createdAt));
   }
 }
 
