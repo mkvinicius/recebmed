@@ -31,31 +31,20 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
     const pending = await storage.getPendingDoctorEntries(doctorId);
     const divergent = await storage.getDivergentDoctorEntries(doctorId);
 
-    if (pending.length === 0 && divergent.length === 0) {
+    if (pending.length === 0) {
       await storage.createAuditLog({
         doctorId,
         triggerType: trigger,
         startedAt,
         endedAt: new Date(),
         reconciledCount: 0,
-        divergentAfter: 0,
+        divergentAfter: divergent.length,
         errorMessage: null,
       });
       return;
     }
 
     console.log(`[Audit] ${trigger}: Usuário ${doctorId} — ${pending.length} pendentes, ${divergent.length} divergentes. Iniciando re-análise...`);
-
-    if (divergent.length > 0) {
-      const resets: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null }> = divergent.map(e => ({
-        id: e.id,
-        status: "pending",
-        matchedReportId: null,
-        divergenceReason: null,
-      }));
-      await storage.batchUpdateDoctorEntryStatus(resets);
-      console.log(`[Audit] ${divergent.length} entradas divergentes resetadas para pendente para re-análise`);
-    }
 
     const result = await runReconciliation(doctorId);
 

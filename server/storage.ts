@@ -55,6 +55,11 @@ export interface IStorage {
 
   createUploadedReport(report: InsertUploadedReport): Promise<UploadedReport>;
   getUploadedReports(userId: string): Promise<UploadedReport[]>;
+
+  getUnmatchedClinicReports(doctorId: string): Promise<ClinicReport[]>;
+  markClinicReportMatched(reportId: string, entryId: string): Promise<boolean>;
+  batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void>;
+  getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -285,6 +290,34 @@ export class DatabaseStorage implements IStorage {
 
   async getUploadedReports(userId: string): Promise<UploadedReport[]> {
     return db.select().from(uploadedReports).where(eq(uploadedReports.userId, userId)).orderBy(desc(uploadedReports.uploadDate));
+  }
+
+  async getUnmatchedClinicReports(doctorId: string): Promise<ClinicReport[]> {
+    return db.select().from(clinicReports)
+      .where(and(eq(clinicReports.doctorId, doctorId), eq(clinicReports.matched, false)))
+      .orderBy(desc(clinicReports.createdAt));
+  }
+
+  async markClinicReportMatched(reportId: string, entryId: string): Promise<boolean> {
+    const result = await db.update(clinicReports)
+      .set({ matched: true, matchedEntryId: entryId })
+      .where(eq(clinicReports.id, reportId))
+      .returning();
+    return result.length > 0;
+  }
+
+  async batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void> {
+    for (const u of updates) {
+      await db.update(clinicReports)
+        .set({ matched: true, matchedEntryId: u.entryId })
+        .where(eq(clinicReports.id, u.reportId));
+    }
+  }
+
+  async getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
+    return db.select().from(doctorEntries)
+      .where(and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.status, "validated")))
+      .orderBy(desc(doctorEntries.createdAt));
   }
 }
 

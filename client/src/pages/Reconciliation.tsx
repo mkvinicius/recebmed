@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
-  Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban
+  Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban,
+  UserPlus, CheckCheck
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -36,10 +37,22 @@ interface EntryResult {
   sourceUrl?: string | null;
 }
 
+interface UnmatchedClinicReport {
+  reportId?: string;
+  id?: string;
+  patientName: string;
+  procedureDate: string;
+  reportValue?: string;
+  reportedValue?: string;
+  insuranceProvider?: string | null;
+  procedureName?: string | null;
+}
+
 interface ReconciliationResults {
   reconciled: EntryResult[];
   divergent: EntryResult[];
   pending: EntryResult[];
+  unmatchedClinic?: UnmatchedClinicReport[];
 }
 
 export default function Reconciliation() {
@@ -48,13 +61,15 @@ export default function Reconciliation() {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ReconciliationResults | null>(null);
-  const [activeTab, setActiveTab] = useState<"verified" | "received" | "divergent" | "pending">("verified");
+  const [activeTab, setActiveTab] = useState<"verified" | "received" | "divergent" | "pending" | "unmatched">("verified");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [divergencyEntry, setDivergencyEntry] = useState<EntryResult | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [acceptingAll, setAcceptingAll] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -160,19 +175,66 @@ export default function Reconciliation() {
   useEffect(() => { loadResults(); }, [loadResults]);
 
   const verifiedCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0);
+  const unmatchedCount = results?.unmatchedClinic?.length || 0;
   const tabs = [
     { key: "verified" as const, label: t("reconciliation.verifiedTab"), icon: ClipboardCheck, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30", border: "border-blue-200 dark:border-blue-800", count: verifiedCount },
     { key: "received" as const, label: t("reconciliation.receivedTab"), icon: CircleDollarSign, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30", border: "border-green-200 dark:border-green-800", count: results?.reconciled?.length || 0 },
     { key: "divergent" as const, label: t("reconciliation.divergentTab"), icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800", count: results?.divergent?.length || 0 },
     { key: "pending" as const, label: t("reconciliation.pendingTab"), icon: Clock, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30", border: "border-red-200 dark:border-red-800", count: results?.pending?.length || 0 },
+    ...(unmatchedCount > 0 ? [{ key: "unmatched" as const, label: t("reconciliation.unmatchedTab"), icon: UserPlus, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/30", border: "border-purple-200 dark:border-purple-800", count: unmatchedCount }] : []),
   ];
 
   const activeEntries = results ? (
     activeTab === "verified" ? [...(results.reconciled || []), ...(results.divergent || [])] :
     activeTab === "received" ? results.reconciled || [] :
     activeTab === "divergent" ? results.divergent || [] :
-    results.pending || []
+    activeTab === "pending" ? results.pending || [] :
+    []
   ) : [];
+
+  const getReportId = (r: UnmatchedClinicReport) => r.reportId || r.id || "";
+  const getReportValue = (r: UnmatchedClinicReport) => r.reportValue || r.reportedValue || "0";
+
+  const handleAcceptClinicReport = async (rid: string) => {
+    const token = getToken();
+    if (!token) return;
+    setAcceptingId(rid);
+    try {
+      const res = await fetch("/api/entries/accept-clinic-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reportId: rid }),
+      });
+      if (res.ok) {
+        setResults(prev => prev ? { ...prev, unmatchedClinic: prev.unmatchedClinic?.filter(r => getReportId(r) !== rid) } : prev);
+        toast({ title: t("reconciliation.acceptedTitle"), description: t("reconciliation.acceptedDesc") });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally { setAcceptingId(null); }
+  };
+
+  const handleAcceptAll = async () => {
+    const token = getToken();
+    if (!token || !results?.unmatchedClinic?.length) return;
+    setAcceptingAll(true);
+    const ids = results.unmatchedClinic.map(r => getReportId(r));
+    try {
+      const res = await fetch("/api/entries/accept-clinic-reports-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reportIds: ids }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const acceptedIds = new Set(data.acceptedIds || ids);
+        setResults(prev => prev ? { ...prev, unmatchedClinic: prev.unmatchedClinic?.filter(r => !acceptedIds.has(getReportId(r))) } : prev);
+        toast({ title: t("reconciliation.allAcceptedTitle"), description: t("reconciliation.allAcceptedDesc", { count: data.accepted }) });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally { setAcceptingAll(false); }
+  };
 
   const generateReportHTML = useCallback(() => {
     if (!results) return "";
@@ -482,7 +544,68 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
             </div>
 
             <div className="space-y-3" data-testid={`list-${activeTab}`}>
-              {activeEntries.length === 0 ? (
+              {activeTab === "unmatched" ? (
+                <>
+                  {results?.unmatchedClinic && results.unmatchedClinic.length > 0 && (
+                    <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-4 border border-purple-200 dark:border-purple-800 mb-3">
+                      <div className="flex items-start gap-3">
+                        <UserPlus className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">{t("reconciliation.unmatchedExplanation")}</p>
+                          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">{t("reconciliation.unmatchedHint")}</p>
+                        </div>
+                        <button
+                          onClick={handleAcceptAll}
+                          disabled={acceptingAll}
+                          className="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 shrink-0 flex items-center gap-1.5"
+                          data-testid="button-accept-all"
+                        >
+                          {acceptingAll ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
+                          {t("reconciliation.acceptAll")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {(results?.unmatchedClinic || []).length === 0 ? (
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 p-8 text-center">
+                      <p className="text-slate-400 text-sm">{t("reconciliation.noUnmatched")}</p>
+                    </div>
+                  ) : (
+                    (results?.unmatchedClinic || []).map(report => {
+                      const rid = getReportId(report);
+                      return (
+                      <div key={rid} className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border border-purple-200 dark:border-purple-800 p-4" data-testid={`unmatched-card-${rid}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{report.patientName}</p>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+                              <span>{formatDate(report.procedureDate)}</span>
+                              <span className="text-slate-300 dark:text-slate-600">•</span>
+                              <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(getReportValue(report))}</span>
+                              {report.insuranceProvider && (
+                                <>
+                                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                                  <span>{report.insuranceProvider}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleAcceptClinicReport(rid)}
+                            disabled={acceptingId === rid}
+                            className="ml-3 px-3 py-1.5 rounded-xl bg-[#8855f6] text-white text-xs font-bold hover:bg-[#7744e0] transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                            data-testid={`button-accept-${rid}`}
+                          >
+                            {acceptingId === rid ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                            {t("reconciliation.acceptEntry")}
+                          </button>
+                        </div>
+                      </div>
+                      );
+                    }))
+                  }
+                </>
+              ) : activeEntries.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-8 text-center">
                   <p className="text-slate-400 dark:text-slate-500 text-sm" data-testid="text-empty">{t("reconciliation.noEntriesInCategory")}</p>
                 </div>
@@ -514,8 +637,8 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                           <span className="font-semibold text-slate-700 dark:text-slate-300" data-testid={`text-value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : entry.status === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
-                        {entry.status === "reconciled" ? t("reconciliation.receivedTab") : entry.status === "divergent" ? t("reconciliation.divergentTab") : t("reconciliation.pendingTab")}
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${entry.status === "reconciled" || entry.status === "validated" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : entry.status === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
+                        {entry.status === "reconciled" || entry.status === "validated" ? t("reconciliation.receivedTab") : entry.status === "divergent" ? t("reconciliation.divergentTab") : t("reconciliation.pendingTab")}
                       </div>
                     </div>
                     {(activeTab === "divergent" || (activeTab === "verified" && entry.status === "divergent")) && expandedEntry === entry.id && (
@@ -530,7 +653,7 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                             <p className="font-medium text-slate-700 dark:text-slate-300">{entry.description}</p>
                           </div>
                         </div>
-                        <p className="mt-3 text-xs text-amber-600 font-semibold">⚠ {t("reconciliation.dataDiffers")}</p>
+                        <p className="mt-3 text-xs text-amber-600 font-semibold">{t("reconciliation.dataDiffers")}</p>
                       </div>
                     )}
                   </div>

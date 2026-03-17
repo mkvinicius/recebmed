@@ -395,7 +395,17 @@
     "exportReport": "Exportar Relatório",
     "downloadPDF": "Baixar PDF",
     "generatedBy": "Gerado por RecebMed",
-    "uploadNewFile": "Enviar novo arquivo"
+    "uploadNewFile": "Enviar novo arquivo",
+    "unmatchedTab": "Não Conferidos",
+    "unmatchedExplanation": "Estes registros constam no relatório da clínica, mas não possuem lançamento correspondente seu. Revise e aceite se estiverem corretos.",
+    "unmatchedHint": "Ao aceitar, um lançamento será criado automaticamente com os dados do relatório.",
+    "acceptAll": "Aceitar Todos",
+    "acceptEntry": "Aceitar",
+    "noUnmatched": "Nenhum registro sem correspondência",
+    "acceptedTitle": "Registro aceito",
+    "acceptedDesc": "Lançamento criado a partir do relatório da clínica.",
+    "allAcceptedTitle": "Todos aceitos",
+    "allAcceptedDesc": "{{count}} lançamentos criados a partir dos relatórios da clínica."
   },
   "clinicReports": {
     "title": "Extratos de Produção",

@@ -12,7 +12,7 @@ export const users = pgTable("users", {
 });
 
 export const entryMethodEnum = pgEnum("entry_method", ["photo", "audio", "manual"]);
-export const entryStatusEnum = pgEnum("entry_status", ["pending", "reconciled", "divergent"]);
+export const entryStatusEnum = pgEnum("entry_status", ["pending", "reconciled", "divergent", "validated"]);
 
 export const doctorEntries = pgTable("doctor_entries", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
@@ -44,6 +44,8 @@ export const clinicReports = pgTable("clinic_reports", {
   reportedValue: numeric("reported_value", { precision: 12, scale: 2 }).notNull(),
   description: text("description"),
   sourcePdfUrl: text("source_pdf_url"),
+  matched: boolean("matched").notNull().default(false),
+  matchedEntryId: varchar("matched_entry_id", { length: 36 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

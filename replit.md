@@ -47,8 +47,8 @@ shared/
 ## Database Tables
 
 - **users**: id, name, email, password, profilePhotoUrl
-- **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, imageHash (SHA-256 for duplicate detection), matchedReportId (FK to clinic_reports.id when reconciled/divergent), divergenceReason (text), status (pending/reconciled/divergent), createdAt
-- **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
+- **doctor_entries**: id, doctorId, patientName, procedureDate, insuranceProvider, description, procedureValue (numeric 12,2), entryMethod (photo/audio/manual), sourceUrl, imageHash (SHA-256 for duplicate detection), matchedReportId (FK to clinic_reports.id when reconciled/divergent), divergenceReason (text), status (pending/reconciled/divergent/validated), createdAt
+- **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, matched (boolean, default false), matchedEntryId (FK to doctor_entries.id), createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
 - **uploaded_reports**: id, userId, fileName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage

@@ -395,7 +395,17 @@
     "exportReport": "Exportar Informe",
     "downloadPDF": "Descargar PDF",
     "generatedBy": "Generado por RecebMed",
-    "uploadNewFile": "Subir nuevo archivo"
+    "uploadNewFile": "Subir nuevo archivo",
+    "unmatchedTab": "Sin Coincidencia",
+    "unmatchedExplanation": "Estos registros aparecen en el informe de la clínica, pero no tienen un registro correspondiente suyo. Revise y acepte si son correctos.",
+    "unmatchedHint": "Al aceptar, se creará automáticamente un registro con los datos del informe.",
+    "acceptAll": "Aceptar Todos",
+    "acceptEntry": "Aceptar",
+    "noUnmatched": "Sin registros sin coincidencia",
+    "acceptedTitle": "Registro aceptado",
+    "acceptedDesc": "Registro creado a partir del informe de la clínica.",
+    "allAcceptedTitle": "Todos aceptados",
+    "allAcceptedDesc": "{{count}} registros creados a partir de los informes de la clínica."
   },
   "clinicReports": {
     "title": "Informes de la Clínica",

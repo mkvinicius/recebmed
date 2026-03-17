@@ -741,6 +741,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/clinic-reports/unmatched", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const reports = await storage.getUnmatchedClinicReports(userId);
+      return res.json({ reports });
+    } catch (error) {
+      console.error("Get unmatched clinic reports error:", error);
+      return res.status(500).json({ message: "Erro ao buscar registros não conferidos" });
+    }
+  });
+
   app.delete("/api/clinic-reports/:id", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
@@ -754,6 +765,106 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete clinic report error:", error);
       return res.status(500).json({ message: "Erro ao excluir relatório" });
+    }
+  });
+
+  app.post("/api/entries/accept-clinic-report", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { reportId } = req.body;
+      if (!reportId) {
+        return res.status(400).json({ message: "ID do relatório é obrigatório" });
+      }
+      const report = await storage.getClinicReport(reportId);
+      if (!report || report.doctorId !== userId) {
+        return res.status(404).json({ message: "Relatório não encontrado" });
+      }
+      if (report.matched) {
+        return res.status(400).json({ message: "Este registro já foi conferido" });
+      }
+
+      const newEntry = await storage.createDoctorEntry({
+        doctorId: userId,
+        patientName: report.patientName,
+        patientBirthDate: report.patientBirthDate || null,
+        procedureDate: report.procedureDate,
+        procedureName: report.procedureName || null,
+        insuranceProvider: report.insuranceProvider || "Particular",
+        description: report.description || report.procedureName || "Aceito do extrato da clínica",
+        procedureValue: report.reportedValue,
+        entryMethod: "manual",
+        sourceUrl: null,
+        imageHash: null,
+        matchedReportId: report.id,
+        divergenceReason: null,
+        status: "reconciled",
+      });
+
+      await storage.markClinicReportMatched(report.id, newEntry.id);
+
+      return res.json({ success: true, entry: newEntry });
+    } catch (error) {
+      console.error("Accept clinic report error:", error);
+      return res.status(500).json({ message: "Erro ao aceitar registro da clínica" });
+    }
+  });
+
+  app.post("/api/entries/accept-clinic-reports-batch", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { reportIds } = req.body;
+      if (!reportIds || !Array.isArray(reportIds) || reportIds.length === 0) {
+        return res.status(400).json({ message: "IDs dos relatórios são obrigatórios" });
+      }
+
+      let accepted = 0;
+      const acceptedIds: string[] = [];
+      for (const reportId of reportIds) {
+        const report = await storage.getClinicReport(reportId);
+        if (!report || report.doctorId !== userId || report.matched) continue;
+
+        const newEntry = await storage.createDoctorEntry({
+          doctorId: userId,
+          patientName: report.patientName,
+          patientBirthDate: report.patientBirthDate || null,
+          procedureDate: report.procedureDate,
+          procedureName: report.procedureName || null,
+          insuranceProvider: report.insuranceProvider || "Particular",
+          description: report.description || report.procedureName || "Aceito do extrato da clínica",
+          procedureValue: report.reportedValue,
+          entryMethod: "manual",
+          sourceUrl: null,
+          imageHash: null,
+          matchedReportId: report.id,
+          divergenceReason: null,
+          status: "reconciled",
+        });
+
+        await storage.markClinicReportMatched(report.id, newEntry.id);
+        accepted++;
+        acceptedIds.push(reportId);
+      }
+
+      return res.json({ success: true, accepted, acceptedIds });
+    } catch (error) {
+      console.error("Accept clinic reports batch error:", error);
+      return res.status(500).json({ message: "Erro ao aceitar registros da clínica" });
+    }
+  });
+
+  app.put("/api/entries/:id/validate", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { id } = req.params;
+      const entry = await storage.getDoctorEntry(id);
+      if (!entry || entry.doctorId !== userId) {
+        return res.status(404).json({ message: "Lançamento não encontrado" });
+      }
+      const updated = await storage.updateDoctorEntry(id, { status: "validated" } as any);
+      return res.json({ success: true, entry: updated });
+    } catch (error) {
+      console.error("Validate entry error:", error);
+      return res.status(500).json({ message: "Erro ao validar lançamento" });
     }
   });
 
@@ -854,7 +965,8 @@ export async function registerRoutes(
       await runReconciliation(userId);
       schedulePostUploadAudit(userId);
       const allEntries = await storage.getDoctorEntries(userId);
-      return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending") } });
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
+      return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending"), unmatchedClinic: unmatchedReports } });
     } catch (error) {
       console.error("PDF reconciliation error:", error);
       return res.status(500).json({ message: "Erro ao processar PDF" });
@@ -932,6 +1044,7 @@ export async function registerRoutes(
       }
 
       const allEntries = await storage.getDoctorEntries(userId);
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
       return res.json({
         success: true,
         extractedCount: savedCount,
@@ -939,6 +1052,7 @@ export async function registerRoutes(
           reconciled: allEntries.filter(e => e.status === "reconciled"),
           divergent: allEntries.filter(e => e.status === "divergent"),
           pending: allEntries.filter(e => e.status === "pending"),
+          unmatchedClinic: unmatchedReports,
         },
       });
     } catch (error: any) {
@@ -970,10 +1084,11 @@ export async function registerRoutes(
     try {
       const userId = (req as any).userId;
       const allEntries = await storage.getDoctorEntries(userId);
-      const reconciled = allEntries.filter(e => e.status === "reconciled");
+      const reconciled = allEntries.filter(e => e.status === "reconciled" || e.status === "validated");
       const divergent = allEntries.filter(e => e.status === "divergent");
       const pending = allEntries.filter(e => e.status === "pending");
-      return res.json({ reconciled, divergent, pending });
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
+      return res.json({ reconciled, divergent, pending, unmatchedClinic: unmatchedReports });
     } catch (error) {
       console.error("Get reconciliation results error:", error);
       return res.status(500).json({ message: "Erro ao buscar resultados" });

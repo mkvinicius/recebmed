@@ -331,6 +331,7 @@ export interface ReconciliationResult {
   reconciled: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string; matchDetails?: string }>;
   divergent: Array<{ entryId: string; reportId: string; patientName: string; procedureDate: string; entryValue: string | null; reportValue: string; divergenceReason: string }>;
   pending: Array<{ entryId: string; patientName: string; procedureDate: string; entryValue: string | null }>;
+  unmatchedClinic: Array<{ reportId: string; patientName: string; procedureDate: string; reportValue: string; insuranceProvider?: string; procedureName?: string }>;
 }
 
 interface MatchScore {
@@ -339,16 +340,19 @@ interface MatchScore {
   totalFields: number;
   matchedFields: string[];
   divergentFields: string[];
+  nameMatched: boolean;
 }
 
 function scoreMatch(entry: any, report: any): MatchScore {
   let score = 0;
-  const totalFields = 5;
+  let filledFields = 0;
   const matchedFields: string[] = [];
   const divergentFields: string[] = [];
 
   const nameDistance = levenshteinDistance(entry.patientName, report.patientName);
-  if (nameDistance <= 3) {
+  const nameMatched = nameDistance <= 3;
+  filledFields++;
+  if (nameMatched) {
     score++;
     matchedFields.push("nome");
   } else {
@@ -357,6 +361,7 @@ function scoreMatch(entry: any, report: any): MatchScore {
 
   const entryDate = new Date(entry.procedureDate);
   const reportDate = new Date(report.procedureDate);
+  filledFields++;
   if (datesWithinDays(entryDate, reportDate, 3)) {
     score++;
     matchedFields.push("data");
@@ -369,20 +374,19 @@ function scoreMatch(entry: any, report: any): MatchScore {
   const entryBirth = normalizeStr(entry.patientBirthDate);
   const reportBirth = normalizeStr(report.patientBirthDate);
   if (entryBirth && reportBirth) {
+    filledFields++;
     if (entryBirth === reportBirth) {
       score++;
       matchedFields.push("nascimento");
     } else {
       divergentFields.push(`Nascimento: ${entry.patientBirthDate} ≠ ${report.patientBirthDate}`);
     }
-  } else {
-    matchedFields.push("nascimento");
-    score++;
   }
 
   const entryProc = normalizeStr(entry.procedureName || entry.description);
   const reportProc = normalizeStr(report.procedureName || report.description);
   if (entryProc && reportProc) {
+    filledFields++;
     const procDistance = levenshteinDistance(entryProc, reportProc);
     const maxLen = Math.max(entryProc.length, reportProc.length);
     if (procDistance <= Math.ceil(maxLen * 0.3) || entryProc.includes(reportProc) || reportProc.includes(entryProc)) {
@@ -391,14 +395,12 @@ function scoreMatch(entry: any, report: any): MatchScore {
     } else {
       divergentFields.push(`Procedimento: "${entry.procedureName || entry.description}" ≠ "${report.procedureName || report.description}"`);
     }
-  } else {
-    matchedFields.push("procedimento");
-    score++;
   }
 
   const entryIns = normalizeStr(entry.insuranceProvider);
   const reportIns = normalizeStr(report.insuranceProvider);
   if (entryIns && reportIns) {
+    filledFields++;
     const insDistance = levenshteinDistance(entryIns, reportIns);
     if (insDistance <= 3 || entryIns.includes(reportIns) || reportIns.includes(entryIns)) {
       score++;
@@ -406,30 +408,40 @@ function scoreMatch(entry: any, report: any): MatchScore {
     } else {
       divergentFields.push(`Convênio: "${entry.insuranceProvider}" ≠ "${report.insuranceProvider}"`);
     }
-  } else {
-    matchedFields.push("convênio");
-    score++;
   }
 
-  return { report, score, totalFields, matchedFields, divergentFields };
+  const totalFields = filledFields;
+  return { report, score, totalFields, matchedFields, divergentFields, nameMatched };
 }
 
-const AI_RECONCILIATION_PROMPT = `Você é um assistente de conferência médica. Analise os lançamentos do médico e os registros da clínica.
-Para cada lançamento do médico, determine o melhor match no relatório da clínica comparando:
-1. Nome do paciente (pode ter variações de grafia)
-2. Data de atendimento (pode ter pequenas diferenças)
-3. Data de nascimento do paciente (se disponível)
-4. Procedimento realizado
-5. Convênio/plano de saúde
+const AI_RECONCILIATION_PROMPT = `Você é um assistente de conferência financeira médica.
 
-Para cada lançamento, responda com:
-- entryIndex: índice do lançamento do médico (0-based)
-- reportIndex: índice do relatório da clínica que melhor corresponde (0-based), ou null se nenhum
-- status: "received" (dados batem), "divergent" (match parcial, algo diferente), ou "pending" (não encontrado)
-- divergenceReason: explicação em português do que está diferente (apenas se divergent)
+REGRA PRINCIPAL: O matching é feito pelo NOME DO PACIENTE. Procure na lista da clínica um paciente com nome igual ou similar ao do médico. NÃO use a posição/índice na lista — o paciente pode estar em qualquer posição.
 
-NÃO compare valores financeiros. Foque apenas nos 5 campos acima.
-Responda APENAS com um array JSON válido, sem markdown.`;
+PROCESSO:
+1. Para cada lançamento do médico, PROCURE pelo nome do paciente na lista da clínica
+2. Se encontrar um nome similar (variações de grafia são aceitas), valide os dados complementares:
+   - Data de atendimento (pequenas diferenças de 1-3 dias são aceitas)
+   - Data de nascimento (se disponível)
+   - Procedimento realizado
+   - Convênio/plano de saúde
+3. Determine o status:
+   - "received": Nome encontrado e dados complementares batem
+   - "divergent": Nome encontrado mas algum dado complementar diverge (informe qual)
+   - "pending": Nome NÃO encontrado na lista da clínica (nenhum paciente similar)
+
+IMPORTANTE:
+- NÃO compare valores financeiros
+- Se o paciente aparece mais de uma vez, use a combinação nome+data para identificar o registro correto
+- NUNCA faça match por posição na lista — sempre por nome
+- Se dois pacientes têm nomes muito diferentes, NUNCA são match mesmo que estejam na mesma posição
+
+Responda com um array JSON:
+[{"entryIndex": 0, "reportIndex": 3, "status": "received", "divergenceReason": null}, ...]
+
+entryIndex = índice do lançamento do médico (0-based)
+reportIndex = índice do registro da clínica que corresponde pelo NOME (0-based), ou null se não encontrado
+Responda APENAS com JSON válido, sem markdown.`;
 
 const AI_BATCH_SIZE = 30;
 
@@ -464,9 +476,9 @@ async function aiReconciliationBatch(
       model: "gpt-5-mini",
       messages: [
         { role: "system", content: AI_RECONCILIATION_PROMPT },
-        { role: "user", content: `Lançamentos do médico (${entries.length}):\n${JSON.stringify(entrySummary)}\n\nRelatório da clínica (${reports.length}):\n${JSON.stringify(reportSummary)}` },
+        { role: "user", content: `Lançamentos do médico (${entries.length}):\n${JSON.stringify(entrySummary, null, 2)}\n\nRegistros da clínica (${reports.length}):\n${JSON.stringify(reportSummary, null, 2)}` },
       ],
-      max_completion_tokens: 4000,
+      max_completion_tokens: 8000,
     });
 
     const content = response.choices[0]?.message?.content || "[]";
@@ -481,18 +493,32 @@ async function aiReconciliationBatch(
 
 export async function runReconciliation(doctorId: string): Promise<ReconciliationResult> {
   const pendingEntries = await storage.getPendingDoctorEntries(doctorId);
-  const twoYearsAgo = new Date();
-  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-  const reports = await storage.getRecentClinicReports(doctorId, twoYearsAgo);
+  const unmatchedReports = await storage.getUnmatchedClinicReports(doctorId);
 
   const result: ReconciliationResult = {
     reconciled: [],
     divergent: [],
     pending: [],
+    unmatchedClinic: [],
   };
 
-  if (pendingEntries.length === 0) return result;
-  if (reports.length === 0) {
+  if (pendingEntries.length === 0 && unmatchedReports.length === 0) return result;
+
+  if (pendingEntries.length === 0) {
+    for (const report of unmatchedReports) {
+      result.unmatchedClinic.push({
+        reportId: report.id,
+        patientName: report.patientName,
+        procedureDate: report.procedureDate.toISOString(),
+        reportValue: report.reportedValue,
+        insuranceProvider: report.insuranceProvider || undefined,
+        procedureName: report.procedureName || undefined,
+      });
+    }
+    return result;
+  }
+
+  if (unmatchedReports.length === 0) {
     for (const entry of pendingEntries) {
       result.pending.push({
         entryId: entry.id,
@@ -505,11 +531,12 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
   }
 
   const usedReports = new Set<string>();
-  const statusUpdates: Array<{ id: string; status: string }> = [];
+  const statusUpdates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null }> = [];
+  const reportMatchUpdates: Array<{ reportId: string; entryId: string }> = [];
 
   for (let batchStart = 0; batchStart < pendingEntries.length; batchStart += AI_BATCH_SIZE) {
     const entryBatch = pendingEntries.slice(batchStart, batchStart + AI_BATCH_SIZE);
-    const availableReports = reports.filter(r => !usedReports.has(r.id));
+    const availableReports = unmatchedReports.filter(r => !usedReports.has(r.id));
     if (availableReports.length === 0) break;
 
     const aiResults = await aiReconciliationBatch(entryBatch, availableReports, batchStart);
@@ -518,10 +545,22 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
       const entry = pendingEntries[aiMatch.entryIndex];
       if (!entry) continue;
 
-      if (aiMatch.status === "received" && aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
+      if (aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
         const report = availableReports[aiMatch.reportIndex];
-        if (report && !usedReports.has(report.id)) {
-          usedReports.add(report.id);
+        if (!report || usedReports.has(report.id)) continue;
+
+        const nameCheck = levenshteinDistance(
+          normalizeStr(entry.patientName),
+          normalizeStr(report.patientName)
+        );
+        if (nameCheck > 5) {
+          console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck})`);
+          continue;
+        }
+
+        usedReports.add(report.id);
+
+        if (aiMatch.status === "received") {
           result.reconciled.push({
             entryId: entry.id,
             reportId: report.id,
@@ -531,11 +570,8 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             reportValue: report.reportedValue,
           });
           statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null });
-        }
-      } else if (aiMatch.status === "divergent" && aiMatch.reportIndex !== null && aiMatch.reportIndex !== undefined) {
-        const report = availableReports[aiMatch.reportIndex];
-        if (report && !usedReports.has(report.id)) {
-          usedReports.add(report.id);
+          reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
+        } else if (aiMatch.status === "divergent") {
           const reason = aiMatch.divergenceReason || "Dados parcialmente diferentes";
           result.divergent.push({
             entryId: entry.id,
@@ -547,6 +583,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             divergenceReason: reason,
           });
           statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: reason });
+          reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
         }
       }
     }
@@ -561,15 +598,16 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     if (processedEntryIds.has(entry.id)) continue;
 
     let bestMatch: MatchScore | null = null;
-    for (const report of reports) {
+    for (const report of unmatchedReports) {
       if (usedReports.has(report.id)) continue;
       const ms = scoreMatch(entry, report);
+      if (!ms.nameMatched) continue;
       if (!bestMatch || ms.score > bestMatch.score) {
         bestMatch = ms;
       }
     }
 
-    if (bestMatch && bestMatch.score >= 4) {
+    if (bestMatch && bestMatch.nameMatched && bestMatch.score >= Math.ceil(bestMatch.totalFields * 0.7)) {
       usedReports.add(bestMatch.report.id);
       result.reconciled.push({
         entryId: entry.id,
@@ -581,7 +619,8 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         matchDetails: bestMatch.matchedFields.join(", "),
       });
       statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null });
-    } else if (bestMatch && bestMatch.score >= 2) {
+      reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
+    } else if (bestMatch && bestMatch.nameMatched && bestMatch.divergentFields.length > 0) {
       usedReports.add(bestMatch.report.id);
       const reason = bestMatch.divergentFields.join("; ");
       result.divergent.push({
@@ -594,6 +633,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         divergenceReason: reason,
       });
       statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason });
+      reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
     } else {
       result.pending.push({
         entryId: entry.id,
@@ -604,16 +644,36 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     }
   }
 
+  for (const report of unmatchedReports) {
+    if (usedReports.has(report.id)) continue;
+    result.unmatchedClinic.push({
+      reportId: report.id,
+      patientName: report.patientName,
+      procedureDate: report.procedureDate.toISOString(),
+      reportValue: report.reportedValue,
+      insuranceProvider: report.insuranceProvider || undefined,
+      procedureName: report.procedureName || undefined,
+    });
+  }
+
   if (statusUpdates.length > 0) {
     await storage.batchUpdateDoctorEntryStatus(statusUpdates);
   }
+  if (reportMatchUpdates.length > 0) {
+    await storage.batchMarkClinicReportsMatched(reportMatchUpdates);
+  }
 
-  const verifiedTotal = result.reconciled.length + result.divergent.length;
+  const msgs: string[] = [];
+  if (result.reconciled.length > 0) msgs.push(`${result.reconciled.length} conferidos`);
+  if (result.divergent.length > 0) msgs.push(`${result.divergent.length} com divergência`);
+  if (result.pending.length > 0) msgs.push(`${result.pending.length} seus lançamentos sem match na clínica`);
+  if (result.unmatchedClinic.length > 0) msgs.push(`${result.unmatchedClinic.length} pacientes da clínica que você ainda não lançou`);
+
   await storage.createNotification({
     doctorId,
     type: "reconciliation",
     title: "Conferência concluída",
-    message: `${verifiedTotal} conferidos (${result.reconciled.length} recebidos, ${result.divergent.length} divergentes), ${result.pending.length} pendentes`,
+    message: msgs.join(". "),
     read: false,
   });
 

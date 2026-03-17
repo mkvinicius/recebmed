@@ -395,7 +395,17 @@
     "exportReport": "Exporter le Rapport",
     "downloadPDF": "Télécharger PDF",
     "generatedBy": "Généré par RecebMed",
-    "uploadNewFile": "Envoyer un nouveau fichier"
+    "uploadNewFile": "Envoyer un nouveau fichier",
+    "unmatchedTab": "Non Appariés",
+    "unmatchedExplanation": "Ces enregistrements apparaissent dans le rapport de la clinique mais n'ont aucune saisie correspondante de votre part. Vérifiez et acceptez si corrects.",
+    "unmatchedHint": "En acceptant, une saisie sera automatiquement créée à partir des données du rapport.",
+    "acceptAll": "Tout Accepter",
+    "acceptEntry": "Accepter",
+    "noUnmatched": "Aucun enregistrement non apparié",
+    "acceptedTitle": "Enregistrement accepté",
+    "acceptedDesc": "Saisie créée à partir du rapport de la clinique.",
+    "allAcceptedTitle": "Tous acceptés",
+    "allAcceptedDesc": "{{count}} saisies créées à partir des rapports de la clinique."
   },
   "clinicReports": {
     "title": "Rapports de la Clinique",
