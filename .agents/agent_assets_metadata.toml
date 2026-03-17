@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "7tHWAGpB4OHjW685uoMuG"
+uri = "file://RecebMed_Technical_Audit.md"
+type = "text"
+title = "RecebMed - Auditoria Técnica Completa"

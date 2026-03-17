@@ -1,0 +1,91 @@
+# Prompt for System Audit: RecebMed Technical Deep Dive
+
+**Objective:** To generate a comprehensive technical audit and documentation of the current RecebMed system. This report will be used to understand the existing architecture, data flows, reconciliation logic, and recent changes before planning future development sprints. Please provide a detailed response in Markdown format, addressing each section below.
+
+---
+
+### 1. High-Level System Architecture
+
+Provide a summary of the current technology stack and architecture.
+
+- **Frontend:** What framework and key libraries are being used (e.g., React, Vite, TailwindCSS)?
+- **Backend:** What framework and language are used (e.g., Node.js, Express, Python, Flask)?
+- **Database:** What type of database is in use (e.g., PostgreSQL, MySQL, MongoDB)?
+- **AI/ML Service:** What specific AI service or model is being used for data extraction and OCR (e.g., Google Vision AI, Azure Form Recognizer, a custom model)?
+- **Deployment:** Where is the application hosted (e.g., Vercel, AWS, Replit)?
+- **Directory Structure:** Provide a high-level overview of the project's directory structure, explaining the purpose of key folders.
+
+---
+
+### 2. Recent Implementations & Fixes
+
+List all significant changes, new features, and bug fixes that have been implemented in the system within the last 7 days. Focus particularly on changes related to the data reconciliation and PDF processing modules.
+
+- **Feature 1:** Description of the new feature.
+- **Bug Fix 1:** Description of the bug and how it was resolved.
+- **Correction 1:** Description of the correction made to the system logic.
+
+---
+
+### 3. Core Data Flow: From User Input to Reconciliation
+
+Describe the step-by-step data flow for a single medical procedure entry, from initial creation by the doctor to the final reconciliation state.
+
+1.  **Initial Data Entry:** How is data captured and stored when a doctor creates an entry via:
+    a.  **Manual Text Input?**
+    b.  **Photo Upload?** (Is the photo processed immediately or stored for later?)
+    c.  **Audio Recording?** (How is the audio transcribed and stored?)
+
+2.  **Pre-Reconciliation State:** Where and in what format is this user-generated data stored before the clinic's PDF is uploaded?
+
+---
+
+### 4. Reconciliation Workflow & AI's Role
+
+Detail the entire reconciliation process that begins when a clinic's PDF report is uploaded.
+
+- **Trigger:** Is the reconciliation process triggered immediately upon PDF upload, or is it a manual or scheduled action?
+- **AI Activation:** When does the AI become active in this workflow?
+- **AI's Core Tasks:** What are the specific responsibilities of the AI? Please detail:
+    - Does it perform OCR on the entire PDF?
+    - Does it extract specific data fields (patient name, procedure, date, insurance)?
+    - Does it perform the comparison logic, or does it only extract data?
+- **AI State:** Is the AI a persistent, active service, or is it invoked on-demand for each reconciliation task?
+
+---
+
+### 5. Reconciliation Logic & Divergence Rules
+
+This is the most critical section. Please be extremely detailed.
+
+- **Matching Fields:** Which specific fields are used to match a doctor's entry with an entry from the clinic's PDF? (e.g., Patient Full Name, Patient Date of Birth, Procedure Date, Insurance Provider).
+- **Matching Algorithm:** Describe the logic for a successful match. Is it a 100% exact match on all fields, or is there a fuzzy matching algorithm?
+- **Handling Partial Matches:** How does the system handle scenarios where some, but not all, fields match? For example:
+    - *Scenario A:* Patient Name and Procedure Date match, but Insurance is different.
+    - *Scenario B:* Patient Name is slightly different (e.g., missing a middle name), but Date of Birth and Procedure Date match.
+- **Divergence Classification:** Define the different statuses (`Divergent`, `Not Checked`, `Unmatched`, etc.). For each status, explain:
+    - What specific condition triggers it?
+    - What is the exact reason provided to the user? (e.g., Does it explicitly state "Insurance Mismatch" or "Patient Name Mismatch"?)
+- **Value Field:** Confirm that the **monetary value** of the procedure is **NOT** used as a primary key for matching.
+
+---
+
+### 6. System Logging & Auditing
+
+Describe the logging mechanisms in place, especially for the reconciliation process.
+
+- **Log Contents:** What specific information is logged during a reconciliation attempt?
+    - Timestamps?
+    - User ID?
+    - File name of the uploaded PDF?
+    - AI confidence scores for each data extraction?
+    - Errors encountered during processing?
+    - Final status of each entry (Matched, Divergent, etc.)?
+- **Log Accessibility:** Where are these logs stored, and how can they be accessed for debugging purposes?
+
+---
+
+### 7. Output Format
+
+Please structure your entire response in a clear, well-organized Markdown format to ensure readability. Use tables, lists, and code blocks where appropriate.
+
