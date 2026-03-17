@@ -51,6 +51,7 @@ shared/
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
+- **audit_logs**: id, doctorId, triggerType (scheduled/post-upload), startedAt, endedAt, reconciledCount, divergentAfter, errorMessage — persists every audit run for traceability
 - **conversations**: id, title, createdAt (AI integration)
 - **messages**: id, conversationId, role, content, createdAt (AI integration)
 

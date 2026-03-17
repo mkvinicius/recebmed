@@ -23,11 +23,21 @@ export function schedulePostUploadAudit(doctorId: string) {
 }
 
 async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-upload") {
+  const startedAt = new Date();
   try {
     const pending = await storage.getPendingDoctorEntries(doctorId);
     const divergent = await storage.getDivergentDoctorEntries(doctorId);
 
     if (pending.length === 0 && divergent.length === 0) {
+      await storage.createAuditLog({
+        doctorId,
+        triggerType: trigger,
+        startedAt,
+        endedAt: new Date(),
+        reconciledCount: 0,
+        divergentAfter: 0,
+        errorMessage: null,
+      });
       return;
     }
 
@@ -52,6 +62,16 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
 
     console.log(`[Audit] ${trigger}: Resultado — ${totalFixed} reconciliados, ${stillDivergent} divergentes, ${stillPending} pendentes`);
 
+    await storage.createAuditLog({
+      doctorId,
+      triggerType: trigger,
+      startedAt,
+      endedAt: new Date(),
+      reconciledCount: totalFixed,
+      divergentAfter: stillDivergent,
+      errorMessage: null,
+    });
+
     if (totalFixed > 0 || (trigger === "post-upload" && (stillDivergent > 0 || stillPending > 0))) {
       let message = "";
       if (totalFixed > 0) {
@@ -73,7 +93,17 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
       });
     }
   } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
     console.error(`[Audit] Erro na auditoria do usuário ${doctorId}:`, err);
+    await storage.createAuditLog({
+      doctorId,
+      triggerType: trigger,
+      startedAt,
+      endedAt: new Date(),
+      reconciledCount: 0,
+      divergentAfter: 0,
+      errorMessage: errorMsg,
+    }).catch(() => {});
   }
 }
 

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, numeric, pgEnum, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -119,5 +119,20 @@ export const insertAiCorrectionSchema = createInsertSchema(aiCorrections).omit({
 });
 export type AiCorrection = typeof aiCorrections.$inferSelect;
 export type InsertAiCorrection = z.infer<typeof insertAiCorrectionSchema>;
+
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  triggerType: text("trigger_type").notNull(),
+  startedAt: timestamp("started_at").notNull(),
+  endedAt: timestamp("ended_at"),
+  reconciledCount: integer("reconciled_count").notNull().default(0),
+  divergentAfter: integer("divergent_after").notNull().default(0),
+  errorMessage: text("error_message"),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true });
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 export * from "./models/chat";

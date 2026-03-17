@@ -4,6 +4,7 @@ import {
   type ClinicReport, type InsertClinicReport, clinicReports,
   type Notification, type InsertNotification, notifications,
   type AiCorrection, type InsertAiCorrection, aiCorrections,
+  type AuditLog, type InsertAuditLog, auditLogs,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
@@ -49,6 +50,7 @@ export interface IStorage {
   getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
   getActiveUserIds(): Promise<string[]>;
   getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -265,6 +267,11 @@ export class DatabaseStorage implements IStorage {
 
   async getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
     return db.select().from(doctorEntries).where(and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.status, "divergent"))).orderBy(desc(doctorEntries.createdAt));
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [result] = await db.insert(auditLogs).values(log).returning();
+    return result;
   }
 }
 
