@@ -498,6 +498,12 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist."
   },
+  "guidedFlow": {
+    "title": "Next Step: Reconciliation",
+    "message": "You have pending entries. To automatically check which procedures were received, upload your clinic report now.",
+    "button": "Upload Clinic Report",
+    "dismiss": "Not now"
+  },
   "tour": {
     "step1Title": "Record your appointments",
     "step1Content": "Welcome to RecebMed! Start here to record your appointments with a photo or audio.",

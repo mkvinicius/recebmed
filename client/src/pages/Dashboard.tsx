@@ -5,7 +5,7 @@ import {
   Bell, Clock, CreditCard, AlertTriangle,
   FileText, AlertCircle, Loader2, CheckCircle2, X,
   Camera, Mic, PenLine,
-  ChevronRight, Search, CheckCheck
+  ChevronRight, Search, CheckCheck, Upload
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -69,6 +69,7 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<DoctorEntry[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showGuidedFlow, setShowGuidedFlow] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -157,6 +158,21 @@ export default function Dashboard() {
   const reconciledCount = entries.filter(e => e.status === "reconciled").length;
   const divergentCount = entries.filter(e => e.status === "divergent").length;
   const recentEntries = entries.slice(0, 5);
+
+  useEffect(() => {
+    if (loadingEntries || pendingCount === 0) return;
+    const dismissed = localStorage.getItem("guidedFlowDismissed");
+    if (dismissed) {
+      const dismissedAt = parseInt(dismissed, 10);
+      if (Date.now() - dismissedAt < 24 * 60 * 60 * 1000) return;
+    }
+    setShowGuidedFlow(true);
+  }, [loadingEntries, pendingCount]);
+
+  const dismissGuidedFlow = () => {
+    localStorage.setItem("guidedFlowDismissed", Date.now().toString());
+    setShowGuidedFlow(false);
+  };
 
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400" : "bg-[#8855f6]/10 text-[#8855f6]";
@@ -321,6 +337,40 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+      {showGuidedFlow && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" data-testid="modal-guided-flow">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-center mb-4">
+              <div className="size-14 rounded-2xl bg-[#8855f6]/10 flex items-center justify-center">
+                <Upload className="w-7 h-7 text-[#8855f6]" />
+              </div>
+            </div>
+            <h3 className="text-lg font-extrabold text-slate-800 dark:text-white text-center" data-testid="text-guided-title">
+              {t("guidedFlow.title")}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2 leading-relaxed" data-testid="text-guided-message">
+              {t("guidedFlow.message")}
+            </p>
+            <div className="mt-6 space-y-2">
+              <button
+                onClick={() => { dismissGuidedFlow(); setLocation("/reconciliation"); }}
+                className="w-full h-12 bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold rounded-xl transition-colors active:scale-[0.97]"
+                data-testid="button-guided-upload"
+              >
+                {t("guidedFlow.button")}
+              </button>
+              <button
+                onClick={dismissGuidedFlow}
+                className="w-full h-10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-medium transition-colors"
+                data-testid="button-guided-dismiss"
+              >
+                {t("guidedFlow.dismiss")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingEntry && (
         <EditEntryModal

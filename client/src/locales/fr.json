@@ -498,6 +498,12 @@
     "title": "Page non trouvée",
     "description": "La page que vous recherchez n'existe pas."
   },
+  "guidedFlow": {
+    "title": "Prochaine étape : Rapprochement",
+    "message": "Vous avez des entrées en attente. Pour vérifier automatiquement quels actes ont été reçus, téléchargez maintenant le rapport de votre clinique.",
+    "button": "Télécharger le rapport clinique",
+    "dismiss": "Pas maintenant"
+  },
   "tour": {
     "step1Title": "Enregistrez vos consultations",
     "step1Content": "Bienvenue sur RecebMed ! Commencez ici pour enregistrer vos consultations avec une photo ou un audio.",

@@ -498,6 +498,12 @@
     "title": "Página no encontrada",
     "description": "La página que busca no existe."
   },
+  "guidedFlow": {
+    "title": "Próximo Paso: Conciliación",
+    "message": "Tiene lanzamientos pendientes. Para que el sistema verifique automáticamente qué procedimientos fueron recibidos, suba ahora el informe de su clínica.",
+    "button": "Subir Informe de la Clínica",
+    "dismiss": "Ahora no"
+  },
   "tour": {
     "step1Title": "Registre sus atenciones",
     "step1Content": "¡Bienvenido a RecebMed! Comience aquí para registrar sus atenciones con una foto o audio.",
