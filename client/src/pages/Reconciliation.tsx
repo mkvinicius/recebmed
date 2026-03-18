@@ -416,7 +416,14 @@ export default function Reconciliation() {
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
 
-        {(!uploadCollapsed || !results) ? (
+        {initialLoading ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
+              <p className="text-sm text-slate-400">{t("common.loading")}</p>
+            </div>
+          </div>
+        ) : (!uploadCollapsed || !results) ? (
           <div
             className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed p-8 mb-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
             onClick={() => !isProcessing && fileInputRef.current?.click()}
