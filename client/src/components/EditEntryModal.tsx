@@ -96,11 +96,11 @@ export default function EditEntryModal({ entry, onClose, onSaved, onDeleted }: E
           <div className="flex items-center gap-2">
             <button
               onClick={() => { onClose(); setLocation(`/entry/${entry.id}`); }}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-[#8855f6]"
-              title={t("common.viewDetails")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#8855f6]/10 text-[#8855f6] text-xs font-semibold hover:bg-[#8855f6]/20 transition-colors"
               data-testid="button-view-details"
             >
-              <ExternalLink className="w-4.5 h-4.5" />
+              <ExternalLink className="w-3.5 h-3.5" />
+              {t("common.viewDetails")}
             </button>
             <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit">
               <X className="w-5 h-5 text-slate-400" />
