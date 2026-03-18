@@ -141,7 +141,7 @@
     "saveChanges": "Guardar Cambios"
   },
   "entries": {
-    "title": "Registros",
+    "title": "Producción",
     "subtitle": "Gestione todos sus procedimientos",
     "searchPlaceholder": "Buscar paciente, procedimiento...",
     "allDates": "Todas las fechas",
@@ -152,7 +152,7 @@
     "dateTo": "Hasta",
     "clearDates": "Limpiar",
     "allInsurances": "Todos los seguros",
-    "allEntries": "Todos los Registros",
+    "allEntries": "Toda la Producción",
     "recordCount": "{{count}} registros",
     "filteredCount": "{{filtered}} de {{total}}",
     "noEntries": "Sin registros aún",

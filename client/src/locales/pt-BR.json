@@ -141,7 +141,7 @@
     "saveChanges": "Salvar Alterações"
   },
   "entries": {
-    "title": "Lançamentos",
+    "title": "Produção",
     "subtitle": "Gerencie todos os seus procedimentos",
     "searchPlaceholder": "Buscar paciente, procedimento...",
     "allDates": "Todas as datas",
@@ -152,7 +152,7 @@
     "dateTo": "Até",
     "clearDates": "Limpar",
     "allInsurances": "Todos os convênios",
-    "allEntries": "Todos os Lançamentos",
+    "allEntries": "Toda a Produção",
     "recordCount": "{{count}} registros",
     "filteredCount": "{{filtered}} de {{total}}",
     "noEntries": "Nenhum lançamento ainda",

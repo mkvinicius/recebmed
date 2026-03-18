@@ -141,7 +141,7 @@
     "saveChanges": "Enregistrer les Modifications"
   },
   "entries": {
-    "title": "Entrées",
+    "title": "Production",
     "subtitle": "Gérez toutes vos procédures",
     "searchPlaceholder": "Rechercher patient, procédure...",
     "allDates": "Toutes les dates",
@@ -152,7 +152,7 @@
     "dateTo": "Au",
     "clearDates": "Effacer",
     "allInsurances": "Toutes les assurances",
-    "allEntries": "Toutes les Entrées",
+    "allEntries": "Toute la Production",
     "recordCount": "{{count}} enregistrements",
     "filteredCount": "{{filtered}} sur {{total}}",
     "noEntries": "Aucune entrée",

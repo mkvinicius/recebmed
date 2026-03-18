@@ -141,7 +141,7 @@
     "saveChanges": "Save Changes"
   },
   "entries": {
-    "title": "Entries",
+    "title": "Production",
     "subtitle": "Manage all your procedures",
     "searchPlaceholder": "Search patient, procedure...",
     "allDates": "All dates",
@@ -152,7 +152,7 @@
     "dateTo": "To",
     "clearDates": "Clear",
     "allInsurances": "All insurances",
-    "allEntries": "All Entries",
+    "allEntries": "All Production",
     "recordCount": "{{count}} records",
     "filteredCount": "{{filtered}} of {{total}}",
     "noEntries": "No entries yet",

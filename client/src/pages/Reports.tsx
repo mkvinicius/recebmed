@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Stethoscope, DollarSign, CheckCircle2, Clock,
-  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity, ChevronDown, ChevronUp, User, History
+  AlertTriangle, TrendingUp, PieChart as PieChartIcon, BarChart3, Loader2, FileUp, Calendar, X, Activity, ChevronDown, ChevronUp, User, History, Search
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -46,6 +47,9 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [insuranceFilter, setInsuranceFilter] = useState("all");
   const now = new Date();
   const { dateFrom, dateTo, quickFilter, setDateFrom, setDateTo, applyQuickFilter, clearDates } = useDateFilter();
 
@@ -80,8 +84,22 @@ export default function Reports() {
     })();
   }, [setLocation]);
 
+  const uniqueInsurances = useMemo(() =>
+    Array.from(new Set(entries.map(e => e.insuranceProvider).filter(Boolean))),
+    [entries]
+  );
+
   const filteredEntries = useMemo(() => {
     return entries.filter(e => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const match = (e.patientName || "").toLowerCase().includes(q) ||
+          (e.insuranceProvider || "").toLowerCase().includes(q) ||
+          (e.description || "").toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      if (statusFilter !== "all" && e.status !== statusFilter) return false;
+      if (insuranceFilter !== "all" && e.insuranceProvider !== insuranceFilter) return false;
       const d = new Date(e.procedureDate || e.createdAt);
       if (dateFrom) {
         const from = new Date(dateFrom + "T00:00:00");
@@ -93,7 +111,7 @@ export default function Reports() {
       }
       return true;
     });
-  }, [entries, dateFrom, dateTo]);
+  }, [entries, dateFrom, dateTo, searchQuery, statusFilter, insuranceFilter]);
 
   const totalValue = useMemo(() =>
     filteredEntries.reduce((sum, e) => sum + (e.procedureValue ? parseFloat(e.procedureValue) : 0), 0),
@@ -255,8 +273,42 @@ export default function Reports() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-6">
-          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reports.period")}</p>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder={t("entries.searchPlaceholder")}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border-0"
+                data-testid="search-input"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" data-testid="clear-search">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {[
+                { key: "all", label: t("common.all") },
+                { key: "pending", label: t("common.pending") },
+                { key: "reconciled", label: t("common.reconciled") },
+                { key: "divergent", label: t("common.divergent") },
+              ].map(s => (
+                <button
+                  key={s.key}
+                  onClick={() => setStatusFilter(s.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${statusFilter === s.key ? "bg-[#8855f6] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  data-testid={`filter-status-${s.key}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateFrom")}</span>
@@ -285,6 +337,12 @@ export default function Reports() {
                 </button>
               )}
             </div>
+            {uniqueInsurances.length > 1 && (
+              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance">
+                <option value="all">{t("entries.allInsurances")}</option>
+                {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
+              </select>
+            )}
           </div>
           <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             {[
