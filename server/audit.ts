@@ -89,6 +89,17 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
         read: false,
       });
     }
+
+    const totalRecords = totalFixed + stillDivergent + stillPending + stillUnmatched;
+    if (totalRecords > 0 && stillUnmatched / totalRecords > 0.3) {
+      await storage.createNotification({
+        doctorId,
+        type: "template_suggestion",
+        title: "Alto número de registros não conferidos",
+        message: `${Math.round(stillUnmatched / totalRecords * 100)}% dos registros não possuem correspondência. Considere treinar um novo template de documento na página de Extratos de Produção para melhorar a extração.`,
+        read: false,
+      });
+    }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error(`[Audit] Erro na auditoria do usuário ${doctorId}:`, err);

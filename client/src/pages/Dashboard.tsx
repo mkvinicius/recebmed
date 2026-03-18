@@ -121,12 +121,17 @@ export default function Dashboard() {
     }, 300);
   };
 
+  const [unmatchedCount, setUnmatchedCount] = useState(0);
+
   const fetchEntries = async (token: string) => {
     try {
-      const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/dashboard/stats", { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       const data = await res.json();
-      if (res.ok) setEntries(data.entries || []);
+      if (res.ok) {
+        setEntries(data.entries || []);
+        setUnmatchedCount(data.unmatched || 0);
+      }
     } catch { }
     finally { setLoadingEntries(false); }
   };
@@ -303,10 +308,10 @@ export default function Dashboard() {
           <button onClick={() => setLocation("/entries")} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-transform" data-testid="card-total">
             <div className="flex items-center justify-between mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><FileText className="w-4 h-4" /></span>
-              <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2 py-0.5 rounded-full">{entries.length}</span>
+              <span className="text-xs font-bold text-[#8855f6] bg-[#8855f6]/10 px-2 py-0.5 rounded-full">{pendingCount + reconciledCount + divergentCount + unmatchedCount}</span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">{t("dashboard.totalLabel")}</p>
-            <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-total-value">{entries.length}</p>
+            <p className="text-xl font-extrabold text-slate-900 dark:text-white" data-testid="stat-total-value">{pendingCount + reconciledCount + divergentCount + unmatchedCount}</p>
           </button>
         </div>
 

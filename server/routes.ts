@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
-import { extractPdfData, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
+import { extractPdfData, extractPdfDataWithTemplate, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
+import { analyzeDocumentStructure, computeDocumentHash } from "./document-validator";
 import { schedulePostUploadAudit } from "./audit";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
@@ -1006,15 +1007,25 @@ export async function registerRoutes(
   app.post("/api/reconciliation/upload", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { file, fileType, fileName } = req.body;
+      const { file, fileType, fileName, templateId } = req.body;
       if (!file || !fileType) return res.status(400).json({ message: "Arquivo não enviado" });
 
       const base64Data = file.replace(/^data:[^;]+;base64,/, "");
       let extractedData: import("./reconciliation").PdfExtractedEntry[] = [];
 
+      let templateMapping: string | null = null;
+      if (templateId) {
+        const template = await storage.getDocumentTemplate(templateId);
+        if (template && template.userId === userId) {
+          templateMapping = template.mappingJson;
+        }
+      }
+
       if (fileType === "pdf") {
         const pdfBuffer = Buffer.from(base64Data, "base64");
-        extractedData = await extractPdfData(pdfBuffer);
+        extractedData = templateMapping
+          ? await extractPdfDataWithTemplate(pdfBuffer, templateMapping)
+          : await extractPdfData(pdfBuffer);
       } else if (fileType === "image") {
         extractedData = await extractImageData(file);
       } else if (fileType === "csv") {
@@ -1424,6 +1435,90 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Import clinic reports error:", error);
       return res.status(500).json({ message: "Erro ao processar PDFs" });
+    }
+  });
+
+  // ── Document Templates ──
+
+  app.post("/api/document-templates/analyze", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { file, fileType } = req.body;
+      if (!file || !fileType) return res.status(400).json({ message: "Arquivo não enviado" });
+
+      const base64Data = file.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const analysis = await analyzeDocumentStructure(buffer, fileType as any);
+      const sampleHash = computeDocumentHash(base64Data.substring(0, 2000));
+
+      return res.json({ success: true, analysis, sampleHash });
+    } catch (error: any) {
+      console.error("Document analysis error:", error);
+      return res.status(500).json({ message: error?.message || "Erro ao analisar documento" });
+    }
+  });
+
+  app.post("/api/document-templates", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { name, mappingJson, sampleHash } = req.body;
+      if (!name || !mappingJson) return res.status(400).json({ message: "Nome e mapeamento são obrigatórios" });
+
+      const template = await storage.createDocumentTemplate({
+        userId,
+        name,
+        mappingJson: typeof mappingJson === "string" ? mappingJson : JSON.stringify(mappingJson),
+        sampleHash: sampleHash || null,
+      });
+
+      return res.status(201).json({ template });
+    } catch (error) {
+      console.error("Create template error:", error);
+      return res.status(500).json({ message: "Erro ao salvar template" });
+    }
+  });
+
+  app.get("/api/document-templates", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const templates = await storage.getDocumentTemplates(userId);
+      return res.json({ templates });
+    } catch (error) {
+      console.error("Get templates error:", error);
+      return res.status(500).json({ message: "Erro ao buscar templates" });
+    }
+  });
+
+  app.delete("/api/document-templates/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const template = await storage.getDocumentTemplate(req.params.id);
+      if (!template || template.userId !== userId) return res.status(404).json({ message: "Template não encontrado" });
+      await storage.deleteDocumentTemplate(req.params.id);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Delete template error:", error);
+      return res.status(500).json({ message: "Erro ao excluir template" });
+    }
+  });
+
+  // ── Dashboard Stats ──
+
+  app.get("/api/dashboard/stats", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const entries = await storage.getDoctorEntries(userId);
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
+
+      const pending = entries.filter(e => e.status === "pending").length;
+      const reconciled = entries.filter(e => e.status === "reconciled" || e.status === "validated").length;
+      const divergent = entries.filter(e => e.status === "divergent").length;
+      const unmatched = unmatchedReports.length;
+      const total = pending + reconciled + divergent + unmatched;
+
+      return res.json({ pending, reconciled, divergent, unmatched, total, entries });
+    } catch (error) {
+      console.error("Dashboard stats error:", error);
+      return res.status(500).json({ message: "Erro ao buscar estatísticas" });
     }
   });
 

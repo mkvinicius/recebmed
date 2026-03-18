@@ -2,6 +2,7 @@ import * as pdfParseModule from "pdf-parse";
 const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 import { getOpenAIClient } from "./openai";
 import { storage } from "./storage";
+import { buildTemplatePrompt } from "./document-validator";
 
 export interface PdfExtractedEntry {
   patientName: string;
@@ -108,6 +109,19 @@ function sanitizeDate(dateStr: string | undefined | null): string | null {
   return null;
 }
 
+const PAYMENT_METHOD_KEYWORDS = [
+  "pix", "px", "dinheiro", "dn", "cartao", "cartão", "cc",
+  "redecard", "re", "pacote", "debito", "débito", "credito", "crédito",
+  "transferencia", "transferência", "boleto", "cheque",
+];
+
+function isPaymentMethod(value: string): boolean {
+  if (!value) return false;
+  const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const parts = normalized.split(/[\s\-–]+/);
+  return parts.some(p => PAYMENT_METHOD_KEYWORDS.includes(p));
+}
+
 function sanitizeEntry(raw: any): PdfExtractedEntry | null {
   if (!raw || typeof raw !== "object") return null;
   const name = (raw.patientName || raw.patient_name || raw.nome || raw.paciente || "").toString().trim();
@@ -116,12 +130,22 @@ function sanitizeEntry(raw: any): PdfExtractedEntry | null {
   const procDate = sanitizeDate(raw.procedureDate || raw.procedure_date || raw.data || raw.date);
   if (!procDate) return null;
 
+  let insurance = (raw.insuranceProvider || raw.insurance_provider || raw.convenio || raw.convênio || raw.insurance || "").toString().trim();
+  const procedure = (raw.procedureName || raw.procedure_name || raw.procedimento || raw.procedure || "").toString().trim();
+
+  if (isPaymentMethod(insurance)) {
+    insurance = "Particular";
+  }
+  if (isPaymentMethod(procedure) && !insurance) {
+    insurance = "Particular";
+  }
+
   return {
     patientName: name,
     patientBirthDate: sanitizeDate(raw.patientBirthDate || raw.patient_birth_date || raw.nascimento || raw.birthdate) || undefined,
     procedureDate: procDate,
-    procedureName: (raw.procedureName || raw.procedure_name || raw.procedimento || raw.procedure || "").toString().trim() || undefined,
-    insuranceProvider: (raw.insuranceProvider || raw.insurance_provider || raw.convenio || raw.convênio || raw.insurance || "").toString().trim() || undefined,
+    procedureName: procedure || undefined,
+    insuranceProvider: insurance || undefined,
     reportedValue: sanitizeValue(raw.reportedValue || raw.reported_value || raw.valor || raw.value),
     description: (raw.description || raw.descricao || raw.descrição || raw.observacao || raw.obs || "").toString().trim() || undefined,
   };
@@ -149,6 +173,41 @@ function parseAIResponse(content: string): PdfExtractedEntry[] {
       }
     } catch {}
     return [];
+  }
+}
+
+export async function extractPdfDataWithTemplate(pdfBuffer: Buffer, templateMappingJson: string): Promise<PdfExtractedEntry[]> {
+  let text: string;
+  try {
+    const pdfData = await pdfParse(pdfBuffer);
+    text = pdfData.text;
+  } catch (pdfErr) {
+    console.error("PDF parse error:", pdfErr);
+    throw new Error("Não foi possível ler o PDF.");
+  }
+
+  if (!text || text.trim().length < 20) {
+    throw new Error("O PDF não contém texto extraível.");
+  }
+
+  const templateHint = buildTemplatePrompt(templateMappingJson);
+  const client = getOpenAIClient();
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT + templateHint },
+        { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
+      ],
+      max_completion_tokens: 16000,
+    });
+    const content = response.choices[0]?.message?.content || "[]";
+    const results = parseAIResponse(content);
+    console.log(`PDF template-aware extraction: ${results.length} entries`);
+    return results;
+  } catch (aiErr: any) {
+    console.error("Template-aware AI extraction error:", aiErr?.message || aiErr);
+    throw new Error("Erro na extração com template. Tente novamente.");
   }
 }
 

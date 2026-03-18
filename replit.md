@@ -8,7 +8,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken) + bcryptjs (12 rounds) for password hashing + express-rate-limit + helmet security headers
-- **AI**: OpenAI direct API (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT)
+- **AI**: OpenAI direct API (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT) + LLM abstraction layer (server/llm.ts) supporting OpenAI and Anthropic providers
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
 
@@ -23,6 +23,7 @@ client/src/
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
   components/DivergencyModal.tsx  - Side-by-side divergency comparison modal (doctor vs clinic data), with accept/manual validation actions
   components/AppTour.tsx          - Custom guided tour for first-time users (3 steps: capture, reports, stats)
+  components/DocumentTraining.tsx  - Document Training UI (upload sample → AI analysis → column mapping → save template)
   components/ObjectUploader.tsx   - Uppy-based file upload component
   hooks/use-upload.ts             - Upload hook for presigned URL flow
   hooks/use-date-filter.ts        - Shared date filter hook with sessionStorage persistence + quick filters (yesterday/today/week/month); cleared on logout
@@ -35,8 +36,10 @@ server/
   index.ts           - Express entry point (50mb body limit)
   routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
   openai.ts          - OpenAI client + image/audio extraction functions
-  reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance)
-  audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications
+  llm.ts             - LLM abstraction layer (provider pattern: OpenAI + Anthropic), LLM_PROVIDER env var
+  document-validator.ts - Document structure analysis (AI-powered column detection + template mapping for clinic files)
+  reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + template-aware extraction + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance) + sanitizeEntry with payment method detection (PX/PIX/DINHEIRO/CARTÃO → Particular)
+  audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched
   storage.ts         - Database storage interface (Drizzle)
   db.ts              - Database connection pool
   replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
@@ -54,6 +57,7 @@ shared/
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
 - **uploaded_reports**: id, userId, fileName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage
 - **audit_logs**: id, doctorId, triggerType (scheduled/post-upload), startedAt, endedAt, reconciledCount, divergentAfter, errorMessage — persists every audit run for traceability
+- **document_templates**: id, userId, name, mappingJson (JSON column mapping array), sampleHash (SHA-256 of sample doc), createdAt — trained document structure templates for clinic file extraction
 - **conversations**: id, title, createdAt (AI integration)
 - **messages**: id, conversationId, role, content, createdAt (AI integration)
 

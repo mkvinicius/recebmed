@@ -6,6 +6,7 @@ import {
   type AiCorrection, type InsertAiCorrection, aiCorrections,
   type AuditLog, type InsertAuditLog, auditLogs,
   type UploadedReport, type InsertUploadedReport, uploadedReports,
+  type DocumentTemplate, type InsertDocumentTemplate, documentTemplates,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
@@ -61,6 +62,11 @@ export interface IStorage {
   batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void>;
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   resetDivergentAndPendingEntries(doctorId: string): Promise<number>;
+
+  createDocumentTemplate(template: InsertDocumentTemplate): Promise<DocumentTemplate>;
+  getDocumentTemplates(userId: string): Promise<DocumentTemplate[]>;
+  getDocumentTemplate(id: string): Promise<DocumentTemplate | undefined>;
+  deleteDocumentTemplate(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -347,6 +353,25 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return result.length;
+  }
+
+  async createDocumentTemplate(template: InsertDocumentTemplate): Promise<DocumentTemplate> {
+    const [result] = await db.insert(documentTemplates).values(template).returning();
+    return result;
+  }
+
+  async getDocumentTemplates(userId: string): Promise<DocumentTemplate[]> {
+    return db.select().from(documentTemplates).where(eq(documentTemplates.userId, userId)).orderBy(desc(documentTemplates.createdAt));
+  }
+
+  async getDocumentTemplate(id: string): Promise<DocumentTemplate | undefined> {
+    const [result] = await db.select().from(documentTemplates).where(eq(documentTemplates.id, id));
+    return result;
+  }
+
+  async deleteDocumentTemplate(id: string): Promise<boolean> {
+    const result = await db.delete(documentTemplates).where(eq(documentTemplates.id, id)).returning();
+    return result.length > 0;
   }
 }
 

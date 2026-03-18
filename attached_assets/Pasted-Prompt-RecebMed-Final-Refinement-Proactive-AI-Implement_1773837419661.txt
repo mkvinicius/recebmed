@@ -1,0 +1,56 @@
+Prompt: RecebMed Final Refinement & Proactive AI Implementation (v5 - Refined)
+Objective: This is the FINAL and DEFINITIVE plan to overhaul the RecebMed application. It incorporates all previous feedback, the critical requirement for an ACTIVE and PARTICIPATIVE AI, and the new Dynamic Document Validator feature. This prompt replaces all previous versions and should be executed as a single, comprehensive update.
+
+CRITICAL GUIDELINE FOR IMPLEMENTATION:
+
+	•	PRESERVE EXISTING FUNCTIONALITY: The current system (matching logic, UI components, background worker, etc.) is largely stable and functional. DO NOT ALTER OR BREAK ANY EXISTING WORKING CODE OR LOGIC. New features must be implemented in a modular fashion, adding to, rather than replacing, existing stable components.
+	•	MODULAR DEVELOPMENT: Implement new features (LLM Abstraction, Document Validator) as separate, self-contained modules or components. This minimizes risk and allows for easier debugging and future updates.
+
+
+🚀 PART 1: CRITICAL - Implement Dynamic Document Validator (Training Mode)
+The Core Problem: The AI struggles with varied PDF/Excel formats from different clinics, leading to parsing errors and database corruption. The system needs to proactively learn new document structures.
+
+The Solution: Implement a “Document Validator” Feature
+
+	1.	UI Integration: `DocumentTraining` Card
+	◦	Instead of a new tab or separate page, create a new, prominent Card on the `ClinicReports` (Extratos de Produção) page, located directly below the main file upload area.
+	◦	This card should be titled: “Treinar IA com Novo Formato de Documento” (Train AI with New Document Format).
+	◦	Include a clear, concise explanation within the card: “Cada clínica ou hospital pode ter um formato de relatório diferente. Use esta ferramenta para ensinar a IA a ler novos layouts de PDF ou Excel, garantindo extração perfeita e evitando erros futuros. Faça o upload de um arquivo de amostra para começar.”
+	◦	The card should contain a button: “Iniciar Treinamento” (Start Training).
+	2.	Training Workflow (Triggered by “Iniciar Treinamento” button):
+	◦	Step A (Upload): User uploads a sample PDF or Excel file (e.g., `NOTAFLMED.pdf`) that represents a new, unknown format.
+	◦	Step B (Analysis): Use the LLM (specifically Claude 3 Opus/Sonnet if available, see Part 2) to extract all column headers and sample data from the first 5 rows.
+	◦	Step C (Mapping): Present an interactive table to the user (e.g., in a modal or a new section within the card):
+	◦	Left Column: “Encontrado no seu arquivo” (Found in your file) (e.g., “Espécie”, “Data Atend.”, “Valor Bruto”).
+	◦	Right Column: Dropdown “Mapear para campo RecebMed” (Map to RecebMed Field) (Options: `Nome do Paciente`, `Data do Procedimento`, `Convênio`, `Procedimento`, `Valor`, `Forma de Pagamento`, `Ignorar`).
+	◦	Step D (Save Template): Once the user confirms the mapping, save this configuration as a named “Document Template” (e.g., “Template: HONPAR Hospital”) in the database (Fields: `name`, `userId`, `mappingJson`, `sampleHash`).
+	3.	Integration with Processing:
+	◦	Update the `processClinicReport` function to check if a template is selected. If so, use the `mappingJson` to guide the AI extraction prompt.
+
+
+⚙️ PART 2: CRITICAL - LLM Abstraction Layer & Claude Integration
+The Goal: Enable the use of Anthropic Claude for complex parsing tasks where GPT-5-mini is underperforming.
+
+	1.	Create `LLMService` Abstraction:
+	◦	Refactor all AI calls into a central service.
+	◦	Implement a provider pattern: `OpenAIProvider` and `AnthropicProvider`.
+	◦	Use an environment variable `LLM_PROVIDER` (default: `openai`) to switch.
+	2.	Claude Implementation:
+	◦	Add the `@anthropic-ai/sdk` package.
+	◦	Implement the `AnthropicProvider` using the `CLAUDE_API_KEY`.
+	◦	Specific Use Case: Use Claude for the Document Validator (Training) and for Complex PDF Parsing (files > 10 pages), as it handles large contexts and structured data mapping significantly better.
+
+
+🔄 PART 3: Refine Active AI (Background Worker)
+	1.	Template-Aware Audit:
+	◦	Update the background audit loop (every 15 min) to use the saved `DocumentTemplates` when re-processing unmatched entries from specific files.
+	2.	Proactive Notification:
+	◦	If the background worker finds a high number of `Unmatched Clinic` entries (>30%), trigger a notification: “High number of unmatched entries found. Consider training a new document template for this file.”
+
+
+🎨 PART 4: Final UI Polishing
+	1.	“PX - PIX” Mapping: Hardcode a final rule in the `sanitizeEntry` function: If `insurance` or `procedure` contains “PIX”, “PX”, “DINHEIRO”, or “CARTÃO”, move it to `payment_method` and set `insurance` to “Particular” if empty.
+	2.	Dashboard Totals: Ensure the “Total” count on the dashboard (currently 55 in some views) always reflects the true sum of `Pending + Reconciled + Divergent + Unmatched` (223+).
+
+
+Execution Instruction: Implement these modules as new files/components where possible to avoid breaking the current stable build. Provide the updated `LLMService` and the new `DocumentTraining` component first.

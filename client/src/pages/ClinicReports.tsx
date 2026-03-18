@@ -7,6 +7,7 @@ import {
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import DocumentTraining from "@/components/DocumentTraining";
 
 interface ClinicReport {
   id: string;
@@ -146,6 +147,8 @@ export default function ClinicReports() {
             <Upload className="w-3.5 h-3.5" /> {t("reconciliation.uploadNewFile")}
           </button>
         </div>
+
+        <DocumentTraining />
 
         <div className="mb-12 space-y-3">
           {loading ? (

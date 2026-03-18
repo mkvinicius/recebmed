@@ -71,6 +71,8 @@ export default function Reconciliation() {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptingAll, setAcceptingAll] = useState(false);
   const [isReReconciling, setIsReReconciling] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -127,7 +129,7 @@ export default function Reconciliation() {
           const res = await fetch("/api/reconciliation/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ file: base64, fileType, fileName: file.name }),
+            body: JSON.stringify({ file: base64, fileType, fileName: file.name, ...(selectedTemplateId ? { templateId: selectedTemplateId } : {}) }),
           });
           if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
           const data = await res.json();
@@ -184,6 +186,15 @@ export default function Reconciliation() {
   }, [setLocation]);
 
   useEffect(() => { loadResults(); }, [loadResults]);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    fetch("/api/document-templates", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.templates) setTemplates(data.templates); })
+      .catch(() => {});
+  }, []);
 
   const verifiedCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0);
   const unmatchedCount = results?.unmatchedClinic?.length || 0;
@@ -473,6 +484,21 @@ export default function Reconciliation() {
                     <Table className="w-3.5 h-3.5" /> CSV
                   </span>
                 </div>
+                {templates.length > 0 && (
+                  <div className="mt-2 w-full max-w-xs" onClick={e => e.stopPropagation()}>
+                    <select
+                      value={selectedTemplateId}
+                      onChange={e => setSelectedTemplateId(e.target.value)}
+                      className="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-2 focus:ring-2 focus:ring-[#8855f6]/30 focus:border-[#8855f6]"
+                      data-testid="select-template"
+                    >
+                      <option value="">{t("reconciliation.autoDetect")}</option>
+                      {templates.map(tmpl => (
+                        <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <p className="text-xs text-slate-400 dark:text-slate-500">{t("reconciliation.maxSize", { max: MAX_FILE_SIZE_MB })}</p>
                 {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.lastFile", { name: fileName })}</p>}
                 <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-file">
