@@ -457,7 +457,7 @@ export default function Reports() {
                 {cardFilteredEntries.map(entry => (
                   <button
                     key={entry.id}
-                    onClick={() => setLocation(`/entries/${entry.id}`)}
+                    onClick={() => setLocation(`/entry/${entry.id}`)}
                     className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-left transition-colors"
                     data-testid={`filtered-entry-${entry.id}`}
                   >
@@ -481,7 +481,7 @@ export default function Reports() {
                         entry.status === "divergent" ? "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
                         "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
                       }`}>
-                        {entry.status === "reconciled" ? t("reconciliation.tabReconciled") : entry.status === "divergent" ? t("reconciliation.tabDivergent") : t("reconciliation.tabPending")}
+                        {entry.status === "reconciled" ? t("reconciliation.receivedTab") : entry.status === "divergent" ? t("reconciliation.divergentTab") : t("reconciliation.pendingTab")}
                       </span>
                     </div>
                   </button>

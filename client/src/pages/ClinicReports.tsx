@@ -128,7 +128,7 @@ export default function ClinicReports() {
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>
 
-        <div className="mb-4 flex items-center justify-between px-1">
+        <div className="mb-4 flex items-center justify-between px-3 py-3 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40">
           <div className="flex items-center gap-3">
             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
               {fileGroups.length} {fileGroups.length === 1 ? t("clinicReports.fileLabel") : t("clinicReports.filesLabel")}
