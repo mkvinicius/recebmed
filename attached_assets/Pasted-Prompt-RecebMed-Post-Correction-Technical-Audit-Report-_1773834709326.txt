@@ -1,0 +1,51 @@
+Prompt: RecebMed Post-Correction Technical Audit Report
+Objective: Provide a comprehensive technical report on the current state of the RecebMed application, detailing all recent corrections and implementations. This report is crucial to ensure alignment before applying further major updates.
+
+
+1. Reconciliation Logic Status
+Please describe the current reconciliation logic in detail:
+
+	•	Matching Mechanism: How are entries from the doctor and clinic reports matched? Is it still by list position, or has it transitioned to patient name (fuzzy matching)?
+	•	Divergence Criteria: What are the exact conditions that classify an entry as `Divergent`? Which fields are compared, and what are the tolerance levels?
+	•	New Categories: Have `Unmatched (Clinic)` or `Pending (Doctor)` categories been implemented? If so, how are they defined and handled?
+	•	Value Field: Is the `value` field still being used as a criterion for `Divergent` status, or is it ignored as per previous recommendations?
+
+2. AI Activity & Background Processing
+Detail the current state of AI activity and background processing:
+
+	•	Background Worker: Is a persistent background worker (e.g., cron job, message queue) implemented and active?
+	•	Reconciliation Loop: Is the AI running a continuous reconciliation loop on a schedule (e.g., every 15 minutes)? If so, describe the frequency and scope of this process.
+	•	LLM Abstraction: Has an LLM abstraction layer been implemented to allow switching between OpenAI and Claude? If so, what is the current `LLM_PROVIDER` in use?
+
+3. PDF Parser & Document Handling
+Describe the current PDF parsing capabilities, especially for complex documents:
+
+	•	`NOTAFLMED.pdf` Handling: How does the parser currently handle the `NOTAFLMED.pdf` structure? Specifically, address:
+	◦	Ignoring “Observação:” lines.
+	◦	Handling headers and footers.
+	◦	Mapping `Espécie` (e.g., “PX - PIX”) to `payment_method`.
+	◦	Handling multiple entries for the same patient.
+	•	Dynamic Document Validator: Has any functionality related to a “Document Validator” or dynamic mapping of PDF/Excel columns been implemented or started?
+
+4. UI/UX Updates
+Report on the status of UI/UX improvements:
+
+	•	Clinic Statements Page (`Extratos de Produção`):
+	◦	Is it now a file-centric view with “File Cards” (Filename, Upload Date, Record Count)?
+	◦	Does clicking a File Card lead to a detailed view of records from that specific file?
+	•	Reconciliation Page (`Conferir Produção`):
+	◦	Have the “Envie um arquivo” card and “Carregar resultados anteriores” button been removed?
+	◦	Does clicking a divergent item in the list directly open the side-by-side comparison modal?
+	•	General UI Consistency:
+	◦	Are dashboard counts accurate?
+	◦	Is naming consistent across the application (e.g., `Lançamentos` vs. `Produção`)?
+	◦	Are page titles consistent with navigation?
+
+5. Missing Features & Final Polish
+Provide an update on the following features:
+
+	•	Original Evidence in Manual Validation Modal: Is the `Original Evidence` (photo/audio) now visible in the manual validation modal?
+	•	Reports Dashboard: Are the charts on the `/reports` page connected to the production database and displaying real data?
+
+
+Please provide this report in Markdown format, detailing the current implementation status for each point.
