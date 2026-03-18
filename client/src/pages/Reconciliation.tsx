@@ -77,6 +77,12 @@ export default function Reconciliation() {
   const locale = getLocale();
   const currency = getCurrencyCode();
 
+  const getDaysAgo = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   const formatCurrency = (val: string | number | null | undefined) => {
     if (!val) return "—";
     const num = typeof val === "string" ? parseFloat(val) : val;
@@ -728,6 +734,12 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                           <p className="font-bold text-slate-800 dark:text-slate-200 truncate" data-testid={`text-patient-${entry.id}`}>{entry.patientName}</p>
                           {(activeTab === "divergent" || (activeTab === "verified" && entry.status === "divergent")) && (
                             expandedEntry === entry.id ? <ChevronUp className="w-4 h-4 text-amber-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-amber-500 shrink-0" />
+                          )}
+                          {entry.status === "pending" && entry.createdAt && getDaysAgo(entry.createdAt) >= 7 && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 shrink-0 flex items-center gap-1" data-testid={`aging-badge-${entry.id}`}>
+                              <Clock className="w-3 h-3" />
+                              {t("reconciliation.agingDays", { days: getDaysAgo(entry.createdAt) })}
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400">

@@ -310,6 +310,10 @@
     "quick60d": "60 días",
     "quickMonth": "Este mes",
     "quickYear": "Este año",
+    "quickYesterday": "Ayer",
+    "quickToday": "Hoy",
+    "quickWeek": "Semana",
+    "quickThisMonth": "Este mes",
     "thisMonth": "Este mes",
     "last3Months": "Últimos 3 meses",
     "last6Months": "Últimos 6 meses",
@@ -409,7 +413,8 @@
     "allAcceptedDesc": "{{count}} registros creados a partir de los informes de la clínica.",
     "reReconcile": "Re-verificar Todo",
     "reReconcileCompleteTitle": "Re-verificación completada",
-    "reReconcileCompleteDesc": "{{count}} registros fueron re-procesados con la verificación actualizada."
+    "reReconcileCompleteDesc": "{{count}} registros fueron re-procesados con la verificación actualizada.",
+    "agingDays": "{{days}}d pendiente"
   },
   "clinicReports": {
     "title": "Informes de la Clínica",

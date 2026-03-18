@@ -310,6 +310,10 @@
     "quick60d": "60 dias",
     "quickMonth": "Este mês",
     "quickYear": "Este ano",
+    "quickYesterday": "Ontem",
+    "quickToday": "Hoje",
+    "quickWeek": "Semana",
+    "quickThisMonth": "Este mês",
     "thisMonth": "Este mês",
     "last3Months": "Últimos 3 meses",
     "last6Months": "Últimos 6 meses",
@@ -409,7 +413,8 @@
     "allAcceptedDesc": "{{count}} lançamentos criados a partir dos relatórios da clínica.",
     "reReconcile": "Re-conferir Tudo",
     "reReconcileCompleteTitle": "Re-conferência concluída",
-    "reReconcileCompleteDesc": "{{count}} lançamentos foram re-processados com a conferência atualizada."
+    "reReconcileCompleteDesc": "{{count}} lançamentos foram re-processados com a conferência atualizada.",
+    "agingDays": "{{days}}d pendente"
   },
   "clinicReports": {
     "title": "Extratos de Produção",

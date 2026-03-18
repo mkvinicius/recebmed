@@ -39,6 +39,7 @@ export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(PW_UPDATE_KEY);
+  sessionStorage.removeItem("recebmed_date_filter");
 }
 
 export function isAuthenticated(): boolean {

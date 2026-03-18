@@ -30,8 +30,9 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
   try {
     const pending = await storage.getPendingDoctorEntries(doctorId);
     const divergent = await storage.getDivergentDoctorEntries(doctorId);
+    const unmatched = await storage.getUnmatchedClinicReports(doctorId);
 
-    if (pending.length === 0) {
+    if (pending.length === 0 && unmatched.length === 0) {
       await storage.createAuditLog({
         doctorId,
         triggerType: trigger,
@@ -44,15 +45,16 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
       return;
     }
 
-    console.log(`[Audit] ${trigger}: Usuário ${doctorId} — ${pending.length} pendentes, ${divergent.length} divergentes. Iniciando re-análise...`);
+    console.log(`[Audit] ${trigger}: Usuário ${doctorId} — ${pending.length} pendentes, ${divergent.length} divergentes, ${unmatched.length} não conferidos. Iniciando re-análise...`);
 
     const result = await runReconciliation(doctorId);
 
     const totalFixed = result.reconciled.length;
     const stillDivergent = result.divergent.length;
     const stillPending = result.pending.length;
+    const stillUnmatched = result.unmatchedClinic.length;
 
-    console.log(`[Audit] ${trigger}: Resultado — ${totalFixed} reconciliados, ${stillDivergent} divergentes, ${stillPending} pendentes`);
+    console.log(`[Audit] ${trigger}: Resultado — ${totalFixed} reconciliados, ${stillDivergent} divergentes, ${stillPending} pendentes, ${stillUnmatched} não conferidos`);
 
     await storage.createAuditLog({
       doctorId,
@@ -64,7 +66,7 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
       errorMessage: null,
     });
 
-    if (totalFixed > 0 || (trigger === "post-upload" && (stillDivergent > 0 || stillPending > 0))) {
+    if (totalFixed > 0 || (trigger === "post-upload" && (stillDivergent > 0 || stillPending > 0 || stillUnmatched > 0))) {
       let message = "";
       if (totalFixed > 0) {
         message += `${totalFixed} registros foram reconciliados automaticamente. `;
@@ -73,7 +75,10 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
         message += `${stillDivergent} registros com divergência precisam de atenção. `;
       }
       if (stillPending > 0) {
-        message += `${stillPending} registros ainda pendentes de conferência.`;
+        message += `${stillPending} registros ainda pendentes de conferência. `;
+      }
+      if (stillUnmatched > 0) {
+        message += `${stillUnmatched} registros da clínica aguardam seu aceite.`;
       }
 
       await storage.createNotification({

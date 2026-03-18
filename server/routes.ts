@@ -996,7 +996,7 @@ export async function registerRoutes(
       schedulePostUploadAudit(userId);
       const allEntries = await storage.getDoctorEntries(userId);
       const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
-      return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending"), unmatchedClinic: unmatchedReports } });
+      return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled" || e.status === "validated"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending"), unmatchedClinic: unmatchedReports } });
     } catch (error) {
       console.error("PDF reconciliation error:", error);
       return res.status(500).json({ message: "Erro ao processar PDF" });
@@ -1079,7 +1079,7 @@ export async function registerRoutes(
         success: true,
         extractedCount: savedCount,
         reconciliation: {
-          reconciled: allEntries.filter(e => e.status === "reconciled"),
+          reconciled: allEntries.filter(e => e.status === "reconciled" || e.status === "validated"),
           divergent: allEntries.filter(e => e.status === "divergent"),
           pending: allEntries.filter(e => e.status === "pending"),
           unmatchedClinic: unmatchedReports,

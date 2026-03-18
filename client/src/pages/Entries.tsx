@@ -9,6 +9,8 @@ import {
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { useDateFilter } from "@/hooks/use-date-filter";
+import type { QuickFilterKey } from "@/hooks/use-date-filter";
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
 
@@ -41,8 +43,7 @@ export default function Entries() {
     const params = new URLSearchParams(window.location.search);
     return params.get("status") || "all";
   });
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const { dateFrom, dateTo, quickFilter, setDateFrom, setDateTo, applyQuickFilter, clearDates } = useDateFilter();
   const [insuranceFilter, setInsuranceFilter] = useState("all");
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
@@ -180,7 +181,7 @@ export default function Entries() {
               />
               {(dateFrom || dateTo) && (
                 <button
-                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  onClick={clearDates}
                   className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   data-testid="button-clear-dates"
                 >
@@ -194,6 +195,23 @@ export default function Entries() {
                 {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
               </select>
             )}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {[
+              { key: "yesterday" as QuickFilterKey, label: t("reports.quickYesterday") },
+              { key: "today" as QuickFilterKey, label: t("reports.quickToday") },
+              { key: "week" as QuickFilterKey, label: t("reports.quickWeek") },
+              { key: "month" as QuickFilterKey, label: t("reports.quickThisMonth") },
+            ].map(q => (
+              <button
+                key={q.key}
+                onClick={() => applyQuickFilter(q.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${quickFilter === q.key ? "bg-[#8855f6] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                data-testid={`quick-filter-${q.key}`}
+              >
+                {q.label}
+              </button>
+            ))}
           </div>
         </div>
 

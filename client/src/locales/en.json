@@ -310,6 +310,10 @@
     "quick60d": "60 days",
     "quickMonth": "This month",
     "quickYear": "This year",
+    "quickYesterday": "Yesterday",
+    "quickToday": "Today",
+    "quickWeek": "Week",
+    "quickThisMonth": "This month",
     "thisMonth": "This month",
     "last3Months": "Last 3 months",
     "last6Months": "Last 6 months",
@@ -409,7 +413,8 @@
     "allAcceptedDesc": "{{count}} entries created from clinic reports.",
     "reReconcile": "Re-check All",
     "reReconcileCompleteTitle": "Re-check complete",
-    "reReconcileCompleteDesc": "{{count}} entries were re-processed with updated matching."
+    "reReconcileCompleteDesc": "{{count}} entries were re-processed with updated matching.",
+    "agingDays": "{{days}}d pending"
   },
   "clinicReports": {
     "title": "Clinic Reports",

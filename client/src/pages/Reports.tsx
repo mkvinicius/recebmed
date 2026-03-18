@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { getToken, clearAuth } from "@/lib/auth";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { useDateFilter } from "@/hooks/use-date-filter";
+import type { QuickFilterKey } from "@/hooks/use-date-filter";
 
 interface DoctorEntry {
   id: string;
@@ -45,37 +47,7 @@ export default function Reports() {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
   const now = new Date();
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [quickFilter, setQuickFilter] = useState<string | null>(null);
-
-  const applyQuickFilter = (key: string) => {
-    const today = new Date();
-    const toStr = today.toISOString().split("T")[0];
-    let fromDate: Date;
-    if (key === "7d") {
-      fromDate = new Date(today); fromDate.setDate(today.getDate() - 7);
-    } else if (key === "30d") {
-      fromDate = new Date(today); fromDate.setDate(today.getDate() - 30);
-    } else if (key === "60d") {
-      fromDate = new Date(today); fromDate.setDate(today.getDate() - 60);
-    } else if (key === "month") {
-      fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
-    } else if (key === "year") {
-      fromDate = new Date(today.getFullYear(), 0, 1);
-    } else {
-      return;
-    }
-    if (quickFilter === key) {
-      setDateFrom("");
-      setDateTo("");
-      setQuickFilter(null);
-    } else {
-      setDateFrom(fromDate.toISOString().split("T")[0]);
-      setDateTo(toStr);
-      setQuickFilter(key);
-    }
-  };
+  const { dateFrom, dateTo, quickFilter, setDateFrom, setDateTo, applyQuickFilter, clearDates } = useDateFilter();
 
   const locale = getLocale();
   const currency = getCurrencyCode();
@@ -291,7 +263,7 @@ export default function Reports() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={e => { setDateFrom(e.target.value); setQuickFilter(null); }}
+                onChange={e => setDateFrom(e.target.value)}
                 className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
                 data-testid="filter-date-from"
               />
@@ -299,13 +271,13 @@ export default function Reports() {
               <input
                 type="date"
                 value={dateTo}
-                onChange={e => { setDateTo(e.target.value); setQuickFilter(null); }}
+                onChange={e => setDateTo(e.target.value)}
                 className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
                 data-testid="filter-date-to"
               />
               {(dateFrom || dateTo) && (
                 <button
-                  onClick={() => { setDateFrom(""); setDateTo(""); setQuickFilter(null); }}
+                  onClick={clearDates}
                   className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   data-testid="button-clear-dates"
                 >
@@ -316,11 +288,10 @@ export default function Reports() {
           </div>
           <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             {[
-              { key: "7d", label: t("reports.quick7d") },
-              { key: "30d", label: t("reports.quick30d") },
-              { key: "60d", label: t("reports.quick60d") },
-              { key: "month", label: t("reports.quickMonth") },
-              { key: "year", label: t("reports.quickYear") },
+              { key: "yesterday" as QuickFilterKey, label: t("reports.quickYesterday") },
+              { key: "today" as QuickFilterKey, label: t("reports.quickToday") },
+              { key: "week" as QuickFilterKey, label: t("reports.quickWeek") },
+              { key: "month" as QuickFilterKey, label: t("reports.quickThisMonth") },
             ].map(q => (
               <button
                 key={q.key}
