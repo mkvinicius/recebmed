@@ -60,6 +60,7 @@ export interface IStorage {
   markClinicReportMatched(reportId: string, entryId: string): Promise<boolean>;
   batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void>;
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
+  resetDivergentAndPendingEntries(doctorId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -318,6 +319,34 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(doctorEntries)
       .where(and(eq(doctorEntries.doctorId, doctorId), eq(doctorEntries.status, "validated")))
       .orderBy(desc(doctorEntries.createdAt));
+  }
+
+  async resetDivergentAndPendingEntries(doctorId: string): Promise<number> {
+    const entriesToReset = await db.select().from(doctorEntries)
+      .where(and(
+        eq(doctorEntries.doctorId, doctorId),
+        inArray(doctorEntries.status, ["divergent", "pending"])
+      ));
+
+    if (entriesToReset.length === 0) return 0;
+
+    for (const entry of entriesToReset) {
+      if (entry.matchedReportId) {
+        await db.update(clinicReports)
+          .set({ matched: false, matchedEntryId: null })
+          .where(eq(clinicReports.id, entry.matchedReportId));
+      }
+    }
+
+    const result = await db.update(doctorEntries)
+      .set({ status: "pending", matchedReportId: null, divergenceReason: null })
+      .where(and(
+        eq(doctorEntries.doctorId, doctorId),
+        inArray(doctorEntries.status, ["divergent", "pending"])
+      ))
+      .returning();
+
+    return result.length;
   }
 }
 

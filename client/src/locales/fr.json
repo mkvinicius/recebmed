@@ -405,7 +405,10 @@
     "acceptedTitle": "Enregistrement accepté",
     "acceptedDesc": "Saisie créée à partir du rapport de la clinique.",
     "allAcceptedTitle": "Tous acceptés",
-    "allAcceptedDesc": "{{count}} saisies créées à partir des rapports de la clinique."
+    "allAcceptedDesc": "{{count}} saisies créées à partir des rapports de la clinique.",
+    "reReconcile": "Re-vérifier Tout",
+    "reReconcileCompleteTitle": "Re-vérification terminée",
+    "reReconcileCompleteDesc": "{{count}} saisies ont été retraitées avec la vérification mise à jour."
   },
   "clinicReports": {
     "title": "Rapports de la Clinique",

@@ -943,6 +943,36 @@ export async function registerRoutes(
     }
   });
 
+  // ── Re-Reconciliation (reset divergent/pending and re-run) ──
+
+  app.post("/api/reconciliation/re-reconcile", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const resetCount = await storage.resetDivergentAndPendingEntries(userId);
+      console.log(`[Re-reconcile] Reset ${resetCount} entries for user ${userId}`);
+
+      if (resetCount > 0) {
+        await runReconciliation(userId);
+      }
+
+      const allEntries = await storage.getDoctorEntries(userId);
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
+      return res.json({
+        success: true,
+        resetCount,
+        reconciliation: {
+          reconciled: allEntries.filter(e => e.status === "reconciled" || e.status === "validated"),
+          divergent: allEntries.filter(e => e.status === "divergent"),
+          pending: allEntries.filter(e => e.status === "pending"),
+          unmatchedClinic: unmatchedReports,
+        },
+      });
+    } catch (error) {
+      console.error("Re-reconciliation error:", error);
+      return res.status(500).json({ message: "Erro ao re-processar conferência" });
+    }
+  });
+
   // ── File Reconciliation (PDF, Image, CSV) ──
 
   app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {

@@ -405,7 +405,10 @@
     "acceptedTitle": "Registro aceptado",
     "acceptedDesc": "Registro creado a partir del informe de la clínica.",
     "allAcceptedTitle": "Todos aceptados",
-    "allAcceptedDesc": "{{count}} registros creados a partir de los informes de la clínica."
+    "allAcceptedDesc": "{{count}} registros creados a partir de los informes de la clínica.",
+    "reReconcile": "Re-verificar Todo",
+    "reReconcileCompleteTitle": "Re-verificación completada",
+    "reReconcileCompleteDesc": "{{count}} registros fueron re-procesados con la verificación actualizada."
   },
   "clinicReports": {
     "title": "Informes de la Clínica",

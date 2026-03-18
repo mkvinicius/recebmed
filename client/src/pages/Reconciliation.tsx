@@ -70,6 +70,7 @@ export default function Reconciliation() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptingAll, setAcceptingAll] = useState(false);
+  const [isReReconciling, setIsReReconciling] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -234,6 +235,29 @@ export default function Reconciliation() {
     } catch {
       toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally { setAcceptingAll(false); }
+  };
+
+  const handleReReconcile = async () => {
+    const token = getToken();
+    if (!token) return;
+    setIsReReconciling(true);
+    try {
+      const res = await fetch("/api/reconciliation/re-reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data.reconciliation);
+        toast({ title: t("reconciliation.reReconcileCompleteTitle"), description: t("reconciliation.reReconcileCompleteDesc", { count: data.resetCount }) });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: t("common.error"), description: data.message || t("reconciliation.processingError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally { setIsReReconciling(false); }
   };
 
   const generateReportHTML = useCallback(() => {
@@ -410,7 +434,7 @@ export default function Reconciliation() {
         </div>}
 
         {results && !showUpload && (
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center gap-3 mb-4 flex-wrap">
             <button
               onClick={() => setShowUpload(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8855f6]/10 text-[#8855f6] text-sm font-semibold hover:bg-[#8855f6]/20 transition-colors"
@@ -418,6 +442,17 @@ export default function Reconciliation() {
             >
               <Upload className="w-4 h-4" /> {t("reconciliation.uploadNewFile")}
             </button>
+            {((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
+              <button
+                onClick={handleReReconcile}
+                disabled={isReReconciling}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors border border-amber-200 dark:border-amber-800 disabled:opacity-50"
+                data-testid="button-re-reconcile"
+              >
+                {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+                {t("reconciliation.reReconcile")}
+              </button>
+            )}
           </div>
         )}
 

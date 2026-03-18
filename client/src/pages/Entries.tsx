@@ -219,9 +219,9 @@ export default function Entries() {
                     <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-[15px]">{entry.description}</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-[15px]">{entry.patientName}</p>
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.patientName} • {entry.insuranceProvider}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.createdAt)}</span>
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>

@@ -263,7 +263,7 @@ export default function Dashboard() {
                     >
                       <div className={`size-8 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{entry.description} - {entry.patientName}</p>
+                        <p className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{entry.patientName} - {entry.description}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500">{entry.insuranceProvider} • {formatDate(entry.createdAt)}</p>
                       </div>
                       {entry.procedureValue && <span className="text-xs font-bold text-green-600 dark:text-green-400 flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
@@ -333,8 +333,8 @@ export default function Dashboard() {
                 <div key={entry.id} onClick={() => openEditModal(entry)} className="card-float px-4 py-4 flex items-center gap-3.5 cursor-pointer" data-testid={`entry-row-${entry.id}`}>
                   <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{entry.description}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.patientName} • {entry.insuranceProvider}</p>
+                    <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(entry.createdAt)}</p>
                   </div>
                   {entry.procedureValue && <span className="text-sm font-bold text-green-600 dark:text-green-400 flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}

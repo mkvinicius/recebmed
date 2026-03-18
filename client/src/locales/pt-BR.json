@@ -405,7 +405,10 @@
     "acceptedTitle": "Registro aceito",
     "acceptedDesc": "Lançamento criado a partir do relatório da clínica.",
     "allAcceptedTitle": "Todos aceitos",
-    "allAcceptedDesc": "{{count}} lançamentos criados a partir dos relatórios da clínica."
+    "allAcceptedDesc": "{{count}} lançamentos criados a partir dos relatórios da clínica.",
+    "reReconcile": "Re-conferir Tudo",
+    "reReconcileCompleteTitle": "Re-conferência concluída",
+    "reReconcileCompleteDesc": "{{count}} lançamentos foram re-processados com a conferência atualizada."
   },
   "clinicReports": {
     "title": "Extratos de Produção",

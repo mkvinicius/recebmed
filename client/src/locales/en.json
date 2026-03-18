@@ -405,7 +405,10 @@
     "acceptedTitle": "Record accepted",
     "acceptedDesc": "Entry created from the clinic report.",
     "allAcceptedTitle": "All accepted",
-    "allAcceptedDesc": "{{count}} entries created from clinic reports."
+    "allAcceptedDesc": "{{count}} entries created from clinic reports.",
+    "reReconcile": "Re-check All",
+    "reReconcileCompleteTitle": "Re-check complete",
+    "reReconcileCompleteDesc": "{{count}} entries were re-processed with updated matching."
   },
   "clinicReports": {
     "title": "Clinic Reports",
