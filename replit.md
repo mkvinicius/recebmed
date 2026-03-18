@@ -8,7 +8,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken) + bcryptjs (12 rounds) for password hashing + express-rate-limit + helmet security headers
-- **AI**: OpenAI direct API (gpt-5-mini for vision/text, gpt-4o-mini-transcribe for audio STT) + LLM abstraction layer (server/llm.ts) supporting OpenAI and Anthropic providers
+- **AI**: LLM abstraction layer (server/llm.ts) with dual provider support — Anthropic Claude (via Replit AI Integrations, `AI_INTEGRATIONS_ANTHROPIC_API_KEY`) preferred for complex parsing (PDFs/images) + OpenAI (gpt-5-mini vision/text, gpt-4o-mini-transcribe for audio STT). `getComplexParsingProvider()` auto-selects Claude when available.
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
 
@@ -35,8 +35,9 @@ client/src/
 server/
   index.ts           - Express entry point (50mb body limit)
   routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
-  openai.ts          - OpenAI client + image/audio extraction functions
-  llm.ts             - LLM abstraction layer (provider pattern: OpenAI + Anthropic), LLM_PROVIDER env var
+  openai.ts          - Image/audio extraction functions (uses Claude via getComplexParsingProvider for parsing, OpenAI for STT)
+  llm.ts             - LLM abstraction layer (provider pattern: OpenAI + Anthropic via Replit AI Integrations), LLM_PROVIDER env var
+  replit_integrations/anthropic/ - Anthropic AI integration (batch processing, chat utilities)
   document-validator.ts - Document structure analysis (AI-powered column detection + template mapping for clinic files)
   reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + template-aware extraction + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance) + sanitizeEntry with payment method detection (PX/PIX/DINHEIRO/CARTÃO → Particular)
   audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched

@@ -59,26 +59,21 @@ class OpenAIProvider implements LLMProvider {
 
 class AnthropicProvider implements LLMProvider {
   name = "anthropic";
-  private client: any = null;
 
-  private async getClient() {
-    if (!this.client) {
-      try {
-        const Anthropic = (await import("@anthropic-ai/sdk")).default;
-        this.client = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
-      } catch {
-        throw new Error("Anthropic SDK not available or CLAUDE_API_KEY not set");
-      }
-    }
-    return this.client;
+  private getClient() {
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+    const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL || undefined;
+    if (!apiKey) throw new Error("No Anthropic API key configured");
+    return new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) });
   }
 
   isAvailable(): boolean {
-    return !!process.env.CLAUDE_API_KEY;
+    return !!(process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY);
   }
 
   async chatCompletion(options: LLMCompletionOptions): Promise<LLMCompletionResult> {
-    const client = await this.getClient();
+    const client = this.getClient();
 
     let systemPrompt = "";
     const messages: any[] = [];
@@ -114,11 +109,12 @@ class AnthropicProvider implements LLMProvider {
     }
 
     const modelMap: Record<string, string> = {
-      "gpt-5-mini": "claude-sonnet-4-20250514",
-      "gpt-4o": "claude-sonnet-4-20250514",
+      "gpt-5-mini": "claude-sonnet-4-6",
+      "gpt-4o": "claude-sonnet-4-6",
+      "complex": "claude-sonnet-4-6",
     };
 
-    const claudeModel = modelMap[options.model || "gpt-5-mini"] || "claude-sonnet-4-20250514";
+    const claudeModel = modelMap[options.model || "gpt-5-mini"] || "claude-sonnet-4-6";
 
     const response = await client.messages.create({
       model: claudeModel,
