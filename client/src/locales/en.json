@@ -386,6 +386,7 @@
     "receivedTab": "Received",
     "divergentTab": "Divergent",
     "pendingTab": "Pending",
+    "totalTab": "Total",
     "noEntriesInCategory": "No entries in this category",
     "sendPDF": "Upload a file to start checking",
     "resultsAfterProcessing": "Results will be displayed here after processing",

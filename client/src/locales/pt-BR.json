@@ -386,6 +386,7 @@
     "receivedTab": "Recebidos",
     "divergentTab": "Divergentes",
     "pendingTab": "Pendentes",
+    "totalTab": "Total",
     "noEntriesInCategory": "Nenhum lançamento nesta categoria",
     "sendPDF": "Envie um arquivo para iniciar a conferência",
     "resultsAfterProcessing": "Os resultados serão exibidos aqui após o processamento",

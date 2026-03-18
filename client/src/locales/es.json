@@ -386,6 +386,7 @@
     "receivedTab": "Recibidos",
     "divergentTab": "Divergentes",
     "pendingTab": "Pendientes",
+    "totalTab": "Total",
     "noEntriesInCategory": "Sin registros en esta categoría",
     "sendPDF": "Suba un archivo para iniciar la verificación",
     "resultsAfterProcessing": "Los resultados se mostrarán aquí después del procesamiento",

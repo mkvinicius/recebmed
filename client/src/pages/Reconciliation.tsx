@@ -6,7 +6,7 @@ import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
   Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban,
-  UserPlus, CheckCheck
+  UserPlus, CheckCheck, BarChart3
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -61,7 +61,7 @@ export default function Reconciliation() {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ReconciliationResults | null>(null);
-  const [activeTab, setActiveTab] = useState<"verified" | "received" | "divergent" | "pending" | "unmatched">("verified");
+  const [activeTab, setActiveTab] = useState<"total" | "verified" | "received" | "divergent" | "pending" | "unmatched">("verified");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -177,7 +177,9 @@ export default function Reconciliation() {
 
   const verifiedCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0);
   const unmatchedCount = results?.unmatchedClinic?.length || 0;
+  const totalCount = (results?.reconciled?.length || 0) + (results?.divergent?.length || 0) + (results?.pending?.length || 0);
   const tabs = [
+    { key: "total" as const, label: t("reconciliation.totalTab"), icon: BarChart3, color: "text-slate-700 dark:text-slate-200", bg: "bg-slate-100 dark:bg-slate-800", border: "border-slate-300 dark:border-slate-600", count: totalCount },
     { key: "verified" as const, label: t("reconciliation.verifiedTab"), icon: ClipboardCheck, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/30", border: "border-blue-200 dark:border-blue-800", count: verifiedCount },
     { key: "received" as const, label: t("reconciliation.receivedTab"), icon: CircleDollarSign, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/30", border: "border-green-200 dark:border-green-800", count: results?.reconciled?.length || 0 },
     { key: "divergent" as const, label: t("reconciliation.divergentTab"), icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/30", border: "border-amber-200 dark:border-amber-800", count: results?.divergent?.length || 0 },
@@ -186,6 +188,7 @@ export default function Reconciliation() {
   ];
 
   const activeEntries = results ? (
+    activeTab === "total" ? [...(results.reconciled || []), ...(results.divergent || []), ...(results.pending || [])] :
     activeTab === "verified" ? [...(results.reconciled || []), ...(results.divergent || [])] :
     activeTab === "received" ? results.reconciled || [] :
     activeTab === "divergent" ? results.divergent || [] :
@@ -262,7 +265,6 @@ export default function Reconciliation() {
 
   const generateReportHTML = useCallback(() => {
     if (!results) return "";
-    const totalEntries = (results.reconciled?.length || 0) + (results.divergent?.length || 0) + (results.pending?.length || 0);
     const now = new Date();
     const dateStr = now.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -290,69 +292,98 @@ export default function Reconciliation() {
       `;
     };
 
+    const tabLabelMap: Record<string, string> = {
+      total: t("reconciliation.totalTab"),
+      verified: t("reconciliation.verifiedTab"),
+      received: t("reconciliation.receivedTab"),
+      divergent: t("reconciliation.divergentTab"),
+      pending: t("reconciliation.pendingTab"),
+      unmatched: t("reconciliation.unmatchedTab"),
+    };
+
+    const reportTitle = tabLabelMap[activeTab] || t("reconciliation.title");
+
+    const sections = activeTab === "total" ? [
+      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
+      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
+      { title: t("reconciliation.pendingTab"), entries: results.pending, color: "#ef4444" },
+    ] : activeTab === "unmatched" ? [
+      { title: t("reconciliation.unmatchedTab"), entries: (results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" })), color: "#9333ea" },
+    ] : activeTab === "verified" ? [
+      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
+      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
+    ] : activeTab === "received" ? [
+      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
+    ] : activeTab === "divergent" ? [
+      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
+    ] : activeTab === "pending" ? [
+      { title: t("reconciliation.pendingTab"), entries: results.pending, color: "#ef4444" },
+    ] : [];
+
+    const sectionCount = sections.reduce((sum, s) => sum + (s.entries?.length || 0), 0);
+
     return `
       <!DOCTYPE html><html><head><meta charset="utf-8">
-      <title>RecebMed — ${t("reconciliation.title")}</title>
+      <title>RecebMed — ${reportTitle}</title>
       <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:30px;color:#333;max-width:800px;margin:0 auto;}
       @media print{body{padding:10px;}}</style></head><body>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
         <div style="width:40px;height:40px;background:#8855f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;">R</div>
         <div><h1 style="margin:0;font-size:20px;color:#8855f6;">RecebMed</h1>
-        <p style="margin:0;font-size:12px;color:#888;">${t("reconciliation.title")} — ${dateStr}</p></div>
+        <p style="margin:0;font-size:12px;color:#888;">${reportTitle} — ${sectionCount} ${t("common.records")} — ${dateStr}</p></div>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:120px;background:#eff6ff;padding:12px;border-radius:8px;text-align:center;">
-          <div style="font-size:22px;font-weight:bold;color:#2563eb;">${(results.reconciled?.length || 0) + (results.divergent?.length || 0)}</div>
-          <div style="font-size:11px;color:#2563eb;">${t("reconciliation.verifiedTab")}</div>
-        </div>
-        <div style="flex:1;min-width:120px;background:#f0fdf4;padding:12px;border-radius:8px;text-align:center;">
-          <div style="font-size:22px;font-weight:bold;color:#16a34a;">${results.reconciled?.length || 0}</div>
-          <div style="font-size:11px;color:#16a34a;">${t("reconciliation.receivedTab")}</div>
-        </div>
-        <div style="flex:1;min-width:120px;background:#fffbeb;padding:12px;border-radius:8px;text-align:center;">
-          <div style="font-size:22px;font-weight:bold;color:#d97706;">${results.divergent?.length || 0}</div>
-          <div style="font-size:11px;color:#d97706;">${t("reconciliation.divergentTab")}</div>
-        </div>
-        <div style="flex:1;min-width:120px;background:#fef2f2;padding:12px;border-radius:8px;text-align:center;">
-          <div style="font-size:22px;font-weight:bold;color:#ef4444;">${results.pending?.length || 0}</div>
-          <div style="font-size:11px;color:#ef4444;">${t("reconciliation.pendingTab")}</div>
-        </div>
-      </div>
-      ${renderSection(t("reconciliation.receivedTab"), results.reconciled, "#16a34a")}
-      ${renderSection(t("reconciliation.divergentTab"), results.divergent, "#d97706")}
-      ${renderSection(t("reconciliation.pendingTab"), results.pending, "#ef4444")}
+      ${sections.map(s => renderSection(s.title, s.entries, s.color)).join("")}
       <p style="margin-top:30px;text-align:center;font-size:10px;color:#aaa;">${t("reconciliation.generatedBy")}</p>
       </body></html>
     `;
-  }, [results, locale, t, formatCurrency, formatDate]);
+  }, [results, locale, t, formatCurrency, formatDate, activeTab]);
 
   const generateTextSummary = useCallback(() => {
     if (!results) return "";
     const lines: string[] = [];
-    lines.push(`📊 *RecebMed — ${t("reconciliation.title")}*`);
-    lines.push("");
-    lines.push(`📋 ${t("reconciliation.verifiedTab")}: ${(results.reconciled?.length || 0) + (results.divergent?.length || 0)}`);
-    lines.push(`✅ ${t("reconciliation.receivedTab")}: ${results.reconciled?.length || 0}`);
-    lines.push(`⚠️ ${t("reconciliation.divergentTab")}: ${results.divergent?.length || 0}`);
-    lines.push(`🔴 ${t("reconciliation.pendingTab")}: ${results.pending?.length || 0}`);
+
+    const tabLabelMap: Record<string, string> = {
+      total: t("reconciliation.totalTab"),
+      verified: t("reconciliation.verifiedTab"),
+      received: t("reconciliation.receivedTab"),
+      divergent: t("reconciliation.divergentTab"),
+      pending: t("reconciliation.pendingTab"),
+      unmatched: t("reconciliation.unmatchedTab"),
+    };
+    const reportTitle = tabLabelMap[activeTab] || t("reconciliation.title");
+    lines.push(`📊 *RecebMed — ${reportTitle}*`);
     lines.push("");
 
     const addSection = (emoji: string, title: string, entries: EntryResult[]) => {
       if (!entries || entries.length === 0) return;
-      lines.push(`${emoji} *${title}:*`);
+      lines.push(`${emoji} *${title} (${entries.length}):*`);
       entries.forEach(e => {
         lines.push(`  • ${e.patientName} — ${formatDate(e.procedureDate)} — ${formatCurrency(e.procedureValue)}`);
       });
       lines.push("");
     };
 
-    addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
-    addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
-    addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+    if (activeTab === "total") {
+      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
+      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+      addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+    } else if (activeTab === "unmatched") {
+      const unmatchedEntries = (results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" }));
+      addSection("🟣", t("reconciliation.unmatchedTab"), unmatchedEntries);
+    } else if (activeTab === "verified") {
+      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
+      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+    } else if (activeTab === "received") {
+      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
+    } else if (activeTab === "divergent") {
+      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+    } else if (activeTab === "pending") {
+      addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+    }
 
     lines.push(`📱 ${t("reconciliation.generatedBy")}`);
     return lines.join("\n");
-  }, [results, t, formatCurrency, formatDate]);
+  }, [results, t, formatCurrency, formatDate, activeTab]);
 
   const handleDownloadPDF = useCallback(() => {
     const html = generateReportHTML();
@@ -563,17 +594,17 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
               {tabs.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border transition-all ${activeTab === tab.key ? `${tab.bg} ${tab.border} shadow-sm` : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"}`}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ${activeTab === tab.key ? `${tab.bg} ${tab.border} shadow-sm` : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"}`}
                   data-testid={`tab-${tab.key}`}
                 >
-                  <tab.icon className={`w-6 h-6 ${activeTab === tab.key ? tab.color : "text-slate-400 dark:text-slate-500"}`} />
-                  <span className={`text-2xl font-extrabold ${activeTab === tab.key ? tab.color : "text-slate-700 dark:text-slate-300"}`} data-testid={`count-${tab.key}`}>{tab.count}</span>
-                  <span className={`text-xs font-semibold ${activeTab === tab.key ? tab.color : "text-slate-500 dark:text-slate-400"}`}>{tab.label}</span>
+                  <tab.icon className={`w-5 h-5 ${activeTab === tab.key ? tab.color : "text-slate-400 dark:text-slate-500"}`} />
+                  <span className={`text-xl font-extrabold ${activeTab === tab.key ? tab.color : "text-slate-700 dark:text-slate-300"}`} data-testid={`count-${tab.key}`}>{tab.count}</span>
+                  <span className={`text-[10px] font-semibold leading-tight text-center ${activeTab === tab.key ? tab.color : "text-slate-500 dark:text-slate-400"}`}>{tab.label}</span>
                 </button>
               ))}
             </div>
