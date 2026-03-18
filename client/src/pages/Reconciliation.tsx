@@ -464,50 +464,29 @@ export default function Reconciliation() {
           )}
         </div>}
 
-        {results && !showUpload && (
-          <div className="flex justify-center gap-3 mb-4 flex-wrap">
+        {(showUpload || !results) && (
+          <div className="flex flex-wrap justify-center gap-3 mb-6">
             <button
-              onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8855f6]/10 text-[#8855f6] text-sm font-semibold hover:bg-[#8855f6]/20 transition-colors"
-              data-testid="button-show-upload"
+              onClick={() => window.open("/api/reconciliation/csv-template", "_blank")}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800"
+              data-testid="button-download-csv-template"
             >
-              <Upload className="w-4 h-4" /> {t("reconciliation.uploadNewFile")}
+              <Download className="w-4 h-4" />
+              {t("reconciliation.downloadTemplate")}
             </button>
-            {((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
-              <button
-                onClick={handleReReconcile}
-                disabled={isReReconciling}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors border border-amber-200 dark:border-amber-800 disabled:opacity-50"
-                data-testid="button-re-reconcile"
-              >
-                {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
-                {t("reconciliation.reReconcile")}
-              </button>
-            )}
+            <button
+              onClick={() => setShowTutorial(!showTutorial)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800"
+              data-testid="button-toggle-tutorial"
+            >
+              <HelpCircle className="w-4 h-4" />
+              {t("reconciliation.csvTutorialTitle")}
+              {showTutorial ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
         )}
 
-        <div className="flex flex-wrap justify-center gap-3 mb-6">
-          <button
-            onClick={() => window.open("/api/reconciliation/csv-template", "_blank")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800"
-            data-testid="button-download-csv-template"
-          >
-            <Download className="w-4 h-4" />
-            {t("reconciliation.downloadTemplate")}
-          </button>
-          <button
-            onClick={() => setShowTutorial(!showTutorial)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800"
-            data-testid="button-toggle-tutorial"
-          >
-            <HelpCircle className="w-4 h-4" />
-            {t("reconciliation.csvTutorialTitle")}
-            {showTutorial ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {showTutorial && (
+        {showTutorial && (showUpload || !results) && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-blue-100 dark:border-blue-800 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-5 mb-6" data-testid="section-csv-tutorial">
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Table className="w-5 h-5 text-green-600" />
@@ -565,6 +544,29 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
 
         {results && (
           <div className="space-y-4 pb-12" data-testid="section-results">
+            {!showUpload && (
+              <div className="flex justify-center gap-3 flex-wrap">
+                <button
+                  onClick={() => setShowUpload(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-[#8855f6] text-sm font-semibold hover:bg-[#8855f6]/10 transition-colors border border-[#8855f6]/30 shadow-sm"
+                  data-testid="button-show-upload"
+                >
+                  <Upload className="w-4 h-4" /> {t("reconciliation.uploadNewFile")}
+                </button>
+                {((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
+                  <button
+                    onClick={handleReReconcile}
+                    disabled={isReReconciling}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 text-sm font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-amber-200 dark:border-amber-800 shadow-sm disabled:opacity-50"
+                    data-testid="button-re-reconcile"
+                  >
+                    {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+                    {t("reconciliation.reReconcile")}
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-4">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
               <div className="grid grid-cols-3 gap-2">
