@@ -65,7 +65,7 @@ export default function Reconciliation() {
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
+  const [uploadCollapsed, setUploadCollapsed] = useState(false);
   const [divergencyEntry, setDivergencyEntry] = useState<EntryResult | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -127,6 +127,7 @@ export default function Reconciliation() {
           const data = await res.json();
           if (data.success && data.reconciliation) {
             setResults(data.reconciliation);
+            setUploadCollapsed(true);
             toast({ title: t("reconciliation.completed"), description: t("reconciliation.extractedCount", { count: data.extractedCount }) });
           } else {
             toast({ title: t("common.error"), description: data.message || t("reconciliation.processingError"), variant: "destructive" });
@@ -167,7 +168,10 @@ export default function Reconciliation() {
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       if (res.ok) {
         const data = await res.json();
-        setResults(data);
+        if (data && (data.reconciled?.length || data.divergent?.length || data.pending?.length)) {
+          setResults(data);
+          setUploadCollapsed(true);
+        }
       }
     } catch {}
     finally { setInitialLoading(false); }
@@ -412,59 +416,102 @@ export default function Reconciliation() {
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
 
-        {(showUpload || !results) && <div
-          className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed p-8 mb-6 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
-          onClick={() => !isProcessing && fileInputRef.current?.click()}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          data-testid="dropzone-pdf"
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPTED_EXTENSIONS}
-            className="hidden"
-            onChange={handleFileChange}
-            data-testid="input-file-upload"
-          />
-          {isProcessing ? (
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-12 h-12 text-[#8855f6] animate-spin" />
-              <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">{t("reconciliation.processing")}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t("reconciliation.processingDesc")}</p>
-              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{fileName}</p>}
+        {(!uploadCollapsed || !results) ? (
+          <div
+            className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed p-8 mb-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
+            onClick={() => !isProcessing && fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            data-testid="dropzone-pdf"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_EXTENSIONS}
+              className="hidden"
+              onChange={handleFileChange}
+              data-testid="input-file-upload"
+            />
+            {isProcessing ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-12 h-12 text-[#8855f6] animate-spin" />
+                <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">{t("reconciliation.processing")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("reconciliation.processingDesc")}</p>
+                {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{fileName}</p>}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="size-16 bg-[#8855f6]/10 rounded-2xl flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-[#8855f6]" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-upload-prompt">{t("reconciliation.dragOrClick")}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("reconciliation.fileSupport")}</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-semibold">
+                    <FileText className="w-3.5 h-3.5" /> PDF
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs font-semibold">
+                    <Image className="w-3.5 h-3.5" /> {t("reconciliation.photo")}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 text-xs font-semibold">
+                    <Table className="w-3.5 h-3.5" /> CSV
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t("reconciliation.maxSize", { max: MAX_FILE_SIZE_MB })}</p>
+                {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.lastFile", { name: fileName })}</p>}
+                <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-file">
+                  <Upload className="w-4 h-4 mr-2" /> {t("reconciliation.selectFile")}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40 p-4 mb-4 text-center transition-all cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            data-testid="dropzone-pdf-compact"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_EXTENSIONS}
+              className="hidden"
+              onChange={handleFileChange}
+              data-testid="input-file-upload"
+            />
+            <div className="flex items-center justify-center gap-3">
+              <div className="size-10 bg-[#8855f6]/10 rounded-xl flex items-center justify-center">
+                <Upload className="w-5 h-5 text-[#8855f6]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("reconciliation.uploadNewFile")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">PDF, {t("reconciliation.photo")}, CSV</p>
+              </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <div className="size-16 bg-[#8855f6]/10 rounded-2xl flex items-center justify-center">
-                <Upload className="w-8 h-8 text-[#8855f6]" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-upload-prompt">{t("reconciliation.dragOrClick")}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("reconciliation.fileSupport")}</p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-semibold">
-                  <FileText className="w-3.5 h-3.5" /> PDF
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-xs font-semibold">
-                  <Image className="w-3.5 h-3.5" /> {t("reconciliation.photo")}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 text-xs font-semibold">
-                  <Table className="w-3.5 h-3.5" /> CSV
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500">{t("reconciliation.maxSize", { max: MAX_FILE_SIZE_MB })}</p>
-              {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.lastFile", { name: fileName })}</p>}
-              <Button className="mt-2 bg-[#8855f6] text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/30 hover:bg-[#7744e0]" data-testid="button-select-file">
-                <Upload className="w-4 h-4 mr-2" /> {t("reconciliation.selectFile")}
-              </Button>
-            </div>
-          )}
-        </div>}
+          </div>
+        )}
 
-        {(showUpload || !results) && (
+        {results && ((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleReReconcile}
+              disabled={isReReconciling}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 text-sm font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-amber-200 dark:border-amber-800 shadow-sm disabled:opacity-50"
+              data-testid="button-re-reconcile"
+            >
+              {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+              {t("reconciliation.reReconcile")}
+            </button>
+          </div>
+        )}
+
+        {(!uploadCollapsed || !results) && (
           <div className="flex flex-wrap justify-center gap-3 mb-6">
             <button
               onClick={() => window.open("/api/reconciliation/csv-template", "_blank")}
@@ -486,7 +533,7 @@ export default function Reconciliation() {
           </div>
         )}
 
-        {showTutorial && (showUpload || !results) && (
+        {showTutorial && (!uploadCollapsed || !results) && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-blue-100 dark:border-blue-800 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-5 mb-6" data-testid="section-csv-tutorial">
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Table className="w-5 h-5 text-green-600" />
@@ -544,29 +591,6 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
 
         {results && (
           <div className="space-y-4 pb-12" data-testid="section-results">
-            {!showUpload && (
-              <div className="flex justify-center gap-3 flex-wrap">
-                <button
-                  onClick={() => setShowUpload(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-[#8855f6] text-sm font-semibold hover:bg-[#8855f6]/10 transition-colors border border-[#8855f6]/30 shadow-sm"
-                  data-testid="button-show-upload"
-                >
-                  <Upload className="w-4 h-4" /> {t("reconciliation.uploadNewFile")}
-                </button>
-                {((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
-                  <button
-                    onClick={handleReReconcile}
-                    disabled={isReReconciling}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 text-sm font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-amber-200 dark:border-amber-800 shadow-sm disabled:opacity-50"
-                    data-testid="button-re-reconcile"
-                  >
-                    {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
-                    {t("reconciliation.reReconcile")}
-                  </button>
-                )}
-              </div>
-            )}
-
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-4">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
               <div className="grid grid-cols-3 gap-2">
