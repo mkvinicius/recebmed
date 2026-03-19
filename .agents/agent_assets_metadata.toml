@@ -12,3 +12,9 @@ id = "jXdG3gqF_gEQeH3Qo5Wao"
 uri = "file://RecebMed_Technical_Audit_Report.md"
 type = "text"
 title = "RecebMed — Relatório Técnico de Auditoria"
+
+[[outputs]]
+id = "xgVYZ9WJGhs9jSFwECb16"
+uri = "file://RecebMed_Final_Engineering_Audit_Report.md"
+type = "text"
+title = "RecebMed — Final Engineering Audit Report"

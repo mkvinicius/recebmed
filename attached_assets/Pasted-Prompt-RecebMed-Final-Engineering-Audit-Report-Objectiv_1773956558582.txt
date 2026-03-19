@@ -1,0 +1,39 @@
+Prompt: RecebMed Final Engineering Audit Report
+Objective: Provide a comprehensive technical report detailing the current engineering architecture, implementation specifics, and operational logic of the RecebMed application following all recent updates. This report is crucial for a final assessment of the system’s robustness, scalability, and adherence to best practices.
+
+
+1. Overall System Architecture & Code Organization
+	•	High-Level Overview: Describe the current architectural pattern (e.g., microservices, monolithic, serverless). What are the main components/services, and how do they interact?
+	•	Codebase Structure: Outline the directory structure and key files/modules. How is the code organized to support modularity and maintainability?
+	•	Technology Stack: List the primary programming languages, frameworks, databases, and cloud services in use.
+
+2. LLM Abstraction Layer & Hybrid AI Strategy
+	•	Implementation Details: Describe how the `LLMService` abstraction layer has been implemented. How does it dynamically switch between OpenAI (GPT-4o-mini) and Anthropic (Claude 3.5 Sonnet) based on input type (image/audio vs. PDF/spreadsheet)?
+	•	Configuration: How are the `LLM_PROVIDER` and API keys managed? Is it via environment variables or a configuration file?
+	•	Fallback Mechanisms: Are there any fallback strategies if one LLM provider fails or hits rate limits?
+
+3. Dynamic Document Validator (Training Mode)
+	•	Module Design: Describe the `DocumentTraining` module. Where is its code located, and how does it integrate with the existing UI and backend?
+	•	Template Storage: How are the `DocumentTemplate` mappings stored in the database (schema details)?
+	•	Parsing Integration: Explain the workflow: when a user uploads a file, how does the system determine if a template should be applied, and how does the LLM use this template for extraction?
+	•	UI/UX Implementation: Detail the exact placement and functionality of the “Treinar IA com Novo Formato de Documento” card and the training workflow.
+
+4. Active AI (Background Worker) & Reconciliation Engine
+	•	Worker Implementation: Describe the background worker’s technical implementation (e.g., cron jobs, message queues, dedicated worker processes). How is its persistence and reliability ensured?
+	•	Reconciliation Flow: Detail the end-to-end process of the background worker: how it identifies pending tasks, fetches data, invokes the appropriate LLM (via `LLMService`), performs matching, and updates database records.
+	•	Concurrency & Mutex: How are concurrent reconciliation tasks handled to prevent race conditions or data corruption?
+	•	Error Handling: What mechanisms are in place to log and recover from errors during background processing?
+
+5. Data Integrity & Database Schema
+	•	Matching Logic: Confirm the exact database fields used for patient matching (e.g., `patient_name`, `procedure_date`, `insurance`). How is fuzzy matching implemented at the database level or application layer?
+	•	Divergence Tracking: How are `divergenceReason` and other reconciliation statuses stored and managed in the database?
+	•	Data Consistency: What measures are in place to prevent data duplication or corruption, especially with the new matching logic and background worker?
+	•	Schema Changes: List any significant changes made to the database schema to support new features (e.g., `DocumentTemplates` table).
+
+6. Performance & Scalability Considerations
+	•	Performance Metrics: What are the typical processing times for different types of inputs (image, audio, PDF, spreadsheet)?
+	•	Scalability: How is the system designed to handle an increasing number of users and data volume?
+	•	Resource Usage: Provide insights into CPU, memory, and database usage under typical load.
+
+
+Please provide this report in Markdown format, detailing the current implementation status for each point, including code snippets or pseudo-code where relevant to illustrate complex logic.
