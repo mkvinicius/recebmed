@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Stethoscope } from "lucide-react";
+import { Loader2, Stethoscope, Eye, EyeOff } from "lucide-react";
 import { saveAuth, setRequiresPasswordUpdate } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +13,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -87,15 +88,25 @@ export default function Login() {
                 <Label htmlFor="password" className="font-semibold text-slate-700 dark:text-slate-300">{t("login.password")}</Label>
                 <Link href="/forgot-password" className="text-xs font-bold text-[#8855f6] hover:underline">{t("login.forgotPassword")}</Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100"
-                data-testid="input-password"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 pr-12"
+                  data-testid="input-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
             <Button
               type="submit"

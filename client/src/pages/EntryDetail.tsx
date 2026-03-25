@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, CheckCircle2, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope, ShieldCheck } from "lucide-react";
+import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope, ShieldCheck } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { statusBadgeStyle, StatusIconDetail } from "@/lib/status";
 
 interface EntryData {
   id: string;
@@ -47,8 +48,6 @@ export default function EntryDetail() {
   };
 
   const statusLabel = (s: string) => s === "reconciled" ? t("common.reconciled") : s === "divergent" ? t("common.divergent") : t("common.pending");
-  const statusStyle = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 border-green-200 dark:border-green-800" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500 border-red-200 dark:border-red-800" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 border-amber-200 dark:border-amber-800";
-  const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <Clock className="w-5 h-5" />;
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const methodLabel = (m: string) => m === "photo" ? t("entryDetail.photoAI") : m === "audio" ? t("entryDetail.audioAI") : t("common.manual");
 
@@ -80,15 +79,15 @@ export default function EntryDetail() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden mt-4">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`size-10 rounded-full flex items-center justify-center ${statusStyle(entry.status)}`}>
-                {statusIcon(entry.status)}
+              <div className={`size-10 rounded-full flex items-center justify-center ${statusBadgeStyle(entry.status)}`}>
+                <StatusIconDetail status={entry.status} />
               </div>
               <div>
                 <h2 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-entry-description">{entry.description}</h2>
                 <p className="text-sm text-slate-400 dark:text-slate-500">ID: {entry.id.slice(0, 8)}...</p>
               </div>
             </div>
-            <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${statusStyle(entry.status)}`} data-testid="text-entry-status">
+            <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${statusBadgeStyle(entry.status)}`} data-testid="text-entry-status">
               {statusLabel(entry.status)}
             </span>
           </div>

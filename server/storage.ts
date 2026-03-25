@@ -12,6 +12,23 @@ import { db } from "./db";
 import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+export interface PaginationOptions {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+  insuranceProvider?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface PaginatedResult<T> {
+  entries: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -22,6 +39,7 @@ export interface IStorage {
 
   createDoctorEntry(entry: InsertDoctorEntry): Promise<DoctorEntry>;
   getDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
+  getDoctorEntriesPaginated(doctorId: string, options: PaginationOptions): Promise<PaginatedResult<DoctorEntry>>;
   getDoctorEntry(id: string): Promise<DoctorEntry | undefined>;
   updateDoctorEntry(id: string, updates: Partial<InsertDoctorEntry>): Promise<DoctorEntry | undefined>;
   deleteDoctorEntry(id: string): Promise<boolean>;
@@ -107,6 +125,56 @@ export class DatabaseStorage implements IStorage {
 
   async getDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
     return db.select().from(doctorEntries).where(eq(doctorEntries.doctorId, doctorId)).orderBy(desc(doctorEntries.createdAt));
+  }
+
+  async getDoctorEntriesPaginated(doctorId: string, options: PaginationOptions): Promise<PaginatedResult<DoctorEntry>> {
+    const { page, limit, status, search, insuranceProvider, dateFrom, dateTo } = options;
+    const conditions: any[] = [eq(doctorEntries.doctorId, doctorId)];
+
+    if (status && status !== "all") {
+      conditions.push(eq(doctorEntries.status, status as any));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(doctorEntries.patientName, `%${search}%`),
+          ilike(doctorEntries.description, `%${search}%`),
+          ilike(doctorEntries.insuranceProvider, `%${search}%`)
+        )
+      );
+    }
+    if (insuranceProvider) {
+      conditions.push(eq(doctorEntries.insuranceProvider, insuranceProvider));
+    }
+    if (dateFrom) {
+      conditions.push(gte(doctorEntries.procedureDate, new Date(dateFrom)));
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      conditions.push(sql`${doctorEntries.procedureDate} <= ${to}`);
+    }
+
+    const whereClause = and(...conditions);
+    const offset = (page - 1) * limit;
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(doctorEntries)
+      .where(whereClause);
+
+    const total = countResult?.count ?? 0;
+    const totalPages = Math.ceil(total / limit);
+
+    const entries = await db
+      .select()
+      .from(doctorEntries)
+      .where(whereClause)
+      .orderBy(desc(doctorEntries.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return { entries, total, page, totalPages };
   }
 
   async getDoctorEntry(id: string): Promise<DoctorEntry | undefined> {

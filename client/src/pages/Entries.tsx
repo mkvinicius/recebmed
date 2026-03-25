@@ -4,13 +4,15 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
   Search, FileText, Clock, CheckCircle2, AlertCircle,
-  Camera, Mic, PenLine, Loader2, X, Calendar
+  Camera, Mic, PenLine, Loader2, X, Calendar, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { statusColor, StatusIcon } from "@/lib/status";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
 import ErrorState from "@/components/ErrorState";
@@ -34,6 +36,7 @@ export default function Entries() {
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("status") || "all";
@@ -45,6 +48,11 @@ export default function Entries() {
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const ITEMS_PER_PAGE = 25;
+  const fetchIdRef = useRef(0);
 
   const statusLabelMap: Record<string, string> = {
     pending: t("common.pending"),
@@ -53,10 +61,25 @@ export default function Entries() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     const token = getToken();
     if (!token) { setLocation("/login"); return; }
-    fetchEntries(token);
-  }, [setLocation]);
+    if (currentPage === 1) {
+      fetchEntries(token, 1);
+    } else {
+      setCurrentPage(1);
+    }
+  }, [statusFilter, debouncedSearch, insuranceFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) { setLocation("/login"); return; }
+    fetchEntries(token, currentPage);
+  }, [currentPage]);
 
   useEffect(() => {
     if (!quickStatusEntry) return;
@@ -67,16 +90,29 @@ export default function Entries() {
     return () => document.removeEventListener("mousedown", handler);
   }, [quickStatusEntry]);
 
-  const fetchEntries = async (token: string) => {
+  const fetchEntries = async (token: string, page: number) => {
+    const fetchId = ++fetchIdRef.current;
     setFetchError(false);
+    setLoadingEntries(true);
     try {
-      const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } });
+      const params = new URLSearchParams({ page: String(page), limit: String(ITEMS_PER_PAGE) });
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (insuranceFilter !== "all") params.set("insuranceProvider", insuranceFilter);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+
+      const res = await fetch(`/api/entries?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (fetchId !== fetchIdRef.current) return;
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       const data = await res.json();
-      if (res.ok) setEntries(data.entries || []);
-      else setFetchError(true);
-    } catch { setFetchError(true); }
-    finally { setLoadingEntries(false); }
+      if (res.ok) {
+        setEntries(data.entries || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalEntries(data.total || 0);
+      } else setFetchError(true);
+    } catch { if (fetchId === fetchIdRef.current) setFetchError(true); }
+    finally { if (fetchId === fetchIdRef.current) setLoadingEntries(false); }
   };
 
   const openEditModal = (entry: DoctorEntry) => {
@@ -95,37 +131,18 @@ export default function Entries() {
     try {
       const res = await fetch(`/api/entries/${entryId}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: newStatus }) });
       const data = await res.json();
-      if (res.ok) { setEntries(prev => prev.map(e => e.id === entryId ? { ...e, ...data.entry } : e)); toast({ title: t("entries.statusUpdated"), description: t("entries.markedAs", { status: statusLabelMap[newStatus] }) }); }
+      if (res.ok) {
+        toast({ title: t("entries.statusUpdated"), description: t("entries.markedAs", { status: statusLabelMap[newStatus] }) });
+        fetchEntries(token, currentPage);
+      }
       else toast({ title: t("common.error"), description: data.message || t("entries.statusUpdateFailed"), variant: "destructive" });
     } catch { toast({ title: t("common.error"), description: t("entries.statusUpdateFailed"), variant: "destructive" }); }
   };
 
-  const filteredEntries = entries.filter(e => {
-    if (statusFilter !== "all" && e.status !== statusFilter) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!e.patientName.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q) && !e.insuranceProvider.toLowerCase().includes(q)) return false;
-    }
-    if (insuranceFilter !== "all" && e.insuranceProvider !== insuranceFilter) return false;
-    if (dateFrom || dateTo) {
-      const d = new Date(e.procedureDate || e.createdAt);
-      if (dateFrom) {
-        const from = new Date(dateFrom + "T00:00:00");
-        if (d < from) return false;
-      }
-      if (dateTo) {
-        const to = new Date(dateTo + "T23:59:59");
-        if (d > to) return false;
-      }
-    }
-    return true;
-  });
-
   const uniqueInsurances = Array.from(new Set(entries.map(e => e.insuranceProvider).filter(Boolean)));
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const methodLabel = (m: string) => m === "photo" ? t("common.photo") : m === "audio" ? t("common.audio") : t("common.manual");
-  const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
-  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500" : "bg-[#8855f6]/10 text-[#8855f6]";
+  const hasActiveFilters = statusFilter !== "all" || !!debouncedSearch || insuranceFilter !== "all" || !!dateFrom || !!dateTo;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -205,24 +222,27 @@ export default function Entries() {
           <div className="flex justify-between items-center mb-3 px-1">
             <span className="font-bold text-slate-800 dark:text-slate-200">{t("entries.allEntries")}</span>
             <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
-              {filteredEntries.length === entries.length ? t("entries.recordCount", { count: entries.length }) : t("entries.filteredCount", { filtered: filteredEntries.length, total: entries.length })}
+              {t("entries.recordCount", { count: totalEntries })}
             </span>
           </div>
           <div className="space-y-3">
             {loadingEntries ? (
               <div className="card-float px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
             ) : fetchError ? (
-              <ErrorState onRetry={() => { const token = getToken(); if (token) { setLoadingEntries(true); fetchEntries(token); } }} />
-            ) : filteredEntries.length === 0 ? (
-              <div className="card-float px-6 py-12 text-center">
-                <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">{entries.length === 0 ? t("entries.noEntries") : t("entries.noFilterResults")}</p>
-              </div>
+              <ErrorState onRetry={() => { const token = getToken(); if (token) { fetchEntries(token, currentPage); } }} />
+            ) : entries.length === 0 ? (
+              <Empty className="card-float py-12">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><FileText className="w-6 h-6" /></EmptyMedia>
+                  <EmptyTitle>{hasActiveFilters ? t("entries.noFilterResults") : t("entries.noEntries")}</EmptyTitle>
+                  <EmptyDescription>{hasActiveFilters ? t("entries.tryDifferentFilter") : t("entries.noEntriesHint")}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
-              filteredEntries.map(entry => (
+              entries.map(entry => (
                 <div key={entry.id} onClick={() => openEditModal(entry)} className="card-float px-4 py-4 flex items-center justify-between cursor-pointer" data-testid={`entry-row-${entry.id}`}>
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                    <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}><StatusIcon status={entry.status} /></div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-[15px]">{entry.patientName}</p>
@@ -262,6 +282,32 @@ export default function Entries() {
               ))
             )}
           </div>
+
+          {totalPages > 1 && !loadingEntries && !fetchError && (
+            <div className="flex items-center justify-between mt-4 px-1">
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {t("entries.pageInfo", { page: currentPage, totalPages, total: totalEntries })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  data-testid="button-prev-page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> {t("entries.prevPage")}
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  data-testid="button-next-page"
+                >
+                  {t("entries.nextPage")} <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       {divergentEntry && (

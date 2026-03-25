@@ -3,13 +3,15 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
   Bell, Clock, CreditCard, AlertTriangle,
-  FileText, AlertCircle, Loader2, CheckCircle2, X,
+  FileText, Loader2, X,
   Camera, Mic, PenLine,
   ChevronRight, Search, CheckCheck, Upload
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { statusColor, StatusIcon } from "@/lib/status";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import ProjectionsPanel from "@/components/ProjectionsPanel";
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
@@ -173,8 +175,6 @@ export default function Dashboard() {
   };
 
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
-  const statusColor = (s: string) => s === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" : s === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400" : "bg-[#8855f6]/10 text-[#8855f6]";
-  const statusIcon = (s: string) => s === "reconciled" ? <CheckCircle2 className="w-5 h-5" /> : s === "divergent" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -253,7 +253,7 @@ export default function Dashboard() {
                       className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800 last:border-b-0"
                       data-testid={`search-result-${entry.id}`}
                     >
-                      <div className={`size-8 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                      <div className={`size-8 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}><StatusIcon status={entry.status} /></div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{entry.patientName} - {entry.description}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500">{entry.insuranceProvider} • {formatDate(entry.createdAt, "relative")}</p>
@@ -317,15 +317,17 @@ export default function Dashboard() {
             ) : fetchError ? (
               <ErrorState onRetry={() => { const token = getToken(); if (token) { setLoadingEntries(true); fetchEntries(token); } }} />
             ) : recentEntries.length === 0 ? (
-              <div className="card-float px-6 py-10 text-center">
-                <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t("dashboard.noEntries")}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("dashboard.noEntriesHint")}</p>
-              </div>
+              <Empty className="card-float py-10">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><FileText className="w-6 h-6" /></EmptyMedia>
+                  <EmptyTitle>{t("dashboard.noEntries")}</EmptyTitle>
+                  <EmptyDescription>{t("dashboard.noEntriesHint")}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
               recentEntries.map(entry => (
                 <div key={entry.id} onClick={() => openEditModal(entry)} className="card-float px-4 py-4 flex items-center gap-3.5 cursor-pointer" data-testid={`entry-row-${entry.id}`}>
-                  <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
+                  <div className={`size-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}><StatusIcon status={entry.status} /></div>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>

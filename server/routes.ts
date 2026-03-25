@@ -644,6 +644,24 @@ export async function registerRoutes(
   app.get("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
+      const status = req.query.status as string | undefined;
+      const search = req.query.search as string | undefined;
+      const insuranceProvider = req.query.insuranceProvider as string | undefined;
+      const dateFrom = req.query.dateFrom as string | undefined;
+      const dateTo = req.query.dateTo as string | undefined;
+
+      const hasFilters = req.query.page !== undefined || req.query.limit !== undefined ||
+        status || search || insuranceProvider || dateFrom || dateTo;
+
+      if (hasFilters) {
+        const result = await storage.getDoctorEntriesPaginated(userId, {
+          page, limit, status, search, insuranceProvider, dateFrom, dateTo,
+        });
+        return res.json(result);
+      }
+
       const entries = await storage.getDoctorEntries(userId);
       return res.json({ entries });
     } catch (error) {

@@ -31,7 +31,9 @@ client/src/
   lib/audioUtils.ts  - WAV conversion for iPhone audio compatibility
   lib/queryClient.ts
   lib/utils.ts       - cn() + centralized formatDate(dateStr, style) and formatCurrency(val, fallback) — ALL pages import from here
+  lib/status.tsx     - Centralized status color/icon utilities (statusColor, statusBadgeStyle, StatusIcon, StatusIconDetail) — replaces per-page duplicates
   components/ErrorState.tsx - Reusable error state component with retry button (used by Dashboard, Entries, Reports)
+  components/ui/empty.tsx   - Reusable empty state component (Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription) — used by Entries, Dashboard
 
 server/
   index.ts           - Express entry point (50mb body limit)
@@ -42,7 +44,7 @@ server/
   document-validator.ts - Document structure analysis (AI-powered column detection + template mapping for clinic files)
   reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + template-aware extraction + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance) + sanitizeEntry with payment method detection (PX/PIX/DINHEIRO/CARTÃO → Particular)
   audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched
-  storage.ts         - Database storage interface (Drizzle)
+  storage.ts         - Database storage interface (Drizzle) — includes getDoctorEntriesPaginated(doctorId, {page, limit, status, search, insuranceProvider, dateFrom, dateTo})
   db.ts              - Database connection pool
   replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
 
