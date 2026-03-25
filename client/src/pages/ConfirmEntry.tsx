@@ -10,6 +10,7 @@ import {
   Building2, FileText, Camera, Mic, PenLine, Trash2, Plus, DollarSign, Brain, AlertTriangle, X
 } from "lucide-react";
 import { getLocale } from "@/lib/i18n";
+import { formatDate } from "@/lib/utils";
 import { getToken, getUser } from "@/lib/auth";
 
 type ConfidenceLevel = "high" | "medium" | "low";
@@ -527,7 +528,7 @@ export default function ConfirmEntry() {
                   <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm" data-testid={`data-duplicate-entry-${i}`}>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{entry.patientName}</p>
                     <p className="text-slate-500 dark:text-slate-400">
-                      {entry.description} — {new Date(entry.procedureDate).toLocaleDateString(getLocale(), { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      {entry.description} — {formatDate(entry.procedureDate, "short")}
                     </p>
                   </div>
                 ))}

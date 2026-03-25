@@ -12,10 +12,10 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { getToken, clearAuth } from "@/lib/auth";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n";
 import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
-import { formatCurrency as fmtCurrency } from "@/lib/utils";
+import { formatCurrency as fmtCurrency, formatDate } from "@/lib/utils";
 import ErrorState from "@/components/ErrorState";
 
 interface DoctorEntry {
@@ -47,6 +47,7 @@ export default function Reports() {
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +57,6 @@ export default function Reports() {
   const { dateFrom, dateTo, quickFilter, setDateFrom, setDateTo, applyQuickFilter, clearDates } = useDateFilter();
 
   const locale = getLocale();
-  const currency = getCurrencyCode();
 
   const formatCurrency = (value: number): string => {
     return fmtCurrency(value) || "—";
@@ -76,12 +76,14 @@ export default function Reports() {
     const token = getToken();
     if (!token) { setLocation("/login"); return; }
     (async () => {
+      setFetchError(false);
       try {
         const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } });
         if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
         const data = await res.json();
         if (res.ok) setEntries(data.entries || []);
-      } catch { /* ignore */ }
+        else setFetchError(true);
+      } catch { setFetchError(true); }
       finally { setLoading(false); }
     })();
   }, [setLocation]);
@@ -250,6 +252,14 @@ export default function Reports() {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <ErrorState onRetry={() => { setLoading(true); const token = getToken(); if (token) { (async () => { setFetchError(false); try { const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } }); if (res.status === 401) { clearAuth(); setLocation("/login"); return; } const data = await res.json(); if (res.ok) setEntries(data.entries || []); else setFetchError(true); } catch { setFetchError(true); } finally { setLoading(false); } })(); } }} />
       </div>
     );
   }
@@ -498,13 +508,13 @@ export default function Reports() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-                        {entry.description || entry.insuranceProvider} · {new Date(entry.procedureDate).toLocaleDateString(getLocale())}
+                        {entry.description || entry.insuranceProvider} · {formatDate(entry.procedureDate, "short")}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       {entry.procedureValue && (
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                          {new Intl.NumberFormat(getLocale(), { style: "currency", currency: getCurrencyCode() }).format(parseFloat(entry.procedureValue))}
+                          {formatCurrency(parseFloat(entry.procedureValue))}
                         </p>
                       )}
                       <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${

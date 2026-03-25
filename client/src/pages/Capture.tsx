@@ -308,7 +308,7 @@ export default function Capture() {
                   <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm" data-testid={`duplicate-entry-${i}`}>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{entry.patientName}</p>
                     <p className="text-slate-500 dark:text-slate-400">
-                      {entry.description} — {formatDate(entry.procedureDate)}
+                      {entry.description} — {fmtDate(entry.procedureDate)}
                     </p>
                   </div>
                 ))}

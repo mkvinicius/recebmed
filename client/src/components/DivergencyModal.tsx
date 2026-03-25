@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 interface DoctorEntry {
@@ -242,7 +241,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
                   <div className="space-y-2">
                     {[
                       { icon: <User className="w-3.5 h-3.5" />, label: t("common.patient"), value: entry.patientName, clinicValue: clinicReport?.patientName },
-                      { icon: <Calendar className="w-3.5 h-3.5" />, label: t("common.date"), value: formatDate(entry.procedureDate), clinicValue: clinicReport ? formatDate(clinicReport.procedureDate) : undefined },
+                      { icon: <Calendar className="w-3.5 h-3.5" />, label: t("common.date"), value: fmtDate(entry.procedureDate), clinicValue: clinicReport ? fmtDate(clinicReport.procedureDate) : undefined },
                       { icon: <Building2 className="w-3.5 h-3.5" />, label: t("common.insurance"), value: entry.insuranceProvider, clinicValue: clinicReport?.insuranceProvider },
                       { icon: <FileText className="w-3.5 h-3.5" />, label: t("common.procedure"), value: entry.description, clinicValue: clinicReport?.description },
                       { icon: <DollarSign className="w-3.5 h-3.5" />, label: t("common.value"), value: entry.procedureValue || "—", clinicValue: clinicReport?.reportedValue },
@@ -268,7 +267,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
                     <div className="space-y-2">
                       {[
                         { icon: <User className="w-3.5 h-3.5" />, label: t("common.patient"), value: clinicReport.patientName, doctorValue: entry.patientName },
-                        { icon: <Calendar className="w-3.5 h-3.5" />, label: t("common.date"), value: formatDate(clinicReport.procedureDate), doctorValue: formatDate(entry.procedureDate) },
+                        { icon: <Calendar className="w-3.5 h-3.5" />, label: t("common.date"), value: fmtDate(clinicReport.procedureDate), doctorValue: fmtDate(entry.procedureDate) },
                         { icon: <Building2 className="w-3.5 h-3.5" />, label: t("common.insurance"), value: clinicReport.insuranceProvider || "—", doctorValue: entry.insuranceProvider },
                         { icon: <FileText className="w-3.5 h-3.5" />, label: t("common.procedure"), value: clinicReport.description || "—", doctorValue: entry.description },
                         { icon: <DollarSign className="w-3.5 h-3.5" />, label: t("common.value"), value: clinicReport.reportedValue || "—", doctorValue: entry.procedureValue || "—" },

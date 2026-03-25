@@ -4,6 +4,7 @@ import {
   Brain, Upload, Loader2, Check, X, Trash2, ChevronDown, ChevronUp, FileText, Save, ArrowRight
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
+import { formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface ColumnMapping {
@@ -368,7 +369,7 @@ export default function DocumentTraining() {
                     <div>
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tmpl.name}</p>
                       <p className="text-xs text-slate-400">
-                        {colCount} {t("documentTraining.mappedFields")} • {new Date(tmpl.createdAt).toLocaleDateString()}
+                        {colCount} {t("documentTraining.mappedFields")} • {formatDate(tmpl.createdAt, "short")}
                       </p>
                     </div>
                   </div>

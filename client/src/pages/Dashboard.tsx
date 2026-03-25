@@ -47,6 +47,7 @@ export default function Dashboard() {
   const userInitials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -109,6 +110,7 @@ export default function Dashboard() {
   const [unmatchedCount, setUnmatchedCount] = useState(0);
 
   const fetchEntries = async (token: string) => {
+    setFetchError(false);
     try {
       const res = await fetch("/api/dashboard/stats", { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
@@ -116,8 +118,8 @@ export default function Dashboard() {
       if (res.ok) {
         setEntries(data.entries || []);
         setUnmatchedCount(data.unmatched || 0);
-      }
-    } catch { }
+      } else { setFetchError(true); }
+    } catch { setFetchError(true); }
     finally { setLoadingEntries(false); }
   };
 
@@ -196,7 +198,7 @@ export default function Dashboard() {
                       <div key={n.id} className={`px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${n.read ? "" : "bg-[#8855f6]/5"}`} onClick={async () => { if (!n.read) { const token = getToken(); if (!token) return; try { await fetch(`/api/notifications/${n.id}/read`, { method: "PUT", headers: { Authorization: `Bearer ${token}` } }); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnreadCount(prev => Math.max(0, prev - 1)); } catch {} } }}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{n.title}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{formatDate(n.createdAt)}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{formatDate(n.createdAt, "relative")}</p>
                       </div>
                     ))}
                   </div>
@@ -254,7 +256,7 @@ export default function Dashboard() {
                       <div className={`size-8 rounded-full flex items-center justify-center flex-shrink-0 ${statusColor(entry.status)}`}>{statusIcon(entry.status)}</div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{entry.patientName} - {entry.description}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{entry.insuranceProvider} • {formatDate(entry.createdAt)}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{entry.insuranceProvider} • {formatDate(entry.createdAt, "relative")}</p>
                       </div>
                       {entry.procedureValue && <span className="text-xs font-bold text-green-600 dark:text-green-400 flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
                     </div>
@@ -312,6 +314,8 @@ export default function Dashboard() {
           <div className="space-y-3">
             {loadingEntries ? (
               <div className="card-float px-6 py-10 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+            ) : fetchError ? (
+              <ErrorState onRetry={() => { const token = getToken(); if (token) { setLoadingEntries(true); fetchEntries(token); } }} />
             ) : recentEntries.length === 0 ? (
               <div className="card-float px-6 py-10 text-center">
                 <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
@@ -325,7 +329,7 @@ export default function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-[15px] text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(entry.createdAt)}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(entry.createdAt, "relative")}</p>
                   </div>
                   {entry.procedureValue && <span className="text-sm font-bold text-green-600 dark:text-green-400 flex-shrink-0">{formatCurrency(entry.procedureValue)}</span>}
                 </div>

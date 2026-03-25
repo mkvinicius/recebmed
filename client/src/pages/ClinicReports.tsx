@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DocumentTraining from "@/components/DocumentTraining";
 
@@ -37,8 +36,6 @@ export default function ClinicReports() {
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const locale = getLocale();
-  const currency = getCurrencyCode();
 
   useEffect(() => {
     const token = getToken();
@@ -178,14 +175,14 @@ export default function ClinicReports() {
                     <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-slate-500">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {formatDateShort(group.date)}
+                        {fmtDateShort(group.date)}
                       </span>
                       <span>{group.records.length} {t("clinicReports.records")}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {formatCurrency(group.totalValue)}
+                      {fmtCurrency(group.totalValue)}
                     </span>
                     {expandedFile === group.sourceKey
                       ? <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -207,7 +204,7 @@ export default function ClinicReports() {
                             {report.patientName}
                           </p>
                           <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                            <span>{formatDate(report.procedureDate)}</span>
+                            <span>{fmtDate(report.procedureDate)}</span>
                             {report.description && (
                               <>
                                 <span className="text-slate-300 dark:text-slate-600">•</span>
@@ -218,7 +215,7 @@ export default function ClinicReports() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-3">
                           <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                            {formatCurrency(report.reportedValue)}
+                            {fmtCurrency(report.reportedValue)}
                           </span>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(report.id); }}

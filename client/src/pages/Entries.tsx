@@ -211,6 +211,8 @@ export default function Entries() {
           <div className="space-y-3">
             {loadingEntries ? (
               <div className="card-float px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+            ) : fetchError ? (
+              <ErrorState onRetry={() => { const token = getToken(); if (token) { setLoadingEntries(true); fetchEntries(token); } }} />
             ) : filteredEntries.length === 0 ? (
               <div className="card-float px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
@@ -227,7 +229,7 @@ export default function Entries() {
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.createdAt)}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.createdAt, "relative")}</span>
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
                       </div>
                     </div>

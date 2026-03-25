@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { FileText, Download, Loader2, Calendar, Hash, ExternalLink, ArrowLeft } from "lucide-react";
+import { FileText, Loader2, Calendar, Hash, ExternalLink, ArrowLeft } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
-import { getLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 interface UploadedReport {
@@ -19,7 +18,6 @@ export default function ReportHistory() {
   const [, setLocation] = useLocation();
   const [reports, setReports] = useState<UploadedReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const locale = getLocale();
 
   useEffect(() => {
     const token = getToken();
@@ -87,7 +85,7 @@ export default function ReportHistory() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-[#8855f6]" />
-                    {formatDate(report.uploadDate)}
+                    {fmtDate(report.uploadDate)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5 text-[#8855f6]" />

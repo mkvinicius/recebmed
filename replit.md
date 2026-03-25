@@ -30,7 +30,8 @@ client/src/
   lib/auth.ts        - Token/user management utilities (clearAuth also clears date filter)
   lib/audioUtils.ts  - WAV conversion for iPhone audio compatibility
   lib/queryClient.ts
-  lib/utils.ts
+  lib/utils.ts       - cn() + centralized formatDate(dateStr, style) and formatCurrency(val, fallback) — ALL pages import from here
+  components/ErrorState.tsx - Reusable error state component with retry button (used by Dashboard, Entries, Reports)
 
 server/
   index.ts           - Express entry point (50mb body limit)

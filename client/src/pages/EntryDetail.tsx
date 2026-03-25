@@ -132,7 +132,7 @@ export default function EntryDetail() {
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-semibold mb-1">
                   <Calendar className="w-4 h-4 text-[#8855f6]" /> {t("entryDetail.procedureDate")}
                 </div>
-                <p className="text-slate-800 dark:text-slate-100 font-bold text-lg" data-testid="text-procedure-date">{formatDate(entry.procedureDate)}</p>
+                <p className="text-slate-800 dark:text-slate-100 font-bold text-lg" data-testid="text-procedure-date">{formatDate(entry.procedureDate, "long")}</p>
               </div>
 
               <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">
@@ -171,7 +171,7 @@ export default function EntryDetail() {
                 <Clock className="w-4 h-4 text-[#8855f6]" /> {t("entryDetail.registeredAt")}
               </div>
               <p className="text-slate-800 dark:text-slate-100 font-medium" data-testid="text-created-at">
-                {new Date(entry.createdAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {formatDate(entry.createdAt, "datetime")}
               </p>
             </div>
 

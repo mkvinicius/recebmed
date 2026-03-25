@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DivergencyModal from "@/components/DivergencyModal";
 
@@ -78,7 +78,7 @@ export default function Reconciliation() {
   const { toast } = useToast();
 
   const locale = getLocale();
-  const currency = getCurrencyCode();
+
 
   const getDaysAgo = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -287,9 +287,9 @@ export default function Reconciliation() {
       const rows = entries.map(e => `
         <tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${e.patientName}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;">${formatDate(e.procedureDate)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${fmtDate(e.procedureDate)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;">${e.insuranceProvider || "—"}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${formatCurrency(e.procedureValue)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmtCurrency(e.procedureValue)}</td>
         </tr>
       `).join("");
       return `
@@ -350,7 +350,7 @@ export default function Reconciliation() {
       <p style="margin-top:30px;text-align:center;font-size:10px;color:#aaa;">${t("reconciliation.generatedBy")}</p>
       </body></html>
     `;
-  }, [results, locale, t, formatCurrency, formatDate, activeTab]);
+  }, [results, locale, t, fmtCurrency, fmtDate, activeTab]);
 
   const generateTextSummary = useCallback(() => {
     if (!results) return "";
@@ -372,7 +372,7 @@ export default function Reconciliation() {
       if (!entries || entries.length === 0) return;
       lines.push(`${emoji} *${title} (${entries.length}):*`);
       entries.forEach(e => {
-        lines.push(`  • ${e.patientName} — ${formatDate(e.procedureDate)} — ${formatCurrency(e.procedureValue)}`);
+        lines.push(`  • ${e.patientName} — ${fmtDate(e.procedureDate)} — ${fmtCurrency(e.procedureValue)}`);
       });
       lines.push("");
     };
@@ -397,7 +397,7 @@ export default function Reconciliation() {
 
     lines.push(`📱 ${t("reconciliation.generatedBy")}`);
     return lines.join("\n");
-  }, [results, t, formatCurrency, formatDate, activeTab]);
+  }, [results, t, fmtCurrency, fmtDate, activeTab]);
 
   const handleDownloadPDF = useCallback(() => {
     const html = generateReportHTML();
@@ -707,9 +707,9 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{report.patientName}</p>
                             <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
-                              <span>{formatDate(report.procedureDate)}</span>
+                              <span>{fmtDate(report.procedureDate)}</span>
                               <span className="text-slate-300 dark:text-slate-600">•</span>
-                              <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(getReportValue(report))}</span>
+                              <span className="font-semibold text-green-600 dark:text-green-400">{fmtCurrency(getReportValue(report))}</span>
                               {report.insuranceProvider && (
                                 <>
                                   <span className="text-slate-300 dark:text-slate-600">•</span>
@@ -766,9 +766,9 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          <span data-testid={`text-date-${entry.id}`}>{formatDate(entry.procedureDate)}</span>
+                          <span data-testid={`text-date-${entry.id}`}>{fmtDate(entry.procedureDate)}</span>
                           <span className="text-slate-300 dark:text-slate-600">•</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300" data-testid={`text-value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300" data-testid={`text-value-${entry.id}`}>{fmtCurrency(entry.procedureValue)}</span>
                         </div>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-xs font-bold ${entry.status === "reconciled" || entry.status === "validated" ? "bg-green-50 dark:bg-green-900/30 text-green-600" : entry.status === "divergent" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`} data-testid={`badge-status-${entry.id}`}>
