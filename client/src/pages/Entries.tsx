@@ -8,11 +8,12 @@ import {
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
+import ErrorState from "@/components/ErrorState";
 
 interface DoctorEntry {
   id: string;
@@ -26,18 +27,12 @@ interface DoctorEntry {
   createdAt: string;
 }
 
-const formatCurrency = (val: string | number | null | undefined) => {
-  if (!val) return null;
-  const num = typeof val === "string" ? parseFloat(val) : val;
-  if (isNaN(num)) return null;
-  return num.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
-};
-
 export default function Entries() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -50,17 +45,6 @@ export default function Entries() {
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  const locale = getLocale();
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-    if (d.toDateString() === today.toDateString()) return `${t("dashboard.today")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
-    if (d.toDateString() === yesterday.toDateString()) return `${t("dashboard.yesterday")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
-  };
 
   const statusLabelMap: Record<string, string> = {
     pending: t("common.pending"),
@@ -84,12 +68,14 @@ export default function Entries() {
   }, [quickStatusEntry]);
 
   const fetchEntries = async (token: string) => {
+    setFetchError(false);
     try {
       const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
       const data = await res.json();
       if (res.ok) setEntries(data.entries || []);
-    } catch { }
+      else setFetchError(true);
+    } catch { setFetchError(true); }
     finally { setLoadingEntries(false); }
   };
 

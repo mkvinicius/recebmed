@@ -4,11 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Download, Upload, FileSpreadsheet, Loader2,
-  CheckCircle2, AlertCircle, ChevronDown, Calendar, FileText
+  CheckCircle2, AlertCircle, ChevronDown, Calendar, FileText, ArrowLeft
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/utils";
 
 const MAX_IMPORT_SIZE_MB = 20;
 const MAX_IMPORT_SIZE_BYTES = MAX_IMPORT_SIZE_MB * 1024 * 1024;
@@ -23,12 +24,7 @@ export default function Import() {
   const locale = getLocale();
   const currency = getCurrencyCode();
 
-  const formatCurrency = (val: string | number | null | undefined) => {
-    if (!val) return null;
-    const num = typeof val === "string" ? parseFloat(val) : val;
-    if (isNaN(num)) return null;
-    return num.toLocaleString(locale, { style: "currency", currency });
-  };
+  const fmtCurrency = (val: string | number | null | undefined) => formatCurrency(val);
 
   const [csvYear, setCsvYear] = useState(currentYear - 1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -87,6 +83,10 @@ export default function Import() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
+          <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t("common.back")}</span>
+          </button>
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("import.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("import.subtitle")}</p>
         </div>

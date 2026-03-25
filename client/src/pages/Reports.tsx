@@ -15,6 +15,8 @@ import { getToken, clearAuth } from "@/lib/auth";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
 import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
+import { formatCurrency as fmtCurrency } from "@/lib/utils";
+import ErrorState from "@/components/ErrorState";
 
 interface DoctorEntry {
   id: string;
@@ -57,7 +59,7 @@ export default function Reports() {
   const currency = getCurrencyCode();
 
   const formatCurrency = (value: number): string => {
-    return value.toLocaleString(locale, { style: "currency", currency });
+    return fmtCurrency(value) || "—";
   };
 
   const getMonthLabel = (date: Date): string => {

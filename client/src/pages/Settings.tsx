@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2,
+  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft,
 } from "lucide-react";
 import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -113,6 +113,10 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
+          <button onClick={() => setLocation("/profile")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t("common.back")}</span>
+          </button>
           <h2 className="text-2xl font-extrabold" data-testid="text-settings-title">{t("settings.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("settings.subtitle")}</p>
         </div>

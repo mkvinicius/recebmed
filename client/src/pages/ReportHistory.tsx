@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { FileText, Download, Loader2, Calendar, Hash, ExternalLink } from "lucide-react";
+import { FileText, Download, Loader2, Calendar, Hash, ExternalLink, ArrowLeft } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
+import { formatDate } from "@/lib/utils";
 
 interface UploadedReport {
   id: string;
@@ -33,11 +34,7 @@ export default function ReportHistory() {
       .finally(() => setLoading(false));
   }, []);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(locale, {
-      day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
-    });
-  };
+  const fmtDate = (dateStr: string) => formatDate(dateStr, "datetime");
 
   const fileIcon = (name: string) => {
     const ext = name.split(".").pop()?.toLowerCase();
@@ -57,6 +54,10 @@ export default function ReportHistory() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
       <div className="pt-2 pb-6 text-white">
+        <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+          <ArrowLeft className="w-4 h-4" />
+          <span>{t("common.back")}</span>
+        </button>
         <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reportHistory.title")}</h2>
         <p className="text-white/70 text-sm mt-1">{t("reportHistory.subtitle")}</p>
       </div>

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
 import { useTranslation } from "react-i18next";
 import { getLocale } from "@/lib/i18n";
+import { formatDate } from "@/lib/utils";
 
 const MAX_IMAGE_SIZE_MB = 20;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
@@ -56,11 +57,7 @@ export default function Capture() {
     });
   };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
+  const fmtDate = (dateStr: string) => formatDate(dateStr, "short");
 
   const processPhoto = async (base64: string, skipDuplicateCheck: boolean) => {
     const token = getToken();

@@ -6,11 +6,12 @@ import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
   Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban,
-  UserPlus, CheckCheck, BarChart3
+  UserPlus, CheckCheck, BarChart3, ArrowLeft
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import DivergencyModal from "@/components/DivergencyModal";
 
 const MAX_FILE_SIZE_MB = 20;
@@ -85,17 +86,9 @@ export default function Reconciliation() {
     return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const formatCurrency = (val: string | number | null | undefined) => {
-    if (!val) return "—";
-    const num = typeof val === "string" ? parseFloat(val) : val;
-    if (isNaN(num)) return "—";
-    return num.toLocaleString(locale, { style: "currency", currency });
-  };
+  const fmtCurrency = (val: string | number | null | undefined) => formatCurrency(val, "—");
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
+  const fmtDate = (dateStr: string) => formatDate(dateStr, "short");
 
   const getFileType = (file: File): "pdf" | "image" | "csv" | null => {
     if (file.type === "application/pdf") return "pdf";
@@ -429,6 +422,10 @@ export default function Reconciliation() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
+          <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t("common.back")}</span>
+          </button>
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reconciliation.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>

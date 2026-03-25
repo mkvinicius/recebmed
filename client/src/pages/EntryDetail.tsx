@@ -3,7 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, CheckCircle2, AlertCircle, Camera, Mic, PenLine, Loader2, Stethoscope, ShieldCheck } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { formatDate, formatCurrency } from "@/lib/utils";
 
 interface EntryData {
   id: string;
@@ -18,13 +18,6 @@ interface EntryData {
   createdAt: string;
 }
 
-const formatCurrency = (val: string | number | null | undefined) => {
-  if (!val) return null;
-  const num = typeof val === "string" ? parseFloat(val) : val;
-  if (isNaN(num)) return null;
-  return num.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
-};
-
 export default function EntryDetail() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -32,13 +25,6 @@ export default function EntryDetail() {
   const [entry, setEntry] = useState<EntryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const locale = getLocale();
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" });
-  };
 
   useEffect(() => {
     const token = getToken();

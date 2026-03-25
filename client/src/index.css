@@ -61,6 +61,11 @@
   --input: 220 13% 91%;
   --ring: 262 90% 65%;
   --radius: 1rem;
+  --primary-border: 262 80% 55%;
+  --destructive-border: 0 70% 50%;
+  --secondary-border: 220 13% 86%;
+  --button-outline: hsl(220 13% 86%);
+  --badge-outline: hsl(220 13% 86%);
 
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 222 47% 11%;
@@ -78,6 +83,11 @@
   --card: 270 20% 10%;
   --card-foreground: 0 0% 95%;
   --popover: 270 20% 10%;
+  --primary-border: 262 80% 60%;
+  --destructive-border: 0 60% 40%;
+  --secondary-border: 270 15% 25%;
+  --button-outline: hsl(270 15% 25%);
+  --badge-outline: hsl(270 15% 25%);
   --popover-foreground: 0 0% 95%;
   --primary: 262 90% 70%;
   --primary-foreground: 0 0% 100%;
@@ -130,6 +140,18 @@
   background: rgb(15 23 42);
   border-color: rgba(255, 255, 255, 0.06);
   box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.3), 0 1px 3px -1px rgba(0, 0, 0, 0.2);
+}
+
+.hover-elevate {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.hover-elevate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.12);
+}
+.active-elevate-2:active {
+  transform: translateY(0px);
+  box-shadow: none;
 }
 
 @layer base {

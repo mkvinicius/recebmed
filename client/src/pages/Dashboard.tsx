@@ -9,11 +9,12 @@ import {
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import ProjectionsPanel from "@/components/ProjectionsPanel";
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
 import AppTour from "@/components/AppTour";
+import ErrorState from "@/components/ErrorState";
 
 interface DoctorEntry {
   id: string;
@@ -39,22 +40,6 @@ interface NotificationItem {
 export default function Dashboard() {
   const { t } = useTranslation();
 
-  const formatCurrency = (val: string | number | null | undefined) => {
-    if (!val) return null;
-    const num = typeof val === "string" ? parseFloat(val) : val;
-    if (isNaN(num)) return null;
-    return num.toLocaleString(getLocale(), { style: "currency", currency: getCurrencyCode() });
-  };
-
-  const formatDate = (dateStr: string) => {
-    const locale = getLocale();
-    const d = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-    if (d.toDateString() === today.toDateString()) return `${t("dashboard.today")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
-    if (d.toDateString() === yesterday.toDateString()) return `${t("dashboard.yesterday")}, ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
-  };
   const [, setLocation] = useLocation();
   const initialUser = getUser();
   const userName = initialUser?.name || "";

@@ -2,11 +2,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
-  Trash2, Loader2, FileText, Calendar, ChevronDown, ChevronUp, File, Upload
+  Trash2, Loader2, FileText, Calendar, ChevronDown, ChevronUp, File, Upload, ArrowLeft
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale, getCurrencyCode } from "@/lib/i18n";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import DocumentTraining from "@/components/DocumentTraining";
 
 interface ClinicReport {
@@ -78,21 +79,11 @@ export default function ClinicReports() {
     } finally { setDeletingId(null); }
   };
 
-  const formatCurrency = (value: string | number) => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    if (isNaN(num)) return (0).toLocaleString(locale, { style: "currency", currency });
-    return num.toLocaleString(locale, { style: "currency", currency });
-  };
+  const fmtCurrency = (value: string | number) => formatCurrency(value, "—") || "—";
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
+  const fmtDate = (dateStr: string) => formatDate(dateStr, "short");
 
-  const formatDateShort = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
-  };
+  const fmtDateShort = (dateStr: string) => formatDate(dateStr, "medium");
 
   const fileGroups: FileGroup[] = useMemo(() => {
     const groups = new Map<string, ClinicReport[]>();
@@ -125,6 +116,10 @@ export default function ClinicReports() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
+          <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t("common.back")}</span>
+          </button>
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>

@@ -8,6 +8,7 @@ import {
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale } from "@/lib/i18n";
+import { formatDate } from "@/lib/utils";
 
 interface DoctorEntry {
   id: string;
@@ -74,12 +75,7 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
     fetchDivergence();
   }, [entry.id]);
 
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return "—";
-    try {
-      return new Date(dateStr).toLocaleDateString(getLocale(), { day: "2-digit", month: "short", year: "numeric" });
-    } catch { return dateStr; }
-  };
+  const fmtDate = (dateStr: string | null | undefined) => formatDate(dateStr);
 
   const saveEntry = async (data: Record<string, any>) => {
     const token = getToken();
