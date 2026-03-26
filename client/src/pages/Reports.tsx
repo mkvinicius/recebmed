@@ -278,7 +278,7 @@ export default function Reports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-1 pb-8 text-white">
+        <div className="pt-1 pb-6 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
@@ -292,7 +292,7 @@ export default function Reports() {
 
         <ReportsTabs />
 
-        <div className="relative z-20 -mt-4 mb-4">
+        <div className="relative z-20 mb-4">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"

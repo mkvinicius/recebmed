@@ -156,12 +156,12 @@ export default function Entries() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-1 pb-8 text-white">
+        <div className="pt-1 pb-14 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("entries.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
 
-        <div className="relative z-20 -mt-4 mb-4">
+        <div className="relative z-20 mb-4">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("entries.searchPlaceholder")} className="w-full pl-11 pr-10 h-12 rounded-2xl bg-white dark:bg-slate-900 border-0 shadow-card text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all" data-testid="input-search" />
         </div>
