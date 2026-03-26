@@ -1,7 +1,6 @@
 import { createHash } from "crypto";
 import { llmChatCompletion, getComplexParsingProvider } from "./llm";
-import * as pdfParseModule from "pdf-parse";
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+import { parsePdfText } from "./pdf-util";
 
 export interface ColumnMapping {
   sourceColumn: string;
@@ -38,8 +37,7 @@ export async function analyzeDocumentStructure(
   let textContent: string;
 
   if (fileType === "pdf") {
-    const pdfData = await pdfParse(fileBuffer);
-    textContent = pdfData.text;
+    textContent = await parsePdfText(fileBuffer);
   } else {
     textContent = fileBuffer.toString("utf-8");
   }

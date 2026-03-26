@@ -1,5 +1,4 @@
-import * as pdfParseModule from "pdf-parse";
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+import { parsePdfText } from "./pdf-util";
 import { getOpenAIClient } from "./openai";
 import { storage } from "./storage";
 import { buildTemplatePrompt } from "./document-validator";
@@ -179,8 +178,7 @@ function parseAIResponse(content: string): PdfExtractedEntry[] {
 export async function extractPdfDataWithTemplate(pdfBuffer: Buffer, templateMappingJson: string): Promise<PdfExtractedEntry[]> {
   let text: string;
   try {
-    const pdfData = await pdfParse(pdfBuffer);
-    text = pdfData.text;
+    text = await parsePdfText(pdfBuffer);
   } catch (pdfErr) {
     console.error("PDF parse error:", pdfErr);
     throw new Error("Não foi possível ler o PDF.");
@@ -214,8 +212,7 @@ export async function extractPdfDataWithTemplate(pdfBuffer: Buffer, templateMapp
 export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEntry[]> {
   let text: string;
   try {
-    const pdfData = await pdfParse(pdfBuffer);
-    text = pdfData.text;
+    text = await parsePdfText(pdfBuffer);
   } catch (pdfErr) {
     console.error("PDF parse error:", pdfErr);
     throw new Error("Não foi possível ler o PDF. O arquivo pode estar corrompido ou protegido por senha.");
