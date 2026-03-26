@@ -6,7 +6,7 @@ import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
   Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban,
-  UserPlus, CheckCheck, BarChart3, ArrowLeft
+  UserPlus, CheckCheck, BarChart3, ArrowLeft, CalendarDays, X
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -75,6 +75,8 @@ export default function Reconciliation() {
   const [isReReconciling, setIsReReconciling] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [exportDateFrom, setExportDateFrom] = useState<string>("");
+  const [exportDateTo, setExportDateTo] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -90,6 +92,17 @@ export default function Reconciliation() {
   const fmtCurrency = (val: string | number | null | undefined) => formatCurrency(val, "—");
 
   const fmtDate = (dateStr: string) => formatDate(dateStr, "short");
+
+  const filterByExportDate = useCallback(<T extends { procedureDate: string }>(entries: T[]): T[] => {
+    if (!exportDateFrom && !exportDateTo) return entries;
+    return entries.filter(e => {
+      const d = e.procedureDate?.slice(0, 10);
+      if (!d) return true;
+      if (exportDateFrom && d < exportDateFrom) return false;
+      if (exportDateTo && d > exportDateTo) return false;
+      return true;
+    });
+  }, [exportDateFrom, exportDateTo]);
 
   const getFileType = (file: File): "pdf" | "image" | "csv" | null => {
     if (file.type === "application/pdf") return "pdf";
@@ -319,23 +332,28 @@ export default function Reconciliation() {
     const reportTitle = tabLabelMap[activeTab] || t("reconciliation.title");
 
     const sections = activeTab === "total" ? [
-      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
-      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
-      { title: t("reconciliation.pendingTab"), entries: results.pending, color: "#ef4444" },
+      { title: t("reconciliation.receivedTab"), entries: filterByExportDate(results.reconciled), color: "#16a34a" },
+      { title: t("reconciliation.divergentTab"), entries: filterByExportDate(results.divergent), color: "#d97706" },
+      { title: t("reconciliation.pendingTab"), entries: filterByExportDate(results.pending), color: "#ef4444" },
     ] : activeTab === "unmatched" ? [
-      { title: t("reconciliation.unmatchedTab"), entries: (results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" })), color: "#9333ea" },
+      { title: t("reconciliation.unmatchedTab"), entries: filterByExportDate((results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" }))), color: "#9333ea" },
     ] : activeTab === "verified" ? [
-      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
-      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
+      { title: t("reconciliation.receivedTab"), entries: filterByExportDate(results.reconciled), color: "#16a34a" },
+      { title: t("reconciliation.divergentTab"), entries: filterByExportDate(results.divergent), color: "#d97706" },
     ] : activeTab === "received" ? [
-      { title: t("reconciliation.receivedTab"), entries: results.reconciled, color: "#16a34a" },
+      { title: t("reconciliation.receivedTab"), entries: filterByExportDate(results.reconciled), color: "#16a34a" },
     ] : activeTab === "divergent" ? [
-      { title: t("reconciliation.divergentTab"), entries: results.divergent, color: "#d97706" },
+      { title: t("reconciliation.divergentTab"), entries: filterByExportDate(results.divergent), color: "#d97706" },
     ] : activeTab === "pending" ? [
-      { title: t("reconciliation.pendingTab"), entries: results.pending, color: "#ef4444" },
+      { title: t("reconciliation.pendingTab"), entries: filterByExportDate(results.pending), color: "#ef4444" },
     ] : [];
 
     const sectionCount = sections.reduce((sum, s) => sum + (s.entries?.length || 0), 0);
+
+    const periodLabel = (exportDateFrom || exportDateTo) ? t("reconciliation.exportFiltered", {
+      from: exportDateFrom ? fmtDate(exportDateFrom) : "—",
+      to: exportDateTo ? fmtDate(exportDateTo) : "—"
+    }) : "";
 
     return `
       <!DOCTYPE html><html><head><meta charset="utf-8">
@@ -345,13 +363,15 @@ export default function Reconciliation() {
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
         <div style="width:40px;height:40px;background:#8855f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;">R</div>
         <div><h1 style="margin:0;font-size:20px;color:#8855f6;">RecebMed</h1>
-        <p style="margin:0;font-size:12px;color:#888;">${reportTitle} — ${sectionCount} ${t("common.records")} — ${dateStr}</p></div>
+        <p style="margin:0;font-size:12px;color:#888;">${reportTitle} — ${sectionCount} ${t("common.records")} — ${dateStr}</p>
+        ${periodLabel ? `<p style="margin:2px 0 0;font-size:11px;color:#8855f6;font-weight:600;">${periodLabel}</p>` : ""}
+        </div>
       </div>
       ${sections.map(s => renderSection(s.title, s.entries, s.color)).join("")}
       <p style="margin-top:30px;text-align:center;font-size:10px;color:#aaa;">${t("reconciliation.generatedBy")}</p>
       </body></html>
     `;
-  }, [results, locale, t, fmtCurrency, fmtDate, activeTab]);
+  }, [results, locale, t, fmtCurrency, fmtDate, activeTab, filterByExportDate, exportDateFrom, exportDateTo]);
 
   const generateTextSummary = useCallback(() => {
     if (!results) return "";
@@ -378,27 +398,36 @@ export default function Reconciliation() {
       lines.push("");
     };
 
+    if (exportDateFrom || exportDateTo) {
+      const periodLabel = t("reconciliation.exportFiltered", {
+        from: exportDateFrom ? fmtDate(exportDateFrom) : "—",
+        to: exportDateTo ? fmtDate(exportDateTo) : "—"
+      });
+      lines.push(`📅 ${periodLabel}`);
+      lines.push("");
+    }
+
     if (activeTab === "total") {
-      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
-      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
-      addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+      addSection("✅", t("reconciliation.receivedTab"), filterByExportDate(results.reconciled));
+      addSection("⚠️", t("reconciliation.divergentTab"), filterByExportDate(results.divergent));
+      addSection("🔴", t("reconciliation.pendingTab"), filterByExportDate(results.pending));
     } else if (activeTab === "unmatched") {
-      const unmatchedEntries = (results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" }));
+      const unmatchedEntries = filterByExportDate((results.unmatchedClinic || []).map((r: any) => ({ patientName: r.patientName, procedureDate: r.procedureDate, insuranceProvider: r.insuranceProvider, procedureValue: r.reportValue || r.reportedValue || "0" })));
       addSection("🟣", t("reconciliation.unmatchedTab"), unmatchedEntries);
     } else if (activeTab === "verified") {
-      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
-      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+      addSection("✅", t("reconciliation.receivedTab"), filterByExportDate(results.reconciled));
+      addSection("⚠️", t("reconciliation.divergentTab"), filterByExportDate(results.divergent));
     } else if (activeTab === "received") {
-      addSection("✅", t("reconciliation.receivedTab"), results.reconciled);
+      addSection("✅", t("reconciliation.receivedTab"), filterByExportDate(results.reconciled));
     } else if (activeTab === "divergent") {
-      addSection("⚠️", t("reconciliation.divergentTab"), results.divergent);
+      addSection("⚠️", t("reconciliation.divergentTab"), filterByExportDate(results.divergent));
     } else if (activeTab === "pending") {
-      addSection("🔴", t("reconciliation.pendingTab"), results.pending);
+      addSection("🔴", t("reconciliation.pendingTab"), filterByExportDate(results.pending));
     }
 
     lines.push(`📱 ${t("reconciliation.generatedBy")}`);
     return lines.join("\n");
-  }, [results, t, fmtCurrency, fmtDate, activeTab]);
+  }, [results, t, fmtCurrency, fmtDate, activeTab, filterByExportDate, exportDateFrom, exportDateTo]);
 
   const handleDownloadPDF = useCallback(() => {
     const html = generateReportHTML();
@@ -634,6 +663,57 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
           <div className="space-y-4 pb-12" data-testid="section-results">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-4">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
+
+              <div className="mb-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarDays className="w-4 h-4 text-[#8855f6]" />
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t("reconciliation.exportDateFilter")}</span>
+                  {(exportDateFrom || exportDateTo) && (
+                    <button
+                      onClick={() => { setExportDateFrom(""); setExportDateTo(""); }}
+                      className="ml-auto flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-500 transition-colors"
+                      data-testid="button-clear-export-dates"
+                      aria-label={t("reconciliation.exportAllPeriod")}
+                    >
+                      <X className="w-3 h-3" />
+                      {t("common.clear")}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block mb-0.5">{t("reconciliation.exportFrom")}</label>
+                    <input
+                      type="date"
+                      value={exportDateFrom}
+                      max={exportDateTo || undefined}
+                      onChange={(e) => setExportDateFrom(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-[#8855f6]/30 focus:border-[#8855f6] outline-none transition-all"
+                      data-testid="input-export-date-from"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block mb-0.5">{t("reconciliation.exportTo")}</label>
+                    <input
+                      type="date"
+                      value={exportDateTo}
+                      min={exportDateFrom || undefined}
+                      onChange={(e) => setExportDateTo(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-[#8855f6]/30 focus:border-[#8855f6] outline-none transition-all"
+                      data-testid="input-export-date-to"
+                    />
+                  </div>
+                </div>
+                {(exportDateFrom || exportDateTo) && (
+                  <p className="text-[10px] text-[#8855f6] font-medium mt-1.5">
+                    {t("reconciliation.exportFiltered", {
+                      from: exportDateFrom ? fmtDate(exportDateFrom) : "—",
+                      to: exportDateTo ? fmtDate(exportDateTo) : "—"
+                    })}
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={handleDownloadPDF}
