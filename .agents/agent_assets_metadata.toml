@@ -24,3 +24,9 @@ id = "mUNkU2-ZoWYJWDePDTAZP"
 uri = "file://RecebMed_UX_UI_Audit_Report.md"
 type = "text"
 title = "RecebMed — Auditoria Completa de UX/UI"
+
+[[outputs]]
+id = "RtvCT3g4kopZ3UKt2HfpQ"
+uri = "file://AUDITORIA_RECEBMED.md"
+type = "text"
+title = "Auditoria Completa RecebMed"
