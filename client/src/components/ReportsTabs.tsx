@@ -15,17 +15,17 @@ export default function ReportsTabs() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5" data-testid="reports-tabs">
+    <div className="flex gap-1.5 overflow-x-auto no-scrollbar p-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-card" data-testid="reports-tabs">
       {tabs.map((tab) => {
         const isActive = location === tab.path;
         return (
           <button
             key={tab.path}
             onClick={() => setLocation(tab.path)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex-shrink-0 ${
               isActive
                 ? "bg-[#8855f6] text-white shadow-sm"
-                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
             data-testid={`reports-tab-${tab.path.replace(/\//g, "-").slice(1)}`}
           >

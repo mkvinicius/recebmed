@@ -113,7 +113,7 @@ export default function ClinicReports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-1 pb-4 text-white">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
           <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors md:hidden" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" />
             <span>{t("common.back")}</span>
@@ -121,7 +121,7 @@ export default function ClinicReports() {
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>
-        <div className="mb-4"><ReportsTabs /></div>
+        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
 
         <div className="mb-4 flex items-center justify-between px-3 py-3 bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40">
           <div className="flex items-center gap-3">

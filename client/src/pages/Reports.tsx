@@ -278,19 +278,16 @@ export default function Reports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6">
-          <div className="text-white mb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reports.title")}</h2>
-                <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
-              </div>
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reports.title")}</h2>
+              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
             </div>
           </div>
-          <ReportsTabs />
         </div>
 
         <div className="relative z-20 -mt-6 mb-4">
@@ -309,6 +306,8 @@ export default function Reports() {
             </button>
           )}
         </div>
+
+        <div className="mb-4"><ReportsTabs /></div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex flex-wrap gap-2 mb-3">
