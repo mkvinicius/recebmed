@@ -295,13 +295,13 @@ export default function Reports() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[180px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
                 type="text"
                 placeholder={t("entries.searchPlaceholder")}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border-0"
+                className="pl-10 h-10 rounded-xl border-slate-200 text-sm"
                 data-testid="search-input"
               />
               {searchQuery && (
@@ -336,7 +336,7 @@ export default function Reports() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
                 data-testid="filter-date-from"
               />
               <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateTo")}</span>
@@ -344,7 +344,7 @@ export default function Reports() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
                 data-testid="filter-date-to"
               />
               {(dateFrom || dateTo) && (
@@ -440,7 +440,7 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <button onClick={() => toggleFilter("all")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "all" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-total-production">
+          <button onClick={() => toggleFilter("all")} className={`bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "all" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-total-production">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><Activity className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalProduction")}</span>
@@ -452,7 +452,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("particular")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "particular" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-particular">
+          <button onClick={() => toggleFilter("particular")} className={`bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "particular" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-particular">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.particularLabel")}</span>
@@ -464,7 +464,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("sus")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "sus" ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-sus">
+          <button onClick={() => toggleFilter("sus")} className={`bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "sus" ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-sus">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">SUS</span>
@@ -476,7 +476,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("convenio")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "convenio" ? "border-green-500 ring-2 ring-green-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-convenio">
+          <button onClick={() => toggleFilter("convenio")} className={`bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "convenio" ? "border-green-500 ring-2 ring-green-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-convenio">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><Stethoscope className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.convenioLabel")}</span>

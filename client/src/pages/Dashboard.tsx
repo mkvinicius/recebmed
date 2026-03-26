@@ -209,7 +209,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="pt-1 pb-6 text-white">
+        <div className="pt-1 pb-4 text-white">
           <p className="text-white/80 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
           <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">{t("common.dr")} {userName.split(" ").slice(0, 2).join(" ") || t("common.doctor")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("dashboard.financialSummary")}</p>

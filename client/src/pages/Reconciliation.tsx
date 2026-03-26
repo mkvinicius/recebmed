@@ -450,7 +450,7 @@ export default function Reconciliation() {
   }, [generateTextSummary, t]);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
           <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors md:hidden" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" />
@@ -630,7 +630,7 @@ export default function Reconciliation() {
               </div>
             </div>
 
-            <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 mb-4 overflow-x-auto">
+            <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-4 mb-4 overflow-x-auto">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t("reconciliation.csvExample")}</p>
               <pre className="text-xs text-green-400 font-mono leading-relaxed whitespace-pre">
 {`paciente;data;convenio;procedimento;valor
@@ -664,53 +664,36 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-4">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
 
-              <div className="mb-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-2 mb-2">
-                  <CalendarDays className="w-4 h-4 text-[#8855f6]" />
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t("reconciliation.exportDateFilter")}</span>
-                  {(exportDateFrom || exportDateTo) && (
-                    <button
-                      onClick={() => { setExportDateFrom(""); setExportDateTo(""); }}
-                      className="ml-auto flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-500 transition-colors"
-                      data-testid="button-clear-export-dates"
-                      aria-label={t("reconciliation.exportAllPeriod")}
-                    >
-                      <X className="w-3 h-3" />
-                      {t("common.clear")}
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block mb-0.5">{t("reconciliation.exportFrom")}</label>
-                    <input
-                      type="date"
-                      value={exportDateFrom}
-                      max={exportDateTo || undefined}
-                      onChange={(e) => setExportDateFrom(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-[#8855f6]/30 focus:border-[#8855f6] outline-none transition-all"
-                      data-testid="input-export-date-from"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block mb-0.5">{t("reconciliation.exportTo")}</label>
-                    <input
-                      type="date"
-                      value={exportDateTo}
-                      min={exportDateFrom || undefined}
-                      onChange={(e) => setExportDateTo(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-[#8855f6]/30 focus:border-[#8855f6] outline-none transition-all"
-                      data-testid="input-export-date-to"
-                    />
-                  </div>
-                </div>
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+                <CalendarDays className="w-3.5 h-3.5 text-[#8855f6]" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("reconciliation.exportFrom")}</span>
+                <input
+                  type="date"
+                  value={exportDateFrom}
+                  max={exportDateTo || undefined}
+                  onChange={(e) => setExportDateFrom(e.target.value)}
+                  className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
+                  data-testid="input-export-date-from"
+                />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("reconciliation.exportTo")}</span>
+                <input
+                  type="date"
+                  value={exportDateTo}
+                  min={exportDateFrom || undefined}
+                  onChange={(e) => setExportDateTo(e.target.value)}
+                  className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
+                  data-testid="input-export-date-to"
+                />
                 {(exportDateFrom || exportDateTo) && (
-                  <p className="text-[10px] text-[#8855f6] font-medium mt-1.5">
-                    {t("reconciliation.exportFiltered", {
-                      from: exportDateFrom ? fmtDate(exportDateFrom) : "—",
-                      to: exportDateTo ? fmtDate(exportDateTo) : "—"
-                    })}
-                  </p>
+                  <button
+                    onClick={() => { setExportDateFrom(""); setExportDateTo(""); }}
+                    className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-500 transition-colors"
+                    data-testid="button-clear-export-dates"
+                    aria-label={t("reconciliation.exportAllPeriod")}
+                  >
+                    <X className="w-3 h-3" />
+                    {t("common.clear")}
+                  </button>
                 )}
               </div>
 

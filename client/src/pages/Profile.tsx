@@ -174,7 +174,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="max-w-lg mx-auto px-4 sm:px-6">
+    <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("profile.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("profile.subtitle")}</p>
