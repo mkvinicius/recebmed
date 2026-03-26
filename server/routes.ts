@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { createHash, randomBytes } from "crypto";
+import { createHash } from "crypto";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, passwordSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
@@ -15,14 +15,13 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { JWT_SECRET } from "./jwt-secret";
 
 function computeImageHash(base64: string): string {
   return createHash("sha256").update(base64).digest("hex");
 }
 
 const BCRYPT_ROUNDS = 12;
-
-const JWT_SECRET = process.env.JWT_SECRET || randomBytes(64).toString("hex");
 
 function generateToken(userId: string): string {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "7d" });

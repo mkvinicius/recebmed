@@ -28,8 +28,14 @@ export default function ProjectionsPanel() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] mb-8 flex items-center justify-center">
-        <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-card border border-slate-100/60 dark:border-slate-700/40 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[1,2,3].map(i => <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />)}
+        </div>
       </div>
     );
   }

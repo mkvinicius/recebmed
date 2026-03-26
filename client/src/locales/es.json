@@ -33,7 +33,15 @@
     "all": "Todos",
     "records": "registros",
     "entries": "registros",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "dr": "Dr.",
+    "doctor": "Doctor",
+    "drInitials": "Dr",
+    "close": "Cerrar",
+    "goBack": "Volver",
+    "previousStep": "Paso anterior",
+    "clearFilter": "Limpiar filtro",
+    "deleteEntry": "Eliminar registro"
   },
   "login": {
     "title": "Iniciar sesión",

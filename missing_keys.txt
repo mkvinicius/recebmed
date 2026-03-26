@@ -1,0 +1,14 @@
+clinicReports.deletedDesc
+confirm.savedDesc
+confirm.savedSingle
+dashboard.deletedDesc
+dashboard.updatedDesc
+import.importedCount
+import.importedResult
+insuranceProvider
+method
+reconciliation.acceptedDesc
+reconciliation.readError
+reconciliation.required
+settings.passwordChanged
+settings.profileUpdated

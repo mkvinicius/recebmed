@@ -344,7 +344,7 @@ export default function ConfirmEntry() {
       <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3 text-white">
-            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr"; return (
+            {(() => { const u = getUser(); const p = u?.profilePhotoUrl; const i = u?.name ? u.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : t("common.drInitials"); return (
               <div className="size-12 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-lg overflow-hidden" data-testid="avatar-profile">
                 {p ? <img src={p} alt={t("common.profile")} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-white tracking-wide">{i}</span>}
               </div>
@@ -509,7 +509,7 @@ export default function ConfirmEntry() {
       {duplicateWarning && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 relative" data-testid="modal-duplicate-data-warning">
-            <button onClick={() => setDuplicateWarning(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="button-close-data-duplicate">
+            <button onClick={() => setDuplicateWarning(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="button-close-data-duplicate" aria-label={t("common.close")}>
               <X className="w-5 h-5" />
             </button>
 

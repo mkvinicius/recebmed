@@ -486,7 +486,12 @@ PROCESSO:
    - "divergent": Nome encontrado mas algum dado complementar diverge (informe qual)
    - "pending": Nome NÃO encontrado na lista da clínica (nenhum paciente similar)
 
-IMPORTANTE:
+REGRAS DE DIVERGÊNCIA:
+- O NOME DO PACIENTE é o campo mais importante para matching
+- Se um campo está preenchido em um lado e VAZIO no outro, NÃO é divergência — ignore esse campo
+- Divergência SÓ ocorre quando AMBOS os lados têm o campo preenchido e os valores são DIFERENTES
+- Exemplo: médico tem convênio "Unimed" e clínica tem vazio → NÃO é divergente
+- Exemplo: médico tem convênio "Unimed" e clínica tem "Amil" → É divergente
 - NÃO compare valores financeiros
 - Se o paciente aparece mais de uma vez, use a combinação nome+data para identificar o registro correto
 - NUNCA faça match por posição na lista — sempre por nome

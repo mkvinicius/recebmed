@@ -188,13 +188,14 @@ export default function Entries() {
                   onClick={clearDates}
                   className="px-2 py-1 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   data-testid="button-clear-dates"
+                  aria-label={t("common.clearFilter")}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
             {uniqueInsurances.length > 1 && (
-              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance">
+              <select value={insuranceFilter} onChange={e => setInsuranceFilter(e.target.value)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0 cursor-pointer" data-testid="filter-insurance" aria-label={t("common.insurance")}>
                 <option value="all">{t("entries.allInsurances")}</option>
                 {uniqueInsurances.map(ins => <option key={ins} value={ins}>{ins}</option>)}
               </select>

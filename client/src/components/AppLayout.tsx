@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const user = getUser();
   const profilePhotoUrl = user?.profilePhotoUrl || null;
-  const userInitials = user?.name ? user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
+  const userInitials = user?.name ? user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : t("common.drInitials");
   const showPwWarning = getRequiresPasswordUpdate();
 
   const tabs = [
@@ -72,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{user?.name || "Dr."}</p>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{user?.name || t("common.dr")}</p>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{user?.email}</p>
             </div>
           </div>

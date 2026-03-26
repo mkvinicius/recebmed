@@ -33,7 +33,15 @@
     "all": "Todos",
     "records": "registros",
     "entries": "lançamentos",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "dr": "Dr.",
+    "doctor": "Doutor",
+    "drInitials": "Dr",
+    "close": "Fechar",
+    "goBack": "Voltar",
+    "previousStep": "Passo anterior",
+    "clearFilter": "Limpar filtro",
+    "deleteEntry": "Excluir lançamento"
   },
   "login": {
     "title": "Entrar na sua conta",

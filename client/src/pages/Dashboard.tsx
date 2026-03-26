@@ -47,7 +47,7 @@ export default function Dashboard() {
   const initialUser = getUser();
   const userName = initialUser?.name || "";
   const profilePhotoUrl = initialUser?.profilePhotoUrl || null;
-  const userInitials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : "Dr";
+  const userInitials = userName ? userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() : t("common.drInitials");
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [fetchError, setFetchError] = useState(false);
@@ -187,7 +187,7 @@ export default function Dashboard() {
                 {unreadCount > 0 && <span className="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center" data-testid="badge-unread">{unreadCount > 9 ? "9+" : unreadCount}</span>}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("dashboard.notifications")}</h4>
                     {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />{t("dashboard.markAllRead")}</button>}
@@ -211,7 +211,7 @@ export default function Dashboard() {
 
         <div className="pt-1 pb-6 text-white">
           <p className="text-white/70 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
-          <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">Dr. {userName.split(" ").slice(0, 2).join(" ") || "Doutor"}</h2>
+          <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">{t("common.dr")} {userName.split(" ").slice(0, 2).join(" ") || t("common.doctor")}</h2>
           <p className="text-white/60 text-sm mt-1">{t("dashboard.financialSummary")}</p>
         </div>
 
@@ -228,7 +228,7 @@ export default function Dashboard() {
             />
             {searchLoading && <Loader2 className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-[#8855f6] animate-spin" />}
             {searchQuery && !searchLoading && (
-              <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowSearch(false); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowSearch(false); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label={t("common.clearFilter")}>
                 <X className="w-4 h-4" />
               </button>
             )}

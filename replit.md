@@ -48,6 +48,7 @@ server/
   audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched
   storage.ts         - Database storage interface (Drizzle) — includes getDoctorEntriesPaginated(doctorId, {page, limit, status, search, insuranceProvider, dateFrom, dateTo})
   db.ts              - Database connection pool
+  jwt-secret.ts      - Shared JWT_SECRET module (single source of truth for main routes + object storage routes)
   replit_integrations/object_storage/ - Object storage service (GCS presigned URLs, ACL)
 
 shared/

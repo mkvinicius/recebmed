@@ -143,7 +143,7 @@ export default function AppTour() {
               <Sparkles className="w-4 h-4 text-white/80" />
               <span className="text-white text-xs font-bold">{currentStep + 1}/{steps.length}</span>
             </div>
-            <button onClick={completeTour} className="text-white/60 hover:text-white transition-colors" data-testid="tour-close">
+            <button onClick={completeTour} className="text-white/60 hover:text-white transition-colors" data-testid="tour-close" aria-label={t("common.close")}>
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -167,6 +167,7 @@ export default function AppTour() {
                   onClick={prevStep}
                   className="size-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   data-testid="tour-prev"
+                  aria-label={t("common.previousStep")}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>

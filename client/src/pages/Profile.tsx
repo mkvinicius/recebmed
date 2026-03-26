@@ -205,7 +205,7 @@ export default function Profile() {
               </button>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-slate-800 dark:text-slate-200 truncate" data-testid="text-user-name">{userName || "Doutor"}</p>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-200 truncate" data-testid="text-user-name">{userName || t("common.doctor")}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 truncate" data-testid="text-user-email">{userEmail}</p>
               {profilePhotoUrl && (
                 <button

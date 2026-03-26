@@ -33,7 +33,15 @@
     "all": "Tous",
     "records": "enregistrements",
     "entries": "entrées",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "dr": "Dr.",
+    "doctor": "Docteur",
+    "drInitials": "Dr",
+    "close": "Fermer",
+    "goBack": "Retour",
+    "previousStep": "Étape précédente",
+    "clearFilter": "Effacer le filtre",
+    "deleteEntry": "Supprimer l'entrée"
   },
   "login": {
     "title": "Se connecter",

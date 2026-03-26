@@ -102,7 +102,7 @@ export default function EditEntryModal({ entry, onClose, onSaved, onDeleted }: E
               <ExternalLink className="w-3.5 h-3.5" />
               {t("common.viewDetails")}
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-edit" aria-label={t("common.close")}>
               <X className="w-5 h-5 text-slate-400" />
             </button>
           </div>
@@ -142,7 +142,7 @@ export default function EditEntryModal({ entry, onClose, onSaved, onDeleted }: E
           </div>
         </div>
         <div className="px-6 py-4 flex gap-3 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-2xl">
-          <Button onClick={handleDelete} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30" data-testid="button-delete-entry"><Trash2 className="w-4 h-4" /></Button>
+          <Button onClick={handleDelete} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30" data-testid="button-delete-entry" aria-label={t("common.deleteEntry")}><Trash2 className="w-4 h-4" /></Button>
           <Button onClick={handleSave} disabled={isSaving} className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl transition-all" data-testid="button-save-edit">
             {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("common.saving")}</> : <><Save className="w-4 h-4 mr-2" /> {t("dashboard.saveChanges")}</>}
           </Button>

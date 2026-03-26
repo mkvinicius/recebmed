@@ -146,36 +146,36 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
         <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:mx-4">
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <button onClick={() => setShowManual(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-back-to-divergency">
+              <button onClick={() => setShowManual(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-back-to-divergency" aria-label={t("common.goBack")}>
                 <ArrowLeft className="w-4 h-4 text-slate-500" />
               </button>
               <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("divergency.manualTitle")}</h3>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-manual">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-manual" aria-label={t("common.close")}>
               <X className="w-5 h-5 text-slate-400" />
             </button>
           </div>
           <div className="px-6 py-4 overflow-y-auto flex-1 space-y-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">{t("divergency.manualDesc")}</p>
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}</label>
-              <input value={manualForm.patientName} onChange={e => setManualForm(f => ({ ...f, patientName: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-patient-name" />
+              <label htmlFor="manual-patient-name" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}</label>
+              <input id="manual-patient-name" value={manualForm.patientName} onChange={e => setManualForm(f => ({ ...f, patientName: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-patient-name" />
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}</label>
-              <input type="date" value={manualForm.procedureDate} onChange={e => setManualForm(f => ({ ...f, procedureDate: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-procedure-date" />
+              <label htmlFor="manual-procedure-date" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}</label>
+              <input id="manual-procedure-date" type="date" value={manualForm.procedureDate} onChange={e => setManualForm(f => ({ ...f, procedureDate: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-procedure-date" />
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}</label>
-              <input value={manualForm.insuranceProvider} onChange={e => setManualForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-insurance" />
+              <label htmlFor="manual-insurance" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}</label>
+              <input id="manual-insurance" value={manualForm.insuranceProvider} onChange={e => setManualForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-insurance" />
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}</label>
-              <input value={manualForm.description} onChange={e => setManualForm(f => ({ ...f, description: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-description" />
+              <label htmlFor="manual-description" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}</label>
+              <input id="manual-description" value={manualForm.description} onChange={e => setManualForm(f => ({ ...f, description: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-description" />
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</label>
-              <input type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
+              <label htmlFor="manual-value" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</label>
+              <input id="manual-value" type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
             </div>
             {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (
               <div className="space-y-1.5">
@@ -218,14 +218,23 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
             </div>
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("divergency.title")}</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-divergency">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" data-testid="button-close-divergency" aria-label={t("common.close")}>
             <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
         <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0">
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+            <div className="space-y-4 py-4">
+              <div className="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="space-y-3">
+                {[1,2,3,4].map(i => <div key={i} className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />)}
+              </div>
+              <div className="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mt-4" />
+              <div className="space-y-3">
+                {[1,2,3,4].map(i => <div key={i} className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />)}
+              </div>
+            </div>
           ) : (
             <>
               {divergenceReason && (
