@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X } from "lucide-react";
+import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X, Trash2, Send } from "lucide-react";
 import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
@@ -35,7 +35,7 @@ export default function Capture() {
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const audioSessionRef = useRef<{ id: number; chunks: Blob[]; cancelled: boolean; stream: MediaStream | null }>({ id: 0, chunks: [], cancelled: false, stream: null });
   const { toast } = useToast();
 
   const [duplicateWarning, setDuplicateWarning] = useState<DuplicateWarning | null>(null);
@@ -176,18 +176,34 @@ export default function Capture() {
   };
 
   const handleAudioToggle = async () => {
-    if (isRecording) { mediaRecorderRef.current?.stop(); setIsRecording(false); return; }
+    if (isRecording) {
+      const session = audioSessionRef.current;
+      session.cancelled = false;
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      const sessionId = Date.now();
+      const session = { id: sessionId, chunks: [] as Blob[], cancelled: false, stream };
+      audioSessionRef.current = session;
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0 && audioSessionRef.current.id === sessionId) session.chunks.push(e.data); };
       mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
+        session.stream?.getTracks().forEach((t) => t.stop());
+        session.stream = null;
+        if (audioSessionRef.current.id !== sessionId) return;
+        if (session.cancelled) {
+          session.chunks = [];
+          toast({ title: t("capture.audioDiscarded"), description: t("capture.audioDiscardedDesc") });
+          return;
+        }
         setProcessingAudio(true);
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const audioBlob = new Blob(session.chunks, { type: mimeType });
         const token = getToken();
         if (!token) { setProcessingAudio(false); return; }
         try {
@@ -206,7 +222,17 @@ export default function Capture() {
       mediaRecorder.start();
       setIsRecording(true);
       toast({ title: t("capture.recordingToast"), description: t("capture.recordingToastDesc") });
-    } catch { toast({ title: t("common.error"), description: t("capture.micError"), variant: "destructive" }); }
+    } catch {
+      stream?.getTracks().forEach((t) => t.stop());
+      toast({ title: t("common.error"), description: t("capture.micError"), variant: "destructive" });
+    }
+  };
+
+  const handleAudioCancel = () => {
+    if (!isRecording) return;
+    audioSessionRef.current.cancelled = true;
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   };
 
   const cards = [
@@ -252,30 +278,66 @@ export default function Capture() {
         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoCapture} data-testid="input-photo-capture" />
 
         <div className="space-y-4">
-          {cards.map(card => (
-            <button
-              key={card.id}
-              onClick={card.onClick}
-              disabled={card.processing}
-              className={`w-full text-left bg-gradient-to-br ${card.gradient} rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 ${isRecording && card.id === "audio" ? "animate-pulse" : ""}`}
-              data-testid={`card-${card.id}`}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
-              <div className="flex items-start gap-4 relative z-10">
-                <div className="size-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
-                  {card.processing ? <Loader2 className="w-7 h-7 animate-spin" /> : <card.icon className="w-7 h-7" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold">{card.title}</h3>
-                    {card.id !== "manual" && <Sparkles className="w-4 h-4 text-white/60" />}
+          {cards.map(card => {
+            if (card.id === "audio" && isRecording) {
+              return (
+                <div key={card.id} className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden animate-pulse" data-testid="card-audio-recording">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
+                  <div className="flex items-start gap-4 relative z-10">
+                    <div className="size-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+                      <Mic className="w-7 h-7" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold">{t("capture.recording")}</h3>
+                      <p className="text-sm text-white/80 mt-1 leading-relaxed">{t("capture.recordingActiveDesc")}</p>
+                      <div className="flex gap-3 mt-4">
+                        <button
+                          onClick={handleAudioCancel}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition-colors backdrop-blur-sm"
+                          data-testid="button-audio-discard"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t("capture.discardAudio")}
+                        </button>
+                        <button
+                          onClick={handleAudioToggle}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-white text-red-600 hover:bg-white/90 rounded-xl text-sm font-bold transition-colors shadow-md"
+                          data-testid="button-audio-send"
+                        >
+                          <Send className="w-4 h-4" />
+                          {t("capture.sendAudio")}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-white/80 mt-1 leading-relaxed">{card.description}</p>
-                  {card.processing && <p className="text-xs text-white/60 mt-2">{card.progressText || t("capture.processingAI")}</p>}
                 </div>
-              </div>
-            </button>
-          ))}
+              );
+            }
+            return (
+              <button
+                key={card.id}
+                onClick={card.onClick}
+                disabled={card.processing}
+                className={`w-full text-left bg-gradient-to-br ${card.gradient} rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70`}
+                data-testid={`card-${card.id}`}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
+                <div className="flex items-start gap-4 relative z-10">
+                  <div className="size-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+                    {card.processing ? <Loader2 className="w-7 h-7 animate-spin" /> : <card.icon className="w-7 h-7" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold">{card.title}</h3>
+                      {card.id !== "manual" && <Sparkles className="w-4 h-4 text-white/60" />}
+                    </div>
+                    <p className="text-sm text-white/80 mt-1 leading-relaxed">{card.description}</p>
+                    {card.processing && <p className="text-xs text-white/60 mt-2">{card.progressText || t("capture.processingAI")}</p>}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
       {duplicateWarning && (
