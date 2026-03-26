@@ -252,8 +252,19 @@ export default function Reports() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mb-4"><ReportsTabs /></div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold">{t("reports.title")}</h2>
+              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
+            </div>
+          </div>
+        </div>
+        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
         <ReportSkeleton />
       </div>
     );
@@ -261,8 +272,19 @@ export default function Reports() {
 
   if (fetchError) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mb-4"><ReportsTabs /></div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold">{t("reports.title")}</h2>
+              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
+            </div>
+          </div>
+        </div>
+        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
         <div className="py-8">
           <ErrorState onRetry={() => { setLoading(true); const token = getToken(); if (token) { (async () => { setFetchError(false); try { const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } }); if (res.status === 401) { clearAuth(); setLocation("/login"); return; } const data = await res.json(); if (res.ok) setEntries(data.entries || []); else setFetchError(true); } catch { setFetchError(true); } finally { setLoading(false); } })(); } }} />
         </div>

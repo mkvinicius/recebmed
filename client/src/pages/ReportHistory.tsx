@@ -44,8 +44,12 @@ export default function ReportHistory() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mb-4"><ReportsTabs /></div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+          <h2 className="text-2xl font-extrabold">{t("reportHistory.title")}</h2>
+          <p className="text-white/80 text-sm mt-1">{t("reportHistory.subtitle")}</p>
+        </div>
+        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" data-testid="loading-spinner" />
         </div>
