@@ -5,6 +5,7 @@ import { ArrowLeft, User, Calendar, Building2, FileText, DollarSign, Clock, Aler
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { statusBadgeStyle, StatusIconDetail } from "@/lib/status";
+import { DetailSkeleton } from "@/components/EntrySkeleton";
 
 interface EntryData {
   id: string;
@@ -53,8 +54,8 @@ export default function EntryDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 text-[#8855f6] animate-spin" data-testid="loading-spinner" />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DetailSkeleton />
       </div>
     );
   }

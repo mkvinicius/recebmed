@@ -353,7 +353,12 @@
     "convenioLabel": "Convênio",
     "weekly": "Semana",
     "monthly": "Mês",
-    "yearly": "Ano"
+    "yearly": "Ano",
+    "tabProduction": "Produção",
+    "tabReconciliation": "Conferência",
+    "tabClinic": "Clínica",
+    "tabImport": "Importar",
+    "tabHistory": "Histórico"
   },
   "reconciliation": {
     "title": "Conferir Produção",

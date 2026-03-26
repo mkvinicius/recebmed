@@ -18,7 +18,9 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 client/src/
   pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import, ReportHistory
   components/ui/     - shadcn/ui components
-  components/AppLayout.tsx       - Bottom tab bar layout wrapper (Início/Lançamentos/Captura/Relatórios/Perfil)
+  components/AppLayout.tsx       - Layout wrapper: desktop sidebar (≥768px, 220px wide) + mobile bottom tab bar (<768px)
+  components/ReportsTabs.tsx     - Horizontal sub-tabs for Reports section (Produção/Conferência/Clínica/Importar/Histórico) — used across all report pages
+  components/EntrySkeleton.tsx   - Skeleton loading components: EntrySkeleton (list items), DashboardCardSkeleton, ReportSkeleton, DetailSkeleton
   components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
   components/DivergencyModal.tsx  - Side-by-side divergency comparison modal (doctor vs clinic data), with accept/manual validation actions

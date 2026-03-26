@@ -8,6 +8,7 @@ import {
   ChevronRight, Search, CheckCheck, Upload
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { EntrySkeleton } from "@/components/EntrySkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { statusColor, StatusIcon } from "@/lib/status";
@@ -313,7 +314,7 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3">
             {loadingEntries ? (
-              <div className="card-float px-6 py-10 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+              <EntrySkeleton count={3} />
             ) : fetchError ? (
               <ErrorState onRetry={() => { const token = getToken(); if (token) { setLoadingEntries(true); fetchEntries(token); } }} />
             ) : recentEntries.length === 0 ? (

@@ -353,7 +353,12 @@
     "convenioLabel": "Assurance",
     "weekly": "Semaine",
     "monthly": "Mois",
-    "yearly": "Année"
+    "yearly": "Année",
+    "tabProduction": "Production",
+    "tabReconciliation": "Rapprochement",
+    "tabClinic": "Clinique",
+    "tabImport": "Importer",
+    "tabHistory": "Historique"
   },
   "reconciliation": {
     "title": "Vérifier Production",

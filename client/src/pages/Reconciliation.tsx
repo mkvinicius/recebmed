@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getLocale } from "@/lib/i18n";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DivergencyModal from "@/components/DivergencyModal";
+import ReportsTabs from "@/components/ReportsTabs";
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -422,13 +423,14 @@ export default function Reconciliation() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
-          <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors" data-testid="button-back">
+          <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors md:hidden" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" />
             <span>{t("common.back")}</span>
           </button>
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reconciliation.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
+        <ReportsTabs />
 
         {initialLoading ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">

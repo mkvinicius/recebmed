@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { EntrySkeleton } from "@/components/EntrySkeleton";
 import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -227,7 +228,7 @@ export default function Entries() {
           </div>
           <div className="space-y-3">
             {loadingEntries ? (
-              <div className="card-float px-6 py-12 flex justify-center"><Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" /></div>
+              <EntrySkeleton count={4} />
             ) : fetchError ? (
               <ErrorState onRetry={() => { const token = getToken(); if (token) { fetchEntries(token, currentPage); } }} />
             ) : entries.length === 0 ? (
