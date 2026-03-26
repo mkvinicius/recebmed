@@ -8,6 +8,14 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
+
+function parseLocalDate(dateStr: string): Date {
+  if (!dateStr) return new Date(NaN);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(dateStr + "T12:00:00");
+  }
+  return new Date(dateStr);
+}
 import { extractPdfData, extractPdfDataWithTemplate, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { analyzeDocumentStructure, computeDocumentHash } from "./document-validator";
 import { schedulePostUploadAudit } from "./audit";
@@ -471,7 +479,7 @@ export async function registerRoutes(
       }
 
       if (!skipDuplicateCheck) {
-        const dataDups = await storage.findDuplicatesByData(userId, patientName, new Date(procedureDate), description);
+        const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description);
         if (dataDups.length > 0) {
           return res.status(409).json({
             message: "duplicate_data",
@@ -490,7 +498,7 @@ export async function registerRoutes(
         doctorId: userId,
         patientName,
         patientBirthDate: patientBirthDate || null,
-        procedureDate: new Date(procedureDate),
+        procedureDate: parseLocalDate(procedureDate),
         procedureName: procedureName || null,
         insuranceProvider,
         description,
@@ -556,7 +564,7 @@ export async function registerRoutes(
                 doctorId: userId,
                 patientName: item.patientName,
                 patientBirthDate: item.patientBirthDate || null,
-                procedureDate: new Date(item.procedureDate),
+                procedureDate: parseLocalDate(item.procedureDate),
                 procedureName: item.procedureName || null,
                 insuranceProvider: item.insuranceProvider,
                 description: item.description,
@@ -689,7 +697,7 @@ export async function registerRoutes(
       const { patientName, procedureDate, insuranceProvider, description, status, procedureValue } = req.body;
       const updates: any = {};
       if (patientName !== undefined) updates.patientName = patientName;
-      if (procedureDate !== undefined) updates.procedureDate = new Date(procedureDate);
+      if (procedureDate !== undefined) updates.procedureDate = parseLocalDate(procedureDate);
       if (insuranceProvider !== undefined) updates.insuranceProvider = insuranceProvider;
       if (description !== undefined) updates.description = description;
       if (status !== undefined) updates.status = status;
@@ -753,7 +761,7 @@ export async function registerRoutes(
         doctorId: userId,
         patientName,
         patientBirthDate: patientBirthDate || null,
-        procedureDate: new Date(procedureDate),
+        procedureDate: parseLocalDate(procedureDate),
         procedureName: procedureName || null,
         insuranceProvider: insuranceProvider || null,
         reportedValue,
@@ -1013,7 +1021,7 @@ export async function registerRoutes(
         mediaStorage.uploadBuffer(pdfBuffer, "application/pdf").catch(err => { console.error("Report upload error:", err); return null; }),
       ]);
       for (const item of extractedData) {
-        await storage.createClinicReport({ doctorId: userId, patientName: item.patientName, procedureDate: new Date(item.procedureDate), reportedValue: item.reportedValue || "0.00", description: item.description || null, sourcePdfUrl: null });
+        await storage.createClinicReport({ doctorId: userId, patientName: item.patientName, procedureDate: parseLocalDate(item.procedureDate), reportedValue: item.reportedValue || "0.00", description: item.description || null, sourcePdfUrl: null });
       }
       if (originalFileUrl) {
         await storage.createUploadedReport({ userId, fileName: "relatorio.pdf", originalFileUrl, extractedRecordCount: extractedData.length });
@@ -1076,7 +1084,7 @@ export async function registerRoutes(
       for (const item of extractedData) {
         try {
           if (!item.patientName || item.patientName.length < 2) { skipCount++; continue; }
-          const procDate = new Date(item.procedureDate + "T00:00:00");
+          const procDate = parseLocalDate(item.procedureDate);
           if (isNaN(procDate.getTime())) { skipCount++; continue; }
           await storage.createClinicReport({
             doctorId: userId,
@@ -1352,7 +1360,7 @@ export async function registerRoutes(
 
         for (const item of extractedData) {
           if (!item.patientName || item.patientName === "Não identificado") { skipped++; continue; }
-          let procDate = new Date(item.procedureDate);
+          let procDate = parseLocalDate(item.procedureDate);
           if (isNaN(procDate.getTime())) { skipped++; continue; }
           if (targetYear && procDate.getFullYear() !== targetYear) {
             procDate.setFullYear(targetYear);
@@ -1441,7 +1449,7 @@ export async function registerRoutes(
         try {
           const extractedData = await extractPdfData(pdfBuffer);
           for (const item of extractedData) {
-            let procDate = new Date(item.procedureDate);
+            let procDate = parseLocalDate(item.procedureDate);
             if (year && procDate.getFullYear() !== parseInt(year)) {
               procDate.setFullYear(parseInt(year));
             }

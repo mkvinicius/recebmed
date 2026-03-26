@@ -12,7 +12,8 @@ export type FormatDateStyle = "short" | "medium" | "long" | "relative" | "dateti
 export function formatDate(dateStr: string | null | undefined, style: FormatDateStyle = "medium"): string {
   if (!dateStr) return "—";
   const locale = getLocale();
-  const d = new Date(dateStr);
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + "T12:00:00" : dateStr;
+  const d = new Date(normalized);
   if (isNaN(d.getTime())) return dateStr;
 
   if (style === "relative") {
