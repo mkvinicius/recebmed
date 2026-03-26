@@ -320,7 +320,7 @@ export default function Reports() {
                 <button
                   key={s.key}
                   onClick={() => setStatusFilter(s.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${statusFilter === s.key ? "bg-[#8855f6] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === s.key ? "bg-[#8855f6] text-white shadow-md shadow-[#8855f6]/20" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                   data-testid={`filter-status-${s.key}`}
                 >
                   {s.label}
@@ -375,7 +375,7 @@ export default function Reports() {
               <button
                 key={q.key}
                 onClick={() => applyQuickFilter(q.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${quickFilter === q.key ? "bg-[#8855f6] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${quickFilter === q.key ? "bg-[#8855f6] text-white shadow-md shadow-[#8855f6]/20" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 data-testid={`quick-filter-${q.key}`}
               >
                 {q.label}
