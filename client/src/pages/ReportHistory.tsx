@@ -61,12 +61,12 @@ export default function ReportHistory() {
           <span>{t("common.back")}</span>
         </button>
         <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reportHistory.title")}</h2>
-        <p className="text-white/70 text-sm mt-1">{t("reportHistory.subtitle")}</p>
+        <p className="text-white/80 text-sm mt-1">{t("reportHistory.subtitle")}</p>
       </div>
       <ReportsTabs />
 
       {reports.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 shadow-card border border-slate-100/60 dark:border-slate-700/40 text-center">
           <FileText className="w-14 h-14 text-slate-200 dark:text-slate-700 mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400 font-semibold text-lg" data-testid="text-empty">{t("reportHistory.empty")}</p>
           <p className="text-slate-400 dark:text-slate-500 text-sm mt-2">{t("reportHistory.emptyDesc")}</p>
@@ -76,7 +76,7 @@ export default function ReportHistory() {
           {reports.map((report) => (
             <div
               key={report.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-5 flex items-center gap-4"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-5 flex items-center gap-4"
               data-testid={`card-report-${report.id}`}
             >
               <div className="size-12 rounded-xl bg-[#8855f6]/10 dark:bg-[#8855f6]/20 flex items-center justify-center text-2xl shrink-0">

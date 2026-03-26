@@ -41,7 +41,13 @@
     "goBack": "Retour",
     "previousStep": "Étape précédente",
     "clearFilter": "Effacer le filtre",
-    "deleteEntry": "Supprimer l'entrée"
+    "deleteEntry": "Supprimer l'entrée",
+    "validated": "Validé",
+    "button": "Bouton",
+    "method": "Méthode",
+    "search": "Rechercher",
+    "selectLanguage": "Choisir la langue",
+    "selectTheme": "Basculer le mode sombre"
   },
   "login": {
     "title": "Se connecter",

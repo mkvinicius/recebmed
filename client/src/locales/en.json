@@ -41,7 +41,13 @@
     "goBack": "Go back",
     "previousStep": "Previous step",
     "clearFilter": "Clear filter",
-    "deleteEntry": "Delete entry"
+    "deleteEntry": "Delete entry",
+    "validated": "Validated",
+    "button": "Button",
+    "method": "Method",
+    "search": "Search",
+    "selectLanguage": "Select language",
+    "selectTheme": "Toggle dark mode"
   },
   "login": {
     "title": "Sign in to your account",

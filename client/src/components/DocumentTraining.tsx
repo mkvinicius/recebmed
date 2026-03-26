@@ -185,7 +185,7 @@ export default function DocumentTraining() {
 
   return (
     <div className="space-y-3">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-5" data-testid="card-document-training">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-5" data-testid="card-document-training">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-2xl flex items-center justify-center bg-[#8855f6]/10 text-[#8855f6]">
@@ -352,7 +352,7 @@ export default function DocumentTraining() {
       </div>
 
       {showTemplates && templates.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden" data-testid="card-saved-templates">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden" data-testid="card-saved-templates">
           <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
             <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("documentTraining.savedTemplates")}</p>
           </div>

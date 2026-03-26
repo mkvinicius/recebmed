@@ -433,7 +433,7 @@ export default function Reconciliation() {
         <ReportsTabs />
 
         {initialLoading ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">
             <div className="flex items-center justify-center gap-3">
               <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
               <p className="text-sm text-slate-400">{t("common.loading")}</p>
@@ -441,7 +441,7 @@ export default function Reconciliation() {
           </div>
         ) : (!uploadCollapsed || !results) ? (
           <div
-            className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed p-8 mb-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
+            className={`bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed p-8 mb-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
             onClick={() => !isProcessing && fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -457,11 +457,14 @@ export default function Reconciliation() {
               data-testid="input-file-upload"
             />
             {isProcessing ? (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
                 <Loader2 className="w-12 h-12 text-[#8855f6] animate-spin" />
                 <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">{t("reconciliation.processing")}</p>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div className="h-full bg-[#8855f6] rounded-full animate-pulse" style={{ width: "75%", transition: "width 2s ease" }} />
+                </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t("reconciliation.processingDesc")}</p>
-                {fileName && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{fileName}</p>}
+                {fileName && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{fileName}</p>}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3">
@@ -508,7 +511,7 @@ export default function Reconciliation() {
           </div>
         ) : (
           <div
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40 p-4 mb-4 text-center transition-all cursor-pointer"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40 p-4 mb-4 text-center transition-all cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -572,7 +575,7 @@ export default function Reconciliation() {
         )}
 
         {showTutorial && (!uploadCollapsed || !results) && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-blue-100 dark:border-blue-800 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-5 mb-6" data-testid="section-csv-tutorial">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-blue-100 dark:border-blue-800 p-5 mb-6" data-testid="section-csv-tutorial">
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Table className="w-5 h-5 text-green-600" />
               {t("reconciliation.csvTutorialTitle")}
@@ -629,7 +632,7 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
 
         {results && (
           <div className="space-y-4 pb-12" data-testid="section-results">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-4">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t("reconciliation.exportReport")}</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -697,14 +700,14 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                     </div>
                   )}
                   {(results?.unmatchedClinic || []).length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 p-8 text-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-8 text-center">
                       <p className="text-slate-400 text-sm">{t("reconciliation.noUnmatched")}</p>
                     </div>
                   ) : (
                     (results?.unmatchedClinic || []).map(report => {
                       const rid = getReportId(report);
                       return (
-                      <div key={rid} className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border border-purple-200 dark:border-purple-800 p-4" data-testid={`unmatched-card-${rid}`}>
+                      <div key={rid} className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-purple-200 dark:border-purple-800 p-4" data-testid={`unmatched-card-${rid}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{report.patientName}</p>
@@ -736,14 +739,14 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                   }
                 </>
               ) : activeEntries.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-8 text-center">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-8 text-center">
                   <p className="text-slate-400 dark:text-slate-500 text-sm" data-testid="text-empty">{t("reconciliation.noEntriesInCategory")}</p>
                 </div>
               ) : (
                 activeEntries.map(entry => (
                   <div
                     key={entry.id}
-                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] border transition-all ${(activeTab === "divergent" || activeTab === "verified") ? "hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer" : ""} ${entry.status === "divergent" ? "border-amber-200 dark:border-amber-800" : "border-slate-100/70 dark:border-slate-700/50"}`}
+                    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-card border transition-all ${(activeTab === "divergent" || activeTab === "verified") ? "hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer" : ""} ${entry.status === "divergent" ? "border-amber-200 dark:border-amber-800" : "border-slate-100/70 dark:border-slate-700/50"}`}
                     onClick={() => {
                       if (entry.status === "divergent") {
                         setDivergencyEntry(entry);
@@ -800,7 +803,7 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
         )}
 
         {!results && !isProcessing && !initialLoading && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-8 text-center mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-8 text-center mb-8">
             <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium" data-testid="text-no-results">{t("reconciliation.sendPDF")}</p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("reconciliation.resultsAfterProcessing")}</p>

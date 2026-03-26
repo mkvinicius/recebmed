@@ -371,6 +371,14 @@ export async function registerRoutes(
       if (images.length > 50) {
         return res.status(400).json({ message: "Máximo de 50 imagens por vez" });
       }
+      const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+      for (let i = 0; i < images.length; i++) {
+        const raw = images[i].replace(/^data:image\/\w+;base64,/, "");
+        const decodedSize = Math.ceil(raw.length * 3 / 4);
+        if (decodedSize > MAX_IMAGE_BYTES) {
+          return res.status(400).json({ message: `Imagem ${i + 1} excede o limite de 10MB` });
+        }
+      }
       const userId = (req as any).userId;
       const corrections = await getCorrectionHints(userId);
 
@@ -1193,6 +1201,41 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Projections error:", error);
       return res.status(500).json({ message: "Erro ao calcular projeções" });
+    }
+  });
+
+  app.get("/api/reports/analytics", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const dateFrom = req.query.dateFrom as string | undefined;
+      const dateTo = req.query.dateTo as string | undefined;
+      const entries = await storage.getDoctorEntries(userId);
+      const filtered = entries.filter(e => {
+        if (dateFrom && new Date(e.procedureDate) < new Date(dateFrom)) return false;
+        if (dateTo && new Date(e.procedureDate) > new Date(dateTo)) return false;
+        return true;
+      });
+      const totalBilled = filtered.reduce((sum, e) => sum + (parseFloat(e.procedureValue || "0") || 0), 0);
+      const byStatus = { pending: 0, reconciled: 0, divergent: 0, validated: 0 };
+      const byInsurance: Record<string, { count: number; total: number }> = {};
+      const byMonth: Record<string, { count: number; total: number }> = {};
+      for (const e of filtered) {
+        const st = e.status as keyof typeof byStatus;
+        if (st in byStatus) byStatus[st]++;
+        const ins = e.insuranceProvider || "Sem convênio";
+        if (!byInsurance[ins]) byInsurance[ins] = { count: 0, total: 0 };
+        byInsurance[ins].count++;
+        byInsurance[ins].total += parseFloat(e.procedureValue || "0") || 0;
+        const d = new Date(e.procedureDate);
+        const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (!byMonth[mk]) byMonth[mk] = { count: 0, total: 0 };
+        byMonth[mk].count++;
+        byMonth[mk].total += parseFloat(e.procedureValue || "0") || 0;
+      }
+      return res.json({ totalEntries: filtered.length, totalBilled, byStatus, byInsurance, byMonth });
+    } catch (error) {
+      console.error("Reports analytics error:", error);
+      return res.status(500).json({ message: "Erro ao calcular analytics" });
     }
   });
 

@@ -122,12 +122,9 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.1), 0 1px 4px -1px rgba(0, 0, 0, 0.06);
 }
-
-.glass-card-dark {
+:is(.dark) .glass-card {
   background: rgba(30, 20, 50, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.4), 0 1px 4px -1px rgba(0, 0, 0, 0.2);
 }
 

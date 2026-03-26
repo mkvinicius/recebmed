@@ -182,7 +182,7 @@ export default function Profile() {
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} data-testid="input-profile-photo" />
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-6 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="relative group">
               <div
@@ -237,7 +237,7 @@ export default function Profile() {
                 <p className="font-semibold text-white">
                   {t("profile.installApp")}
                 </p>
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-white/80">
                   {t("profile.installAppDesc")}
                 </p>
               </div>
@@ -246,7 +246,7 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-amber-500 dark:text-amber-400">
@@ -261,13 +261,16 @@ export default function Profile() {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${theme === "dark" ? "bg-[#8855f6]" : "bg-slate-300"}`}
               data-testid="toggle-dark-mode"
+              aria-label={t("common.selectTheme")}
+              role="switch"
+              aria-checked={theme === "dark"}
             >
               <div className={`absolute top-1 size-6 rounded-full bg-white shadow-md transition-transform duration-300 ${theme === "dark" ? "translate-x-7" : "translate-x-1"}`} />
             </button>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-blue-500 dark:text-blue-400">
               <Globe className="w-5 h-5" />
@@ -277,10 +280,12 @@ export default function Profile() {
               <p className="text-xs text-slate-400 dark:text-slate-500">{t("profile.languageDesc")}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("common.selectLanguage")}>
             {LANGUAGE_OPTIONS.map((lang) => (
               <button
                 key={lang.code}
+                role="radio"
+                aria-checked={currentLang.code === lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   currentLang.code === lang.code
@@ -296,7 +301,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden mb-6">
           {links.map((link, i) => (
             <button
               key={link.path}

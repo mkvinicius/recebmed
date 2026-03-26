@@ -292,7 +292,7 @@ export default function Reports() {
 
         <ReportsTabs />
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[180px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -387,7 +387,7 @@ export default function Reports() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <button
             onClick={() => setLocation("/reconciliation")}
-            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border border-slate-100/60 dark:border-slate-700/40 hover:border-[#8855f6]/40 transition-all text-left"
             data-testid="link-reconciliation"
           >
             <div className="size-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -400,7 +400,7 @@ export default function Reports() {
           </button>
           <button
             onClick={() => setLocation("/clinic-reports")}
-            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border border-slate-100/60 dark:border-slate-700/40 hover:border-[#8855f6]/40 transition-all text-left"
             data-testid="link-clinic-reports"
           >
             <div className="size-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -413,7 +413,7 @@ export default function Reports() {
           </button>
           <button
             onClick={() => setLocation("/import")}
-            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border border-slate-100/60 dark:border-slate-700/40 hover:border-[#8855f6]/40 transition-all text-left"
             data-testid="link-import"
           >
             <div className="size-10 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -426,7 +426,7 @@ export default function Reports() {
           </button>
           <button
             onClick={() => setLocation("/reports/history")}
-            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] hover:border-[#8855f6]/40 transition-all text-left"
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border border-slate-100/60 dark:border-slate-700/40 hover:border-[#8855f6]/40 transition-all text-left"
             data-testid="link-report-history"
           >
             <div className="size-10 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -440,7 +440,7 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <button onClick={() => toggleFilter("all")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "all" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-total-production">
+          <button onClick={() => toggleFilter("all")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "all" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-total-production">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><Activity className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.totalProduction")}</span>
@@ -452,7 +452,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("particular")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "particular" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-particular">
+          <button onClick={() => toggleFilter("particular")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "particular" ? "border-[#8855f6] ring-2 ring-[#8855f6]/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-particular">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-[#8855f6]/10 text-[#8855f6] rounded-xl"><DollarSign className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.particularLabel")}</span>
@@ -464,7 +464,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("sus")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "sus" ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-sus">
+          <button onClick={() => toggleFilter("sus")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "sus" ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-sus">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">SUS</span>
@@ -476,7 +476,7 @@ export default function Reports() {
             </div>
           </button>
 
-          <button onClick={() => toggleFilter("convenio")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] text-left active:scale-[0.97] transition-all ${activeFilter === "convenio" ? "border-green-500 ring-2 ring-green-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-convenio">
+          <button onClick={() => toggleFilter("convenio")} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border text-left active:scale-[0.97] transition-all ${activeFilter === "convenio" ? "border-green-500 ring-2 ring-green-500/20" : "border-slate-100/60 dark:border-slate-700/40"}`} data-testid="card-convenio">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl"><Stethoscope className="w-4 h-4" /></span>
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">{t("reports.convenioLabel")}</span>
@@ -490,7 +490,7 @@ export default function Reports() {
         </div>
 
         {activeFilter && (
-          <div className="mb-8 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden" data-testid="filtered-entries-list">
+          <div className="mb-8 bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden" data-testid="filtered-entries-list">
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-800">
               <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {activeFilter === "all" ? t("reports.totalProduction") : activeFilter === "particular" ? t("reports.particularLabel") : activeFilter === "sus" ? "SUS" : t("reports.convenioLabel")}
@@ -542,7 +542,7 @@ export default function Reports() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="chart-production">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-card border border-slate-100/60 dark:border-slate-700/40" data-testid="chart-production">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-[#8855f6]" />
@@ -623,7 +623,7 @@ export default function Reports() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)]" data-testid="chart-insurance">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-card border border-slate-100/60 dark:border-slate-700/40" data-testid="chart-insurance">
             <div className="flex items-center gap-2 mb-4">
               <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
               <h3 className="font-bold text-slate-800 dark:text-slate-100">{t("reports.insuranceDistribution")}</h3>
@@ -669,7 +669,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden mb-12" data-testid="table-top-insurers">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden mb-12" data-testid="table-top-insurers">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700">
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{t("reports.topInsurers")}</h3>
           </div>

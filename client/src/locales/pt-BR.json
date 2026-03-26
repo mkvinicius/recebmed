@@ -41,7 +41,13 @@
     "goBack": "Voltar",
     "previousStep": "Passo anterior",
     "clearFilter": "Limpar filtro",
-    "deleteEntry": "Excluir lançamento"
+    "deleteEntry": "Excluir lançamento",
+    "validated": "Validado",
+    "button": "Botão",
+    "method": "Método",
+    "search": "Buscar",
+    "selectLanguage": "Selecionar idioma",
+    "selectTheme": "Alternar tema escuro"
   },
   "login": {
     "title": "Entrar na sua conta",

@@ -41,7 +41,13 @@
     "goBack": "Volver",
     "previousStep": "Paso anterior",
     "clearFilter": "Limpiar filtro",
-    "deleteEntry": "Eliminar registro"
+    "deleteEntry": "Eliminar registro",
+    "validated": "Validado",
+    "button": "Botón",
+    "method": "Método",
+    "search": "Buscar",
+    "selectLanguage": "Seleccionar idioma",
+    "selectTheme": "Alternar modo oscuro"
   },
   "login": {
     "title": "Iniciar sesión",

@@ -129,15 +129,24 @@ export default function Entries() {
     setQuickStatusEntry(null);
     const token = getToken();
     if (!token) return;
+    const prevEntries = [...entries];
+    setEntries(prev => prev.map(ent => ent.id === entryId ? { ...ent, status: newStatus } : ent));
     try {
       const res = await fetch(`/api/entries/${entryId}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: newStatus }) });
       const data = await res.json();
       if (res.ok) {
         toast({ title: t("entries.statusUpdated"), description: t("entries.markedAs", { status: statusLabelMap[newStatus] }) });
-        fetchEntries(token, currentPage);
+        if (statusFilter !== "all" && newStatus !== statusFilter) {
+          fetchEntries(token, currentPage);
+        }
+      } else {
+        setEntries(prevEntries);
+        toast({ title: t("common.error"), description: data.message || t("entries.statusUpdateFailed"), variant: "destructive" });
       }
-      else toast({ title: t("common.error"), description: data.message || t("entries.statusUpdateFailed"), variant: "destructive" });
-    } catch { toast({ title: t("common.error"), description: t("entries.statusUpdateFailed"), variant: "destructive" }); }
+    } catch {
+      setEntries(prevEntries);
+      toast({ title: t("common.error"), description: t("entries.statusUpdateFailed"), variant: "destructive" });
+    }
   };
 
   const uniqueInsurances = Array.from(new Set(entries.map(e => e.insuranceProvider).filter(Boolean)));
@@ -152,7 +161,7 @@ export default function Entries() {
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.12),0_4px_12px_-4px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.03)] border border-slate-100/60 dark:border-slate-700/40 dark:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.04)] p-4 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -167,20 +176,20 @@ export default function Entries() {
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateFrom")}</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("entries.dateFrom")}</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
                 data-testid="filter-date-from"
               />
-              <span className="text-[11px] font-semibold text-slate-400">{t("entries.dateTo")}</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("entries.dateTo")}</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-[120px]"
+                className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0 cursor-pointer w-auto min-w-[120px]"
                 data-testid="filter-date-to"
               />
               {(dateFrom || dateTo) && (

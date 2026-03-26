@@ -150,15 +150,24 @@ function PatientNameInput({ value, onChange, placeholder, testId }: {
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoComplete="off"
+        role="combobox"
+        aria-expanded={showDropdown && suggestions.length > 0}
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+        aria-controls={`${testId}-listbox`}
+        aria-activedescendant={activeIndex >= 0 ? `${testId}-option-${activeIndex}` : undefined}
         className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 focus-visible:ring-[#8855f6]/30 text-slate-800 dark:text-slate-100 font-medium"
         data-testid={testId}
       />
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg max-h-48 overflow-y-auto" data-testid={`${testId}-suggestions`}>
+        <div role="listbox" id={`${testId}-listbox`} className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg max-h-48 overflow-y-auto" data-testid={`${testId}-suggestions`}>
           {suggestions.map((name, i) => (
             <button
               key={name}
               type="button"
+              role="option"
+              id={`${testId}-option-${i}`}
+              aria-selected={i === activeIndex}
               onClick={() => { onChange(name); setShowDropdown(false); }}
               className={`w-full text-left px-3 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 ${
                 i === activeIndex
@@ -375,7 +384,7 @@ export default function ConfirmEntry() {
 
         <div className="space-y-4 mb-8">
           {entries.map((entry, index) => (
-            <div key={index} className="glass-card dark:glass-card-dark rounded-2xl p-6 shadow-2xl">
+            <div key={index} className="glass-card rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-xl ${entryMethod === "manual" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600" : "bg-green-50 dark:bg-green-900/30 text-green-600"}`}>

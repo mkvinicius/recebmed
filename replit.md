@@ -39,7 +39,7 @@ client/src/
 
 server/
   index.ts           - Express entry point (50mb body limit)
-  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + import + object storage)
+  routes.ts          - API routes (auth + entries + clinic reports + notifications + AI + reconciliation + projections + analytics + import + object storage)
   openai.ts          - Image/audio extraction functions (uses Claude via getComplexParsingProvider for parsing, OpenAI for STT)
   llm.ts             - LLM abstraction layer (provider pattern: OpenAI + Anthropic via Replit AI Integrations), LLM_PROVIDER env var
   replit_integrations/anthropic/ - Anthropic AI integration (batch processing, chat utilities)
