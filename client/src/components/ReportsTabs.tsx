@@ -15,7 +15,7 @@ export default function ReportsTabs() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-4 pb-0.5" data-testid="reports-tabs">
+    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5" data-testid="reports-tabs">
       {tabs.map((tab) => {
         const isActive = location === tab.path;
         return (

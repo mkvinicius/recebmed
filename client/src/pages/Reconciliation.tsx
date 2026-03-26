@@ -459,7 +459,7 @@ export default function Reconciliation() {
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reconciliation.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
-        <ReportsTabs />
+        <div className="mb-4"><ReportsTabs /></div>
 
         {initialLoading ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">

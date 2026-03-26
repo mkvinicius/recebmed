@@ -209,13 +209,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="pt-1 pb-4 text-white">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
           <p className="text-white/80 text-sm" data-testid="text-greeting-label">{new Date().getHours() < 12 ? t("dashboard.goodMorning") : new Date().getHours() < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening")},</p>
           <h2 className="text-2xl font-extrabold mt-0.5" data-testid="text-greeting">{t("common.dr")} {userName.split(" ").slice(0, 2).join(" ") || t("common.doctor")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("dashboard.financialSummary")}</p>
         </div>
 
-        <div className="relative z-20 mb-4" ref={searchRef}>
+        <div className="relative z-20 -mt-6 mb-4" ref={searchRef}>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input

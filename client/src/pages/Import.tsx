@@ -91,7 +91,7 @@ export default function Import() {
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("import.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("import.subtitle")}</p>
         </div>
-        <ReportsTabs />
+        <div className="mb-4"><ReportsTabs /></div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/70 dark:border-slate-700/50 p-5 mb-6">
           <div className="flex items-center gap-3 mb-4">
