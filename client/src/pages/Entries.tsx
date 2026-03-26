@@ -161,19 +161,18 @@ export default function Entries() {
           <p className="text-white/80 mt-1 text-sm">{t("entries.subtitle")}</p>
         </div>
 
+        <div className="relative mb-4">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("entries.searchPlaceholder")} className="w-full pl-11 pr-10 h-12 rounded-2xl bg-white dark:bg-slate-900 border-0 shadow-card text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all" data-testid="input-search" />
+        </div>
+
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("entries.searchPlaceholder")} className="w-full pl-11 pr-10 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/40 transition-all" data-testid="input-search" />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[{ v: "all", l: t("common.all") }, { v: "pending", l: t("common.pending") }, { v: "reconciled", l: t("common.reconciled") }, { v: "divergent", l: t("common.divergent") }].map(f => (
-                <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${statusFilter === f.v ? "bg-[#8855f6] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[{ v: "all", l: t("common.all") }, { v: "pending", l: t("common.pending") }, { v: "reconciled", l: t("common.reconciled") }, { v: "divergent", l: t("common.divergent") }].map(f => (
+              <button key={f.v} onClick={() => setStatusFilter(f.v)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${statusFilter === f.v ? "bg-[#8855f6] text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`} data-testid={`filter-status-${f.v}`}>{f.l}</button>
+            ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t("entries.dateFrom")}</span>

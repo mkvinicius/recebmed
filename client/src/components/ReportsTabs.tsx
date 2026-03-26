@@ -15,22 +15,22 @@ export default function ReportsTabs() {
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-5 gap-1.5 mb-4" data-testid="reports-tabs">
+    <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-4 pb-0.5" data-testid="reports-tabs">
       {tabs.map((tab) => {
         const isActive = location === tab.path;
         return (
           <button
             key={tab.path}
             onClick={() => setLocation(tab.path)}
-            className={`flex items-center justify-center gap-1 px-1.5 py-2 rounded-xl text-[11px] font-bold transition-all leading-tight ${
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex-shrink-0 ${
               isActive
-                ? "bg-[#8855f6] text-white shadow-md shadow-[#8855f6]/20"
+                ? "bg-[#8855f6] text-white shadow-sm"
                 : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
             data-testid={`reports-tab-${tab.path.replace(/\//g, "-").slice(1)}`}
           >
             <tab.icon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{t(tab.labelKey)}</span>
+            {t(tab.labelKey)}
           </button>
         );
       })}
