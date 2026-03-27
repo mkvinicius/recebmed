@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /settings
+
+Sitemap: https://recebmed.com/sitemap.xml
