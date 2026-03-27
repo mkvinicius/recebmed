@@ -299,7 +299,7 @@ export default function Entries() {
                       <button
                         onClick={e => handleDeleteEntry(entry.id, e)}
                         disabled={deletingId === entry.id}
-                        className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === entry.id ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 ring-2 ring-red-300 dark:ring-red-700 scale-110" : "text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"}`}
+                        className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === entry.id ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 ring-2 ring-red-300 dark:ring-red-700 scale-110" : "text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"}`}
                         data-testid={`button-delete-${entry.id}`}
                         aria-label={confirmDeleteId === entry.id ? t("entries.tapToConfirmDelete") : t("common.delete")}
                         title={confirmDeleteId === entry.id ? t("entries.tapToConfirmDelete") : t("common.delete")}
