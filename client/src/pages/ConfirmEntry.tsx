@@ -110,7 +110,10 @@ function PatientNameInput({ value, onChange, placeholder, testId }: {
           setShowDropdown(filtered.length > 0);
           setActiveIndex(-1);
         }
-      } catch {}
+      } catch {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
     }, 250);
   }, []);
 

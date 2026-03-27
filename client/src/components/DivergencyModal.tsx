@@ -8,6 +8,7 @@ import {
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 interface DoctorEntry {
   id: string;
@@ -68,8 +69,9 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
           setClinicReport(data.clinicReport);
           setDivergenceReason(data.divergenceReason);
         }
-      } catch {}
-      finally { setLoading(false); }
+      } catch {
+        toast({ title: t("common.error"), description: t("dashboard.updateFailed"), variant: "destructive" });
+      } finally { setLoading(false); }
     };
     fetchDivergence();
   }, [entry.id]);
@@ -159,23 +161,23 @@ export default function DivergencyModal({ entry, onClose, onResolved }: Divergen
             <p className="text-sm text-slate-500 dark:text-slate-400">{t("divergency.manualDesc")}</p>
             <div className="space-y-1.5">
               <label htmlFor="manual-patient-name" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.patient")}</label>
-              <input id="manual-patient-name" value={manualForm.patientName} onChange={e => setManualForm(f => ({ ...f, patientName: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-patient-name" />
+              <Input id="manual-patient-name" value={manualForm.patientName} onChange={e => setManualForm(f => ({ ...f, patientName: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-medium focus-visible:ring-[#8855f6]/30" data-testid="manual-patient-name" />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="manual-procedure-date" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Calendar className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.date")}</label>
-              <input id="manual-procedure-date" type="date" value={manualForm.procedureDate} onChange={e => setManualForm(f => ({ ...f, procedureDate: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-procedure-date" />
+              <Input id="manual-procedure-date" type="date" value={manualForm.procedureDate} onChange={e => setManualForm(f => ({ ...f, procedureDate: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-medium focus-visible:ring-[#8855f6]/30" data-testid="manual-procedure-date" />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="manual-insurance" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><Building2 className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.insurance")}</label>
-              <input id="manual-insurance" value={manualForm.insuranceProvider} onChange={e => setManualForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-insurance" />
+              <Input id="manual-insurance" value={manualForm.insuranceProvider} onChange={e => setManualForm(f => ({ ...f, insuranceProvider: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-medium focus-visible:ring-[#8855f6]/30" data-testid="manual-insurance" />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="manual-description" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><FileText className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.procedure")}</label>
-              <input id="manual-description" value={manualForm.description} onChange={e => setManualForm(f => ({ ...f, description: e.target.value }))} className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-description" />
+              <Input id="manual-description" value={manualForm.description} onChange={e => setManualForm(f => ({ ...f, description: e.target.value }))} className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-medium focus-visible:ring-[#8855f6]/30" data-testid="manual-description" />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="manual-value" className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm"><DollarSign className="w-3.5 h-3.5 text-[#8855f6]" /> {t("common.value")}</label>
-              <input id="manual-value" type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="w-full h-11 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8855f6]/30" data-testid="manual-value" />
+              <Input id="manual-value" type="number" step="0.01" min="0" value={manualForm.procedureValue} onChange={e => setManualForm(f => ({ ...f, procedureValue: e.target.value }))} placeholder="0.00" className="h-11 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-medium focus-visible:ring-[#8855f6]/30" data-testid="manual-value" />
             </div>
             {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (
               <div className="space-y-1.5">

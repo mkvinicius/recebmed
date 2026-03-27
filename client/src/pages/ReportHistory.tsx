@@ -33,7 +33,7 @@ export default function ReportHistory() {
         const data = await res.json();
         if (res.ok) setReports(data.reports);
       })
-      .catch(() => {})
+      .catch(() => { setLoading(false); })
       .finally(() => setLoading(false));
   }, []);
 

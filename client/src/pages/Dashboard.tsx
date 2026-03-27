@@ -150,7 +150,9 @@ export default function Dashboard() {
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
       }
-    } catch { }
+    } catch {
+      console.warn("Failed to fetch notifications");
+    }
   };
 
   const markAllRead = async () => {
@@ -160,7 +162,9 @@ export default function Dashboard() {
       await fetch("/api/notifications/read-all", { method: "PUT", headers: { Authorization: `Bearer ${token}` } });
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch { }
+    } catch {
+      console.warn("Failed to mark notifications as read");
+    }
   };
 
   const openEditModal = (entry: DoctorEntry) => {
@@ -212,7 +216,7 @@ export default function Dashboard() {
                     {notifications.length === 0 ? (
                       <div className="px-4 py-8 text-center"><Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" /><p className="text-sm text-slate-400 dark:text-slate-500">{t("dashboard.noNotifications")}</p></div>
                     ) : notifications.slice(0, 15).map(n => (
-                      <div key={n.id} className={`px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${n.read ? "" : "bg-[#8855f6]/5"}`} onClick={async () => { if (!n.read) { const token = getToken(); if (!token) return; try { await fetch(`/api/notifications/${n.id}/read`, { method: "PUT", headers: { Authorization: `Bearer ${token}` } }); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnreadCount(prev => Math.max(0, prev - 1)); } catch {} } }}>
+                      <div key={n.id} className={`px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${n.read ? "" : "bg-[#8855f6]/5"}`} onClick={async () => { if (!n.read) { const token = getToken(); if (!token) return; try { await fetch(`/api/notifications/${n.id}/read`, { method: "PUT", headers: { Authorization: `Bearer ${token}` } }); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnreadCount(prev => Math.max(0, prev - 1)); } catch { console.warn("Failed to mark notification as read"); } } }}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{n.title}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{n.message}</p>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{formatDate(n.createdAt, "relative")}</p>

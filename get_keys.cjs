@@ -1,17 +1,27 @@
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('client/src/locales/en.json', 'utf8'));
+const path = require('path');
 
 function flatten(obj, prefix = '') {
   let keys = [];
-  for (let key in obj) {
+  for (const key in obj) {
+    const newKey = prefix ? prefix + '.' + key : key;
     if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-      keys = keys.concat(flatten(obj[key], prefix + key + '.'));
+      keys = keys.concat(flatten(obj[key], newKey));
     } else {
-      keys.push(prefix + key);
+      keys.push(newKey);
     }
   }
   return keys;
 }
 
-const flatKeys = flatten(data);
-flatKeys.sort().forEach(k => console.log(k));
+const locales = ['en.json', 'es.json', 'fr.json', 'pt-BR.json'];
+locales.forEach(file => {
+  const filePath = path.join('client', 'src', 'locales', file);
+  try {
+    const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const keys = flatten(content);
+    fs.writeFileSync(file.split('.')[0] + '_keys.txt', keys.sort().join('\n'));
+  } catch (err) {
+    console.error('Error processing ' + file + ':', err);
+  }
+});

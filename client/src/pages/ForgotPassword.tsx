@@ -50,7 +50,6 @@ export default function ForgotPassword() {
   const [step, setStep] = useState<"email" | "code" | "done">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [devCode, setDevCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -75,9 +74,6 @@ export default function ForgotPassword() {
       if (!res.ok) {
         toast({ title: t("common.error"), description: data.message, variant: "destructive" });
         return;
-      }
-      if (data.code) {
-        setDevCode(data.code);
       }
       setStep("code");
       toast({ title: t("forgotPassword.codeSent"), description: t("forgotPassword.codeSentDesc") });
@@ -192,15 +188,7 @@ export default function ForgotPassword() {
                 <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">{t("forgotPassword.subtitleStep2")}</p>
               </div>
 
-              {devCode && (
-                <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">{t("forgotPassword.devModeLabel")}</p>
-                    <p className="text-lg font-mono font-bold text-amber-800 dark:text-amber-300 tracking-widest">{devCode}</p>
-                  </div>
-                </div>
-              )}
+
 
               <form onSubmit={handleVerifyAndReset} className="space-y-5">
                 <div className="space-y-2">

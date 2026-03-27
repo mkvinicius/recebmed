@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, passwordSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
@@ -242,8 +242,8 @@ export async function registerRoutes(
         expiresAt: Date.now() + 15 * 60 * 1000,
         attempts: 0,
       });
-      console.log(`[SECURITY] Reset code generated for ${email}: ${code}`);
-      return res.json({ success: true, message: "Código de verificação enviado.", code });
+      console.log(`[SECURITY] Reset code generated for ${email}`);
+      return res.json({ success: true, message: "Código de verificação enviado." });
     } catch (error) {
       console.error("Request reset error:", error);
       return res.status(500).json({ message: "Erro ao solicitar redefinição" });
@@ -758,7 +758,7 @@ export async function registerRoutes(
       if (!existing || existing.doctorId !== userId) {
         return res.status(404).json({ message: "Lançamento não encontrado" });
       }
-      await storage.deleteDoctorEntry(id);
+      await storage.deleteDoctorEntry(id, userId);
       return res.json({ success: true });
     } catch (error) {
       console.error("Delete entry error:", error);
@@ -823,7 +823,7 @@ export async function registerRoutes(
       if (!existing || existing.doctorId !== userId) {
         return res.status(404).json({ message: "Relatório não encontrado" });
       }
-      await storage.deleteClinicReport(id);
+      await storage.deleteClinicReport(id, userId);
       return res.json({ success: true });
     } catch (error) {
       console.error("Delete clinic report error:", error);

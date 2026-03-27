@@ -68,8 +68,14 @@ export default function EditEntryModal({ entry, onClose, onSaved, onDeleted }: E
     }
   };
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
   const handleDelete = async () => {
-    if (!window.confirm(t("dashboard.confirmDelete"))) return;
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setConfirmingDelete(false);
     const token = getToken();
     if (!token) return;
     try {
@@ -142,7 +148,7 @@ export default function EditEntryModal({ entry, onClose, onSaved, onDeleted }: E
           </div>
         </div>
         <div className="px-6 py-4 flex gap-3 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900 rounded-b-2xl">
-          <Button onClick={handleDelete} variant="outline" className="h-12 px-4 rounded-full font-bold border-2 border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30" data-testid="button-delete-entry" aria-label={t("common.deleteEntry")}><Trash2 className="w-4 h-4" /></Button>
+          <Button onClick={handleDelete} variant="outline" className={`h-12 px-4 rounded-full font-bold border-2 transition-all ${confirmingDelete ? "border-red-500 bg-red-500 text-white hover:bg-red-600 scale-105" : "border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"}`} data-testid="button-delete-entry" aria-label={confirmingDelete ? t("entries.tapToConfirmDelete") : t("common.deleteEntry")}>{confirmingDelete ? <span className="text-xs">{t("entries.tapToConfirmDelete")}</span> : <Trash2 className="w-4 h-4" />}</Button>
           <Button onClick={handleSave} disabled={isSaving} className="flex-1 h-12 rounded-full bg-[#8855f6] hover:bg-[#7744e0] text-white font-bold shadow-lg shadow-[#8855f6]/30 hover:shadow-xl transition-all" data-testid="button-save-edit">
             {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("common.saving")}</> : <><Save className="w-4 h-4 mr-2" /> {t("dashboard.saveChanges")}</>}
           </Button>

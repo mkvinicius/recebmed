@@ -42,12 +42,12 @@ export interface IStorage {
   getDoctorEntriesPaginated(doctorId: string, options: PaginationOptions): Promise<PaginatedResult<DoctorEntry>>;
   getDoctorEntry(id: string): Promise<DoctorEntry | undefined>;
   updateDoctorEntry(id: string, updates: Partial<InsertDoctorEntry>): Promise<DoctorEntry | undefined>;
-  deleteDoctorEntry(id: string): Promise<boolean>;
+  deleteDoctorEntry(id: string, doctorId?: string): Promise<boolean>;
 
   createClinicReport(report: InsertClinicReport): Promise<ClinicReport>;
   getClinicReports(doctorId: string): Promise<ClinicReport[]>;
   getClinicReport(id: string): Promise<ClinicReport | undefined>;
-  deleteClinicReport(id: string): Promise<boolean>;
+  deleteClinicReport(id: string, doctorId?: string): Promise<boolean>;
 
   getNotifications(doctorId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -189,8 +189,10 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async deleteDoctorEntry(id: string): Promise<boolean> {
-    const result = await db.delete(doctorEntries).where(eq(doctorEntries.id, id)).returning();
+  async deleteDoctorEntry(id: string, doctorId?: string): Promise<boolean> {
+    const conditions = [eq(doctorEntries.id, id)];
+    if (doctorId) conditions.push(eq(doctorEntries.doctorId, doctorId));
+    const result = await db.delete(doctorEntries).where(and(...conditions)).returning();
     return result.length > 0;
   }
 
@@ -208,8 +210,10 @@ export class DatabaseStorage implements IStorage {
     return report;
   }
 
-  async deleteClinicReport(id: string): Promise<boolean> {
-    const result = await db.delete(clinicReports).where(eq(clinicReports.id, id)).returning();
+  async deleteClinicReport(id: string, doctorId?: string): Promise<boolean> {
+    const conditions = [eq(clinicReports.id, id)];
+    if (doctorId) conditions.push(eq(clinicReports.doctorId, doctorId));
+    const result = await db.delete(clinicReports).where(and(...conditions)).returning();
     return result.length > 0;
   }
 
@@ -233,8 +237,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadNotificationCount(doctorId: string): Promise<number> {
-    const result = await db.select().from(notifications).where(and(eq(notifications.doctorId, doctorId), eq(notifications.read, false)));
-    return result.length;
+    const result = await db.select({ count: sql<number>`count(*)` }).from(notifications).where(and(eq(notifications.doctorId, doctorId), eq(notifications.read, false)));
+    return Number(result[0]?.count || 0);
   }
 
   async getPendingDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {
@@ -379,23 +383,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }> {
-    const [report] = await db.select().from(uploadedReports)
-      .where(and(eq(uploadedReports.id, reportId), eq(uploadedReports.userId, userId)));
-    if (!report) throw new Error("Relatório não encontrado");
+    return await db.transaction(async (tx) => {
+      const [report] = await tx.select().from(uploadedReports)
+        .where(and(eq(uploadedReports.id, reportId), eq(uploadedReports.userId, userId)));
+      if (!report) throw new Error("Relatório não encontrado");
 
-    const fileUrl = report.originalFileUrl;
+      const fileUrl = report.originalFileUrl;
 
-    const deletedEntriesResult = await db.delete(doctorEntries)
-      .where(and(eq(doctorEntries.doctorId, userId), eq(doctorEntries.sourceUrl, fileUrl)))
-      .returning();
+      const deletedEntriesResult = await tx.delete(doctorEntries)
+        .where(and(eq(doctorEntries.doctorId, userId), eq(doctorEntries.sourceUrl, fileUrl)))
+        .returning();
 
-    const deletedClinicResult = await db.delete(clinicReports)
-      .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)))
-      .returning();
+      const deletedClinicResult = await tx.delete(clinicReports)
+        .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)))
+        .returning();
 
-    await db.delete(uploadedReports).where(eq(uploadedReports.id, reportId));
+      await tx.delete(uploadedReports).where(eq(uploadedReports.id, reportId));
 
-    return { deletedEntries: deletedEntriesResult.length, deletedClinicReports: deletedClinicResult.length };
+      return { deletedEntries: deletedEntriesResult.length, deletedClinicReports: deletedClinicResult.length };
+    });
   }
 
   async getUnmatchedClinicReports(doctorId: string): Promise<ClinicReport[]> {
@@ -427,31 +433,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resetDivergentAndPendingEntries(doctorId: string): Promise<number> {
-    const entriesToReset = await db.select().from(doctorEntries)
-      .where(and(
-        eq(doctorEntries.doctorId, doctorId),
-        inArray(doctorEntries.status, ["divergent", "pending"])
-      ));
+    return await db.transaction(async (tx) => {
+      const entriesToReset = await tx.select().from(doctorEntries)
+        .where(and(
+          eq(doctorEntries.doctorId, doctorId),
+          inArray(doctorEntries.status, ["divergent", "pending"])
+        ));
 
-    if (entriesToReset.length === 0) return 0;
+      if (entriesToReset.length === 0) return 0;
 
-    for (const entry of entriesToReset) {
-      if (entry.matchedReportId) {
-        await db.update(clinicReports)
+      const matchedReportIds = entriesToReset
+        .map(e => e.matchedReportId)
+        .filter((id): id is string => !!id);
+
+      if (matchedReportIds.length > 0) {
+        await tx.update(clinicReports)
           .set({ matched: false, matchedEntryId: null })
-          .where(eq(clinicReports.id, entry.matchedReportId));
+          .where(inArray(clinicReports.id, matchedReportIds));
       }
-    }
 
-    const result = await db.update(doctorEntries)
-      .set({ status: "pending", matchedReportId: null, divergenceReason: null })
-      .where(and(
-        eq(doctorEntries.doctorId, doctorId),
-        inArray(doctorEntries.status, ["divergent", "pending"])
-      ))
-      .returning();
+      const result = await tx.update(doctorEntries)
+        .set({ status: "pending", matchedReportId: null, divergenceReason: null })
+        .where(and(
+          eq(doctorEntries.doctorId, doctorId),
+          inArray(doctorEntries.status, ["divergent", "pending"])
+        ))
+        .returning();
 
-    return result.length;
+      return result.length;
+    });
   }
 
   async createDocumentTemplate(template: InsertDocumentTemplate): Promise<DocumentTemplate> {
