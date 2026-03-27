@@ -54,3 +54,8 @@ outputType = "webview"
 stack = "MOCKUP_JS"
 mockupState = "FULLSTACK"
 integrations = ["javascript_openai_ai_integrations:2.0.0", "javascript_object_storage:2.0.0", "javascript_anthropic_ai_integrations:2.0.0", "github:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "c36a5eefcce139c81d70f6665fe24de3943fe49d5844d6666cf5d69ad744c7d7bb552ad66dcceebfc385409f883100c6607b46c10439968f69fb2ff102601ab6"

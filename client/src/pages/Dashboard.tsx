@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [entries, setEntries] = useState<DoctorEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [statsAgg, setStatsAgg] = useState({ pending: 0, reconciled: 0, divergent: 0, unmatched: 0, total: 0 });
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -112,8 +113,8 @@ export default function Dashboard() {
 
   const [unmatchedCount, setUnmatchedCount] = useState(0);
 
-  const fetchEntries = async (token: string) => {
-    setFetchError(false);
+  const fetchEntries = async (token: string, retryCount = 0) => {
+    if (retryCount === 0) setFetchError(false);
     try {
       const res = await fetch("/api/dashboard/stats", { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
@@ -121,9 +122,24 @@ export default function Dashboard() {
       if (res.ok) {
         setEntries(data.entries || []);
         setUnmatchedCount(data.unmatched || 0);
-      } else { setFetchError(true); }
-    } catch { setFetchError(true); }
-    finally { setLoadingEntries(false); }
+        setStatsAgg({ pending: data.pending || 0, reconciled: data.reconciled || 0, divergent: data.divergent || 0, unmatched: data.unmatched || 0, total: data.total || 0 });
+        setLoadingEntries(false);
+      } else {
+        if (retryCount < 2) {
+          await new Promise(r => setTimeout(r, 1500));
+          return fetchEntries(token, retryCount + 1);
+        }
+        setFetchError(true);
+        setLoadingEntries(false);
+      }
+    } catch {
+      if (retryCount < 2) {
+        await new Promise(r => setTimeout(r, 1500));
+        return fetchEntries(token, retryCount + 1);
+      }
+      setFetchError(true);
+      setLoadingEntries(false);
+    }
   };
 
   const fetchNotifications = async (token: string) => {
@@ -155,9 +171,9 @@ export default function Dashboard() {
     }
   };
 
-  const pendingCount = entries.filter(e => e.status === "pending").length;
-  const reconciledCount = entries.filter(e => e.status === "reconciled").length;
-  const divergentCount = entries.filter(e => e.status === "divergent").length;
+  const pendingCount = statsAgg.pending;
+  const reconciledCount = statsAgg.reconciled;
+  const divergentCount = statsAgg.divergent;
   const recentEntries = entries.slice(0, 5);
 
   useEffect(() => {

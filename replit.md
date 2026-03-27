@@ -7,7 +7,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Frontend**: React (Vite 3.2.11 + Rollup 2.80.0) + TailwindCSS v4 (via @tailwindcss/postcss) + shadcn/ui components
 - **Backend**: Node.js (Express) + TypeScript
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
-- **Auth**: JWT (jsonwebtoken) + bcryptjs (12 rounds) for password hashing + express-rate-limit + helmet security headers
+- **Auth**: JWT (jsonwebtoken, persistent `JWT_SECRET` env var) + bcryptjs (12 rounds) for password hashing + express-rate-limit + helmet security headers
 - **AI**: LLM abstraction layer (server/llm.ts) with dual provider support — Anthropic Claude (via Replit AI Integrations, `AI_INTEGRATIONS_ANTHROPIC_API_KEY`) preferred for complex parsing (PDFs/images) + OpenAI (gpt-5-mini vision/text, gpt-4o-mini-transcribe for audio STT). `getComplexParsingProvider()` auto-selects Claude when available.
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports

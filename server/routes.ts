@@ -1598,7 +1598,9 @@ export async function registerRoutes(
       const unmatched = unmatchedReports.length;
       const total = pending + reconciled + divergent + unmatched;
 
-      return res.json({ pending, reconciled, divergent, unmatched, total, entries });
+      const recentEntries = entries.slice(0, 15);
+
+      return res.json({ pending, reconciled, divergent, unmatched, total, entries: recentEntries });
     } catch (error) {
       console.error("Dashboard stats error:", error);
       return res.status(500).json({ message: "Erro ao buscar estatísticas" });
