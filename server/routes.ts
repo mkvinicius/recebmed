@@ -474,8 +474,8 @@ export async function registerRoutes(
       const userId = (req as any).userId;
       const { patientName, patientBirthDate, procedureDate, procedureName, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck } = req.body;
 
-      if (!patientName || !procedureDate || !insuranceProvider || !description) {
-        return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+      if (!patientName || !procedureDate || !insuranceProvider) {
+        return res.status(400).json({ message: "Nome, data e convênio são obrigatórios" });
       }
 
       if (!skipDuplicateCheck) {
@@ -544,7 +544,7 @@ export async function registerRoutes(
       }
 
       const validEntries = entriesData.filter((item: any) =>
-        item.patientName && item.procedureDate && item.insuranceProvider && item.description
+        item.patientName && item.procedureDate && item.insuranceProvider
       );
 
       if (validEntries.length === 0) {

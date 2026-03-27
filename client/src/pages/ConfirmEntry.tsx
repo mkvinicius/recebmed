@@ -279,7 +279,7 @@ export default function ConfirmEntry() {
     const shouldSkip = forceSkipDuplicate || skipDuplicateCheck;
 
     const validIndices: number[] = [];
-    entries.forEach((e, i) => { if (e.patientName && e.procedureDate && e.insuranceProvider && e.description) validIndices.push(i); });
+    entries.forEach((e, i) => { if (e.patientName && e.procedureDate && e.insuranceProvider) validIndices.push(i); });
     if (validIndices.length === 0) {
       toast({ title: t("confirm.requiredFields"), description: t("confirm.requiredFieldsDesc"), variant: "destructive" });
       return;

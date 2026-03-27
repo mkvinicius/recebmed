@@ -22,7 +22,7 @@ export const doctorEntries = pgTable("doctor_entries", {
   procedureDate: timestamp("procedure_date").notNull(),
   procedureName: text("procedure_name"),
   insuranceProvider: text("insurance_provider").notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   procedureValue: numeric("procedure_value", { precision: 12, scale: 2 }),
   entryMethod: entryMethodEnum("entry_method").notNull().default("manual"),
   sourceUrl: text("source_url"),
