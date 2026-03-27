@@ -193,7 +193,11 @@
     "deleteFailedDesc": "Failed to delete.",
     "confirmDelete": "Are you sure you want to delete this entry?",
     "conferenceStatus": "Conference Status",
-    "statusUpdateFailed": "Failed to update status."
+    "statusUpdateFailed": "Failed to update status.",
+    "entryDeleted": "Entry deleted!",
+    "entryDeletedDesc": "The record was successfully removed.",
+    "deleteError": "Could not delete the entry.",
+    "tapToConfirmDelete": "Tap again to confirm deletion"
   },
   "capture": {
     "title": "New Entry",

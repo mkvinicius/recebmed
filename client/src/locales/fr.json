@@ -193,7 +193,11 @@
     "deleteFailedDesc": "Échec de la suppression.",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette entrée ?",
     "conferenceStatus": "Statut de Rapprochement",
-    "statusUpdateFailed": "Échec de la mise à jour du statut."
+    "statusUpdateFailed": "Échec de la mise à jour du statut.",
+    "entryDeleted": "Entrée supprimée !",
+    "entryDeletedDesc": "L'enregistrement a été supprimé avec succès.",
+    "deleteError": "Impossible de supprimer l'entrée.",
+    "tapToConfirmDelete": "Appuyez à nouveau pour confirmer la suppression"
   },
   "capture": {
     "title": "Nouvelle Entrée",

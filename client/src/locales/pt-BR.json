@@ -193,7 +193,11 @@
     "deleteFailedDesc": "Falha ao excluir.",
     "confirmDelete": "Tem certeza que deseja excluir este lançamento?",
     "conferenceStatus": "Status da Conferência",
-    "statusUpdateFailed": "Falha ao atualizar status."
+    "statusUpdateFailed": "Falha ao atualizar status.",
+    "entryDeleted": "Lançamento excluído!",
+    "entryDeletedDesc": "O registro foi removido com sucesso.",
+    "deleteError": "Não foi possível excluir o lançamento.",
+    "tapToConfirmDelete": "Toque novamente para confirmar exclusão"
   },
   "capture": {
     "title": "Novo Lançamento",

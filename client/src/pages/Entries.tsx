@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
   Search, FileText, Clock, CheckCircle2, AlertCircle,
-  Camera, Mic, PenLine, Loader2, X, Calendar, ChevronLeft, ChevronRight
+  Camera, Mic, PenLine, Loader2, X, Calendar, ChevronLeft, ChevronRight, Trash2
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +47,8 @@ export default function Entries() {
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,6 +148,33 @@ export default function Entries() {
     } catch {
       setEntries(prevEntries);
       toast({ title: t("common.error"), description: t("entries.statusUpdateFailed"), variant: "destructive" });
+    }
+  };
+
+  const handleDeleteEntry = async (entryId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirmDeleteId !== entryId) {
+      setConfirmDeleteId(entryId);
+      setTimeout(() => setConfirmDeleteId(prev => prev === entryId ? null : prev), 4000);
+      return;
+    }
+    setConfirmDeleteId(null);
+    setDeletingId(entryId);
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/entries/${entryId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        setEntries(prev => prev.filter(e => e.id !== entryId));
+        setTotalEntries(prev => prev - 1);
+        toast({ title: t("entries.entryDeleted"), description: t("entries.entryDeletedDesc") });
+      } else {
+        toast({ title: t("common.error"), description: t("entries.deleteError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("entries.deleteError"), variant: "destructive" });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -266,6 +295,17 @@ export default function Entries() {
                   </div>
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
                     {entry.procedureValue && <span className="text-sm font-bold text-green-600 dark:text-green-400" data-testid={`value-${entry.id}`}>{formatCurrency(entry.procedureValue)}</span>}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={e => handleDeleteEntry(entry.id, e)}
+                        disabled={deletingId === entry.id}
+                        className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === entry.id ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 ring-2 ring-red-300 dark:ring-red-700 scale-110" : "text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"}`}
+                        data-testid={`button-delete-${entry.id}`}
+                        aria-label={confirmDeleteId === entry.id ? t("entries.tapToConfirmDelete") : t("common.delete")}
+                        title={confirmDeleteId === entry.id ? t("entries.tapToConfirmDelete") : t("common.delete")}
+                      >
+                        {deletingId === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
                     <div className="relative" ref={quickStatusEntry === entry.id ? quickStatusRef : undefined}>
                       <button onClick={e => { e.stopPropagation(); setQuickStatusEntry(quickStatusEntry === entry.id ? null : entry.id); }}
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all hover:scale-105 active:scale-95 ${entry.status === "reconciled" ? "bg-green-50 dark:bg-green-900/30 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" : entry.status === "divergent" ? "bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"}`}
@@ -286,6 +326,7 @@ export default function Entries() {
                           ))}
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 </div>

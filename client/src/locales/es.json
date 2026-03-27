@@ -193,7 +193,11 @@
     "deleteFailedDesc": "Error al eliminar.",
     "confirmDelete": "¿Está seguro de que desea eliminar este registro?",
     "conferenceStatus": "Estado de Conciliación",
-    "statusUpdateFailed": "Error al actualizar estado."
+    "statusUpdateFailed": "Error al actualizar estado.",
+    "entryDeleted": "¡Registro eliminado!",
+    "entryDeletedDesc": "El registro fue eliminado con éxito.",
+    "deleteError": "No se pudo eliminar el registro.",
+    "tapToConfirmDelete": "Toque de nuevo para confirmar eliminación"
   },
   "capture": {
     "title": "Nuevo Registro",
