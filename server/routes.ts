@@ -479,7 +479,7 @@ export async function registerRoutes(
       }
 
       if (!skipDuplicateCheck) {
-        const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description);
+        const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description, insuranceProvider);
         if (dataDups.length > 0) {
           return res.status(409).json({
             message: "duplicate_data",
@@ -552,40 +552,56 @@ export async function registerRoutes(
       }
 
       const savedEntries = [];
+      const skippedDuplicates: string[] = [];
       const allDiffs: Array<{ doctorId: string; field: string; originalValue: string; correctedValue: string; entryMethod: string }> = [];
-      const BATCH_CHUNK = 5;
 
-      for (let c = 0; c < validEntries.length; c += BATCH_CHUNK) {
-        const chunk = validEntries.slice(c, c + BATCH_CHUNK);
-        const chunkSaved = await Promise.all(
-          chunk.map(async (item: any) => {
-            try {
-              const entry = await storage.createDoctorEntry({
-                doctorId: userId,
-                patientName: item.patientName,
-                patientBirthDate: item.patientBirthDate || null,
-                procedureDate: parseLocalDate(item.procedureDate),
-                procedureName: item.procedureName || null,
-                insuranceProvider: item.insuranceProvider,
-                description: item.description,
-                procedureValue: item.procedureValue || null,
-                entryMethod: entryMethod || "manual",
-                sourceUrl: item.sourceUrl || null,
-                imageHash: item._imageHash || null,
-                status: "pending",
-              });
-              if (item._originalData && entryMethod && entryMethod !== "manual") {
-                const diffs = detectCorrections(item._originalData, { patientName: item.patientName, procedureDate: item.procedureDate, insuranceProvider: item.insuranceProvider, description: item.description, procedureValue: item.procedureValue || "" }, entryMethod, userId);
-                allDiffs.push(...diffs);
-              }
-              return entry;
-            } catch (err) {
-              console.error("Error saving entry in batch:", err);
-              return null;
-            }
-          })
-        );
-        savedEntries.push(...chunkSaved.filter(Boolean));
+      const normalizeForDedup = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+      const seenInBatch = new Set<string>();
+      const deduped = validEntries.filter((item: any) => {
+        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.description || "").toLowerCase().trim()}|${(item.insuranceProvider || "").toLowerCase().trim()}`;
+        if (seenInBatch.has(key)) {
+          console.log(`[Batch] Duplicata intra-lote ignorada: ${item.patientName}`);
+          skippedDuplicates.push(item.patientName);
+          return false;
+        }
+        seenInBatch.add(key);
+        return true;
+      });
+
+      for (const item of deduped) {
+        try {
+          const dups = await storage.findDuplicatesByData(
+            userId, item.patientName, parseLocalDate(item.procedureDate),
+            item.description || null, item.insuranceProvider
+          );
+          if (dups.length > 0) {
+            console.log(`[Batch] Duplicata no banco ignorada: ${item.patientName} - ${item.description || "sem proc"} - ${item.procedureDate}`);
+            skippedDuplicates.push(item.patientName);
+            continue;
+          }
+
+          const entry = await storage.createDoctorEntry({
+            doctorId: userId,
+            patientName: item.patientName,
+            patientBirthDate: item.patientBirthDate || null,
+            procedureDate: parseLocalDate(item.procedureDate),
+            procedureName: item.procedureName || null,
+            insuranceProvider: item.insuranceProvider,
+            description: item.description,
+            procedureValue: item.procedureValue || null,
+            entryMethod: entryMethod || "manual",
+            sourceUrl: item.sourceUrl || null,
+            imageHash: item._imageHash || null,
+            status: "pending",
+          });
+          if (item._originalData && entryMethod && entryMethod !== "manual") {
+            const diffs = detectCorrections(item._originalData, { patientName: item.patientName, procedureDate: item.procedureDate, insuranceProvider: item.insuranceProvider, description: item.description, procedureValue: item.procedureValue || "" }, entryMethod, userId);
+            allDiffs.push(...diffs);
+          }
+          savedEntries.push(entry);
+        } catch (err) {
+          console.error("Error saving entry in batch:", err);
+        }
       }
 
       if (allDiffs.length > 0) {
@@ -597,16 +613,29 @@ export async function registerRoutes(
       }
 
       if (savedEntries.length > 0) {
+        const dupMsg = skippedDuplicates.length > 0 ? ` (${skippedDuplicates.length} duplicata(s) ignorada(s))` : "";
         await storage.createNotification({
           doctorId: userId,
           type: "batch_created",
           title: "Lançamentos em lote",
-          message: `${savedEntries.length} lançamentos registrados com sucesso`,
+          message: `${savedEntries.length} lançamentos registrados com sucesso${dupMsg}`,
+          read: false,
+        });
+      } else if (skippedDuplicates.length > 0) {
+        await storage.createNotification({
+          doctorId: userId,
+          type: "batch_created",
+          title: "Lançamentos duplicados",
+          message: `${skippedDuplicates.length} lançamento(s) já existente(s) — nenhum novo registro criado`,
           read: false,
         });
       }
 
-      return res.status(201).json({ entries: savedEntries, count: savedEntries.length });
+      return res.status(201).json({
+        entries: savedEntries,
+        count: savedEntries.length,
+        ...(skippedDuplicates.length > 0 ? { skippedDuplicates: skippedDuplicates.length, skippedNames: skippedDuplicates } : {}),
+      });
     } catch (error) {
       console.error("Batch create error:", error);
       return res.status(500).json({ message: "Erro ao salvar lançamentos" });

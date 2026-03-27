@@ -66,7 +66,7 @@ export interface IStorage {
   getRecentAiCorrections(doctorId: string, limit?: number): Promise<AiCorrection[]>;
 
   findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
-  findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]>;
+  findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, insuranceProvider?: string): Promise<DoctorEntry[]>;
   getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
   getActiveUserIds(): Promise<string[]>;
   getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
@@ -292,23 +292,32 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(doctorEntries.createdAt)).limit(5);
   }
 
-  async findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string): Promise<DoctorEntry[]> {
+  async findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, insuranceProvider?: string): Promise<DoctorEntry[]> {
     const dayStart = new Date(procedureDate);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(procedureDate);
     dayEnd.setHours(23, 59, 59, 999);
 
     const normalized = normalizePatientName(patientName);
-    const allSameDay = await db.select().from(doctorEntries).where(
-      and(
-        eq(doctorEntries.doctorId, doctorId),
-        gte(doctorEntries.procedureDate, dayStart),
-        sql`${doctorEntries.procedureDate} <= ${dayEnd}`,
-        ilike(doctorEntries.description, description)
-      )
-    ).orderBy(desc(doctorEntries.createdAt)).limit(20);
 
-    return allSameDay.filter(e => normalizePatientName(e.patientName) === normalized).slice(0, 5);
+    const conditions = [
+      eq(doctorEntries.doctorId, doctorId),
+      gte(doctorEntries.procedureDate, dayStart),
+      sql`${doctorEntries.procedureDate} <= ${dayEnd}`,
+    ];
+
+    const allSameDay = await db.select().from(doctorEntries).where(
+      and(...conditions)
+    ).orderBy(desc(doctorEntries.createdAt)).limit(50);
+
+    return allSameDay.filter(e => {
+      if (normalizePatientName(e.patientName) !== normalized) return false;
+      const descMatch = (!description && !e.description) ||
+        (description && e.description && e.description.toLowerCase().trim() === description.toLowerCase().trim());
+      const insMatch = !insuranceProvider || !e.insuranceProvider ||
+        e.insuranceProvider.toLowerCase().trim() === insuranceProvider.toLowerCase().trim();
+      return descMatch && insMatch;
+    }).slice(0, 5);
   }
 
   async getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]> {

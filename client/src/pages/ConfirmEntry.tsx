@@ -331,6 +331,23 @@ export default function ConfirmEntry() {
           toast({ title: t("confirm.saveError"), description: data.message, variant: "destructive" });
           return;
         }
+        if (data.skippedDuplicates && data.skippedDuplicates > 0) {
+          if (data.count === 0) {
+            toast({
+              title: t("confirm.allDuplicates"),
+              description: t("confirm.allDuplicatesDesc", { count: data.skippedDuplicates }),
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          toast({
+            title: t("confirm.savedWithDuplicates", { saved: data.count, skipped: data.skippedDuplicates }),
+            description: t("confirm.duplicatesSkippedDesc"),
+          });
+          setLocation("/dashboard");
+          return;
+        }
       }
       toast({
         title: validIndices.length > 1 ? t("confirm.savedBatch", { count: validIndices.length }) : t("confirm.savedSingle"),
