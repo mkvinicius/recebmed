@@ -81,6 +81,8 @@ export interface IStorage {
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   resetDivergentAndPendingEntries(doctorId: string): Promise<number>;
 
+  deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }>;
+
   createDocumentTemplate(template: InsertDocumentTemplate): Promise<DocumentTemplate>;
   getDocumentTemplates(userId: string): Promise<DocumentTemplate[]>;
   getDocumentTemplate(id: string): Promise<DocumentTemplate | undefined>;
@@ -365,6 +367,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUploadedReports(userId: string): Promise<UploadedReport[]> {
     return db.select().from(uploadedReports).where(eq(uploadedReports.userId, userId)).orderBy(desc(uploadedReports.uploadDate));
+  }
+
+  async deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }> {
+    const [report] = await db.select().from(uploadedReports)
+      .where(and(eq(uploadedReports.id, reportId), eq(uploadedReports.userId, userId)));
+    if (!report) throw new Error("Relatório não encontrado");
+
+    const fileUrl = report.originalFileUrl;
+
+    const deletedEntriesResult = await db.delete(doctorEntries)
+      .where(and(eq(doctorEntries.doctorId, userId), eq(doctorEntries.sourceUrl, fileUrl)))
+      .returning();
+
+    const deletedClinicResult = await db.delete(clinicReports)
+      .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)))
+      .returning();
+
+    await db.delete(uploadedReports).where(eq(uploadedReports.id, reportId));
+
+    return { deletedEntries: deletedEntriesResult.length, deletedClinicReports: deletedClinicResult.length };
   }
 
   async getUnmatchedClinicReports(doctorId: string): Promise<ClinicReport[]> {

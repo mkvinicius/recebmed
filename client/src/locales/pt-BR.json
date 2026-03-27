@@ -604,7 +604,15 @@
     "download": "Baixar Original",
     "empty": "Nenhum relatório enviado ainda",
     "emptyDesc": "Os relatórios aparecerão aqui após o upload na página de Conciliação.",
-    "records": "{{count}} registro(s)"
+    "records": "{{count}} registro(s)",
+    "delete": "Apagar relatório",
+    "deleteTitle": "Apagar relatório",
+    "deleteConfirm": "Tem certeza que deseja apagar este relatório?",
+    "deleteCascadeWarning": "Todos os lançamentos criados a partir deste documento também serão apagados automaticamente.",
+    "deleteConfirmBtn": "Apagar tudo",
+    "deleted": "Relatório apagado",
+    "deletedDesc": "{{entries}} lançamento(s) e {{reports}} registro(s) clínicos removidos.",
+    "deleteError": "Não foi possível apagar o relatório."
   },
   "documentTraining": {
     "title": "Treinar IA",

@@ -1147,6 +1147,21 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/uploaded-reports/:id", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const reportId = req.params.id;
+      const result = await storage.deleteUploadedReportCascade(reportId, userId);
+      return res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error("Delete uploaded report error:", error);
+      if (error.message === "Relatório não encontrado") {
+        return res.status(404).json({ message: error.message });
+      }
+      return res.status(500).json({ message: "Erro ao apagar relatório" });
+    }
+  });
+
   app.get("/api/reconciliation/csv-template", (_req: Request, res: Response) => {
     const csv = generateCsvTemplate();
     res.setHeader("Content-Type", "text/csv; charset=utf-8");

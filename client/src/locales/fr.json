@@ -604,7 +604,15 @@
     "download": "Télécharger l'original",
     "empty": "Aucun rapport envoyé pour le moment",
     "emptyDesc": "Les rapports apparaîtront ici après le téléchargement sur la page Réconciliation.",
-    "records": "{{count}} enregistrement(s)"
+    "records": "{{count}} enregistrement(s)",
+    "delete": "Supprimer le rapport",
+    "deleteTitle": "Supprimer le rapport",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce rapport ?",
+    "deleteCascadeWarning": "Toutes les entrées créées à partir de ce document seront également supprimées automatiquement.",
+    "deleteConfirmBtn": "Tout supprimer",
+    "deleted": "Rapport supprimé",
+    "deletedDesc": "{{entries}} entrée(s) et {{reports}} enregistrement(s) cliniques supprimés.",
+    "deleteError": "Impossible de supprimer le rapport."
   },
   "documentTraining": {
     "title": "Entraîner l'IA",

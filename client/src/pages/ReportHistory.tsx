@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { FileText, Loader2, Calendar, Hash, ExternalLink, ArrowLeft } from "lucide-react";
+import { FileText, Loader2, Calendar, Hash, ExternalLink, ArrowLeft, Trash2, AlertTriangle } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import ReportsTabs from "@/components/ReportsTabs";
 
 interface UploadedReport {
@@ -19,6 +20,9 @@ export default function ReportHistory() {
   const [, setLocation] = useLocation();
   const [reports, setReports] = useState<UploadedReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<UploadedReport | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const token = getToken();
@@ -40,6 +44,37 @@ export default function ReportHistory() {
     if (ext === "csv") return "📊";
     if (ext === "pdf") return "📄";
     return "🖼️";
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const token = getToken();
+    if (!token) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/uploaded-reports/${deleteTarget.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setReports((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+        toast({
+          title: t("reportHistory.deleted"),
+          description: t("reportHistory.deletedDesc", {
+            entries: data.deletedEntries,
+            reports: data.deletedClinicReports,
+          }),
+        });
+      } else {
+        toast({ title: t("common.error"), description: data.message || t("reportHistory.deleteError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.connectionError"), variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   if (loading) {
@@ -103,18 +138,76 @@ export default function ReportHistory() {
                 </div>
               </div>
 
-              <a
-                href={report.originalFileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#8855f6] hover:bg-[#7744e4] text-white font-semibold text-sm transition-colors"
-                data-testid={`link-download-${report.id}`}
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("reportHistory.download")}</span>
-              </a>
+              <div className="shrink-0 flex items-center gap-2">
+                <button
+                  onClick={() => setDeleteTarget(report)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-semibold text-sm transition-colors"
+                  data-testid={`button-delete-${report.id}`}
+                  title={t("reportHistory.delete")}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <a
+                  href={report.originalFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#8855f6] hover:bg-[#7744e4] text-white font-semibold text-sm transition-colors"
+                  data-testid={`link-download-${report.id}`}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("reportHistory.download")}</span>
+                </a>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6" data-testid="modal-delete-report">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {t("reportHistory.deleteTitle")}
+              </h3>
+            </div>
+
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+              {t("reportHistory.deleteConfirm")}
+            </p>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4">
+              <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{deleteTarget.fileName}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t("reportHistory.records", { count: deleteTarget.extractedRecordCount })}
+              </p>
+            </div>
+            <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-6">
+              {t("reportHistory.deleteCascadeWarning")}
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                data-testid="button-delete-cancel"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow-lg transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                data-testid="button-delete-confirm"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {t("reportHistory.deleteConfirmBtn")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -604,7 +604,15 @@
     "download": "Download Original",
     "empty": "No reports uploaded yet",
     "emptyDesc": "Reports will appear here after uploading on the Reconciliation page.",
-    "records": "{{count}} record(s)"
+    "records": "{{count}} record(s)",
+    "delete": "Delete report",
+    "deleteTitle": "Delete report",
+    "deleteConfirm": "Are you sure you want to delete this report?",
+    "deleteCascadeWarning": "All entries created from this document will also be automatically deleted.",
+    "deleteConfirmBtn": "Delete all",
+    "deleted": "Report deleted",
+    "deletedDesc": "{{entries}} entry(ies) and {{reports}} clinic record(s) removed.",
+    "deleteError": "Could not delete the report."
   },
   "documentTraining": {
     "title": "Train AI",

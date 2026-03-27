@@ -604,7 +604,15 @@
     "download": "Descargar Original",
     "empty": "Ningún informe cargado aún",
     "emptyDesc": "Los informes aparecerán aquí después de subirlos en la página de Conciliación.",
-    "records": "{{count}} registro(s)"
+    "records": "{{count}} registro(s)",
+    "delete": "Eliminar informe",
+    "deleteTitle": "Eliminar informe",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este informe?",
+    "deleteCascadeWarning": "Todos los registros creados a partir de este documento también serán eliminados automáticamente.",
+    "deleteConfirmBtn": "Eliminar todo",
+    "deleted": "Informe eliminado",
+    "deletedDesc": "{{entries}} registro(s) y {{reports}} informe(s) clínicos eliminados.",
+    "deleteError": "No se pudo eliminar el informe."
   },
   "documentTraining": {
     "title": "Entrenar IA",
