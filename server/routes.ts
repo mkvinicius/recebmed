@@ -19,7 +19,7 @@ function parseLocalDate(dateStr: string): Date {
 }
 import { extractPdfData, extractPdfDataWithTemplate, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { analyzeDocumentStructure, computeDocumentHash } from "./document-validator";
-import { schedulePostUploadAudit } from "./audit";
+import { schedulePostUploadAudit, runAIAnomalyScan } from "./audit";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
 import Papa from "papaparse";
@@ -1020,6 +1020,19 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Mark all read error:", error);
       return res.status(500).json({ message: "Erro ao marcar notificações" });
+    }
+  });
+
+  // ── AI Anomaly Scan ──
+
+  app.post("/api/ai/anomaly-scan", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const result = await runAIAnomalyScan(userId);
+      return res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("AI anomaly scan error:", error);
+      return res.status(500).json({ message: "Erro ao executar varredura inteligente" });
     }
   });
 

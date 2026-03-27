@@ -5,7 +5,7 @@ import {
   Bell, Clock, CreditCard, AlertTriangle,
   FileText, Loader2, X,
   Camera, Mic, PenLine,
-  ChevronRight, Search, CheckCheck, Upload
+  ChevronRight, Search, CheckCheck, Upload, Brain
 } from "lucide-react";
 import { getToken, getUser, clearAuth } from "@/lib/auth";
 import { EntrySkeleton } from "@/components/EntrySkeleton";
@@ -142,6 +142,38 @@ export default function Dashboard() {
     }
   };
 
+  const [scanningAI, setScanningAI] = useState(false);
+
+  const runAIScan = async () => {
+    const token = getToken();
+    if (!token || scanningAI) return;
+    setScanningAI(true);
+    try {
+      const res = await fetch("/api/ai/anomaly-scan", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: t("common.error"), description: data.message, variant: "destructive" });
+      } else if (!data.scanned && data.reason === "cooldown") {
+        toast({ title: t("dashboard.aiScanDone"), description: t("dashboard.aiScanCooldown") });
+      } else if (!data.scanned && data.reason === "insufficient_data") {
+        toast({ title: t("dashboard.aiScanDone"), description: t("dashboard.aiScanInsufficientData") });
+      } else if (data.anomaliesFound > 0) {
+        toast({ title: t("dashboard.aiScanDone"), description: t("dashboard.aiScanFoundAnomalies", { count: data.anomaliesFound }) });
+        await fetchNotifications(token);
+      } else {
+        toast({ title: t("dashboard.aiScanDone"), description: t("dashboard.aiScanNoAnomalies") });
+      }
+    } catch {
+      console.warn("AI scan failed");
+      toast({ title: t("common.error"), description: t("dashboard.aiScanError"), variant: "destructive" });
+    } finally {
+      setScanningAI(false);
+    }
+  };
+
   const fetchNotifications = async (token: string) => {
     try {
       const res = await fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } });
@@ -210,7 +242,12 @@ export default function Dashboard() {
                 <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("dashboard.notifications")}</h4>
-                    {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />{t("dashboard.markAllRead")}</button>}
+                    <div className="flex items-center gap-2">
+                      <button onClick={runAIScan} disabled={scanningAI} className="text-xs text-[#8855f6] font-semibold hover:underline flex items-center gap-1 disabled:opacity-50" data-testid="button-ai-scan" title={t("dashboard.aiScanTitle")}>
+                        {scanningAI ? <Loader2 className="w-3 h-3 animate-spin" /> : <Brain className="w-3.5 h-3.5" />}
+                      </button>
+                      {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-[#8855f6] font-semibold hover:underline" data-testid="button-mark-all-read"><CheckCheck className="w-3.5 h-3.5 inline mr-1" />{t("dashboard.markAllRead")}</button>}
+                    </div>
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
                     {notifications.length === 0 ? (

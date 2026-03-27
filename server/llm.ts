@@ -171,6 +171,75 @@ export async function llmChatCompletion(
   return provider.chatCompletion(options);
 }
 
+export interface AIAnomalyResult {
+  anomalies: Array<{
+    type: "duplicate" | "value_outlier" | "missing_data" | "suspicious_pattern";
+    severity: "high" | "medium" | "low";
+    description: string;
+    entryIds: string[];
+  }>;
+}
+
+export async function aiAnomalyScan(
+  entries: Array<{ id: string; patientName: string; procedureDate: string; description: string | null; insuranceProvider: string; procedureValue: string | null; status: string }>,
+): Promise<AIAnomalyResult> {
+  if (entries.length < 2) {
+    return { anomalies: [] };
+  }
+
+  const provider = getComplexParsingProvider();
+
+  const entriesList = entries.map((e, i) =>
+    `[${i + 1}] ID:${e.id} | ${e.patientName} | ${e.procedureDate} | ${e.description || "(vazio)"} | ${e.insuranceProvider} | R$${e.procedureValue || "0"} | ${e.status}`
+  ).join("\n");
+
+  const result = await provider.chatCompletion({
+    model: "complex",
+    maxTokens: 2000,
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content: `Você é um auditor financeiro especializado em consultórios médicos brasileiros.
+
+TAREFA: Analise os lançamentos e identifique ANOMALIAS reais.
+
+TIPOS DE ANOMALIA:
+1. **duplicate** — Mesmo paciente, mesma data, procedimento igual ou muito similar (variações de escrita contam). Mesmo paciente com procedimentos DIFERENTES na mesma data NÃO é duplicata.
+2. **value_outlier** — Valor muito discrepante para o mesmo tipo de procedimento (ex: mesma consulta cobrada R$150 e R$1500).
+3. **missing_data** — Lançamento sem descrição de procedimento ou valor zerado/nulo.
+4. **suspicious_pattern** — Padrão suspeito (ex: muitos procedimentos iguais no mesmo dia para pacientes diferentes, o que pode indicar erro de importação).
+
+REGRAS:
+- Só reporte anomalias com certeza razoável, não suposições vagas.
+- Mesmo paciente pode ter vários atendimentos legítimos (retorno, procedimento diferente, etc).
+- Agrupe duplicatas: se A e B são iguais, reporte ambos IDs juntos.
+- Máximo 10 anomalias mais relevantes.
+- Retorne JSON VÁLIDO.
+
+Formato de resposta:
+{"anomalies": [{"type": "duplicate"|"value_outlier"|"missing_data"|"suspicious_pattern", "severity": "high"|"medium"|"low", "description": "explicação curta em português", "entryIds": ["id1", "id2"]}]}`
+      },
+      {
+        role: "user",
+        content: `LANÇAMENTOS PARA ANÁLISE:\n${entriesList}`
+      }
+    ]
+  });
+
+  try {
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return { anomalies: (parsed.anomalies || []).slice(0, 10) };
+    }
+  } catch (err) {
+    console.error("[AI-Scan] Parse error:", err);
+  }
+
+  return { anomalies: [] };
+}
+
 export interface AIDuplicateCheckResult {
   isDuplicate: boolean;
   confidence: "high" | "medium" | "low";
