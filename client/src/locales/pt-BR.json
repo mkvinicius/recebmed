@@ -237,7 +237,8 @@
     "duplicateDataTitle": "Possível duplicata detectada",
     "duplicateDataDesc": "Já existe um lançamento com os mesmos dados (paciente, data e procedimento):",
     "duplicateContinue": "Continuar mesmo assim",
-    "duplicateCancel": "Cancelar"
+    "duplicateCancel": "Cancelar",
+    "aiDetected": "Duplicata identificada por inteligência artificial"
   },
   "confirm": {
     "title": "Confirmar Lançamentos",

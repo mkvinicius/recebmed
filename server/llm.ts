@@ -170,3 +170,81 @@ export async function llmChatCompletion(
   const provider = getLLMProvider(providerName);
   return provider.chatCompletion(options);
 }
+
+export interface AIDuplicateCheckResult {
+  isDuplicate: boolean;
+  confidence: "high" | "medium" | "low";
+  reason: string;
+  matchedEntryId?: string;
+}
+
+export async function aiDuplicateCheck(
+  newEntry: { patientName: string; procedureDate: string; description: string | null; insuranceProvider: string; procedureValue: string | null },
+  existingEntries: Array<{ id: string; patientName: string; procedureDate: string; description: string | null; insuranceProvider: string; procedureValue: string | null }>
+): Promise<AIDuplicateCheckResult> {
+  if (existingEntries.length === 0) {
+    return { isDuplicate: false, confidence: "high", reason: "Nenhum lançamento similar encontrado" };
+  }
+
+  const provider = getComplexParsingProvider();
+
+  const existingList = existingEntries.map((e, i) =>
+    `[${i + 1}] ID: ${e.id}\n    Paciente: ${e.patientName}\n    Data: ${e.procedureDate}\n    Procedimento: ${e.description || "(vazio)"}\n    Convênio: ${e.insuranceProvider}\n    Valor: ${e.procedureValue || "(vazio)"}`
+  ).join("\n\n");
+
+  const result = await provider.chatCompletion({
+    model: "complex",
+    maxTokens: 500,
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content: `Você é um validador de duplicatas para um sistema financeiro médico brasileiro.
+
+TAREFA: Comparar um NOVO lançamento com lançamentos EXISTENTES e determinar se é DUPLICATA.
+
+REGRAS IMPORTANTES:
+- O MESMO paciente pode ter VÁRIOS atendimentos diferentes (consultas, retornos, procedimentos distintos).
+- Só é duplicata quando TODOS os critérios coincidem: mesmo paciente, mesma data, mesmo procedimento/descrição, mesmo convênio.
+- Variações de escrita do MESMO procedimento são duplicata (ex: "Limpeza" vs "Profilaxia dental", "Consulta" vs "Consulta médica").
+- Variações de nome que claramente são a mesma pessoa são duplicata (ex: "Maria Silva" vs "Maria da Silva", "João P. Santos" vs "João Pedro Santos").
+- Se a data for diferente, NÃO é duplicata mesmo que tudo mais coincida (pode ser retorno).
+- Se o procedimento/descrição for claramente diferente, NÃO é duplicata mesmo na mesma data (ex: "Consulta" vs "Radiografia").
+- Se o valor for significativamente diferente E o procedimento parece diferente, NÃO é duplicata.
+- Na DÚVIDA, responda que NÃO é duplicata. É melhor permitir uma entrada extra do que bloquear um lançamento legítimo.
+
+Responda APENAS em JSON válido:
+{"isDuplicate": boolean, "confidence": "high"|"medium"|"low", "reason": "explicação curta em português", "matchedEntryId": "id do existente ou null"}`
+      },
+      {
+        role: "user",
+        content: `NOVO LANÇAMENTO:
+Paciente: ${newEntry.patientName}
+Data: ${newEntry.procedureDate}
+Procedimento: ${newEntry.description || "(vazio)"}
+Convênio: ${newEntry.insuranceProvider}
+Valor: ${newEntry.procedureValue || "(vazio)"}
+
+LANÇAMENTOS EXISTENTES:
+${existingList}`
+      }
+    ]
+  });
+
+  try {
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        isDuplicate: parsed.isDuplicate === true && parsed.confidence === "high",
+        confidence: parsed.confidence || "low",
+        reason: parsed.reason || "",
+        matchedEntryId: parsed.matchedEntryId || undefined,
+      };
+    }
+  } catch (err) {
+    console.error("AI duplicate check parse error:", err);
+  }
+
+  return { isDuplicate: false, confidence: "low", reason: "Não foi possível validar — entrada permitida" };
+}

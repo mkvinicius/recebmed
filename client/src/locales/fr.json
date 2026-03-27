@@ -237,7 +237,8 @@
     "duplicateDataTitle": "Doublon potentiel détecté",
     "duplicateDataDesc": "Une entrée avec les mêmes données (patient, date et procédure) existe déjà :",
     "duplicateContinue": "Continuer quand même",
-    "duplicateCancel": "Annuler"
+    "duplicateCancel": "Annuler",
+    "aiDetected": "Doublon identifié par intelligence artificielle"
   },
   "confirm": {
     "title": "Confirmer les Entrées",

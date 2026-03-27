@@ -237,7 +237,8 @@
     "duplicateDataTitle": "Posible duplicado detectado",
     "duplicateDataDesc": "Ya existe un registro con los mismos datos (paciente, fecha y procedimiento):",
     "duplicateContinue": "Continuar de todos modos",
-    "duplicateCancel": "Cancelar"
+    "duplicateCancel": "Cancelar",
+    "aiDetected": "Duplicado identificado por inteligencia artificial"
   },
   "confirm": {
     "title": "Confirmar Registros",

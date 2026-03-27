@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { extractDataFromImage, extractDataFromAudio, type CorrectionHint } from "./openai";
+import { aiDuplicateCheck } from "./llm";
 
 function parseLocalDate(dateStr: string): Date {
   if (!dateStr) return new Date(NaN);
@@ -492,6 +493,40 @@ export async function registerRoutes(
             },
           });
         }
+
+        const similarEntries = await storage.findSimilarEntriesForAI(userId, parseLocalDate(procedureDate), patientName);
+        if (similarEntries.length > 0) {
+          try {
+            const aiResult = await aiDuplicateCheck(
+              { patientName, procedureDate, description: description || null, insuranceProvider, procedureValue: procedureValue || null },
+              similarEntries.map(e => ({
+                id: e.id, patientName: e.patientName,
+                procedureDate: e.procedureDate instanceof Date ? e.procedureDate.toISOString().split("T")[0] : String(e.procedureDate),
+                description: e.description, insuranceProvider: e.insuranceProvider,
+                procedureValue: e.procedureValue,
+              }))
+            );
+            if (aiResult.isDuplicate) {
+              console.log(`[AI-Dedup] Duplicata detectada: ${patientName} - ${description} (confiança: ${aiResult.confidence}, motivo: ${aiResult.reason})`);
+              return res.status(409).json({
+                message: "duplicate_data",
+                duplicateWarning: {
+                  type: "ai_detected",
+                  reason: aiResult.reason,
+                  confidence: aiResult.confidence,
+                  existingEntries: similarEntries
+                    .filter(e => e.id === aiResult.matchedEntryId)
+                    .map(e => ({
+                      id: e.id, patientName: e.patientName, procedureDate: e.procedureDate,
+                      description: e.description, procedureValue: e.procedureValue, createdAt: e.createdAt,
+                    })),
+                },
+              });
+            }
+          } catch (aiErr) {
+            console.warn("[AI-Dedup] Falha na validação por IA, permitindo entrada:", aiErr);
+          }
+        }
       }
 
       const entry = await storage.createDoctorEntry({
@@ -575,9 +610,31 @@ export async function registerRoutes(
             item.description || null, item.insuranceProvider
           );
           if (dups.length > 0) {
-            console.log(`[Batch] Duplicata no banco ignorada: ${item.patientName} - ${item.description || "sem proc"} - ${item.procedureDate}`);
+            console.log(`[Batch] Duplicata exata no banco ignorada: ${item.patientName} - ${item.description || "sem proc"} - ${item.procedureDate}`);
             skippedDuplicates.push(item.patientName);
             continue;
+          }
+
+          const similarEntries = await storage.findSimilarEntriesForAI(userId, parseLocalDate(item.procedureDate), item.patientName);
+          if (similarEntries.length > 0) {
+            try {
+              const aiResult = await aiDuplicateCheck(
+                { patientName: item.patientName, procedureDate: item.procedureDate, description: item.description || null, insuranceProvider: item.insuranceProvider, procedureValue: item.procedureValue || null },
+                similarEntries.map(e => ({
+                  id: e.id, patientName: e.patientName,
+                  procedureDate: e.procedureDate instanceof Date ? e.procedureDate.toISOString().split("T")[0] : String(e.procedureDate),
+                  description: e.description, insuranceProvider: e.insuranceProvider,
+                  procedureValue: e.procedureValue,
+                }))
+              );
+              if (aiResult.isDuplicate) {
+                console.log(`[Batch AI-Dedup] Duplicata detectada: ${item.patientName} - ${item.description || "sem proc"} (${aiResult.reason})`);
+                skippedDuplicates.push(item.patientName);
+                continue;
+              }
+            } catch (aiErr) {
+              console.warn("[Batch AI-Dedup] Falha na validação, permitindo entrada:", aiErr);
+            }
           }
 
           const entry = await storage.createDoctorEntry({

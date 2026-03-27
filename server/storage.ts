@@ -67,6 +67,7 @@ export interface IStorage {
 
   findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
   findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, insuranceProvider?: string): Promise<DoctorEntry[]>;
+  findSimilarEntriesForAI(doctorId: string, procedureDate: Date, patientName: string): Promise<DoctorEntry[]>;
   getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
   getActiveUserIds(): Promise<string[]>;
   getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
@@ -322,6 +323,41 @@ export class DatabaseStorage implements IStorage {
         e.insuranceProvider.toLowerCase().trim() === insuranceProvider.toLowerCase().trim();
       return descMatch && insMatch;
     }).slice(0, 5);
+  }
+
+  async findSimilarEntriesForAI(doctorId: string, procedureDate: Date, patientName: string): Promise<DoctorEntry[]> {
+    const dayStart = new Date(procedureDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(procedureDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const results = await db.select().from(doctorEntries).where(
+      and(
+        eq(doctorEntries.doctorId, doctorId),
+        gte(doctorEntries.procedureDate, dayStart),
+        sql`${doctorEntries.procedureDate} <= ${dayEnd}`,
+      )
+    ).orderBy(desc(doctorEntries.createdAt)).limit(30);
+
+    if (results.length > 0) return results;
+
+    const normalized = normalizePatientName(patientName);
+    const weekStart = new Date(procedureDate);
+    weekStart.setDate(weekStart.getDate() - 3);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(procedureDate);
+    weekEnd.setDate(weekEnd.getDate() + 3);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    const weekResults = await db.select().from(doctorEntries).where(
+      and(
+        eq(doctorEntries.doctorId, doctorId),
+        gte(doctorEntries.procedureDate, weekStart),
+        sql`${doctorEntries.procedureDate} <= ${weekEnd}`,
+      )
+    ).orderBy(desc(doctorEntries.createdAt)).limit(50);
+
+    return weekResults.filter(e => normalizePatientName(e.patientName) === normalized).slice(0, 10);
   }
 
   async getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]> {

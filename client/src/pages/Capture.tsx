@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X, Trash2, Send } from "lucide-react";
+import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X, Trash2, Send, Brain } from "lucide-react";
 import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
@@ -359,10 +359,19 @@ export default function Capture() {
             </div>
 
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {duplicateWarning.type === "exact_image" || duplicateWarning.type === "exact_image_batch"
-                ? t("capture.duplicateImageDesc")
-                : t("capture.duplicateDataDesc")}
+              {duplicateWarning.type === "ai_detected" && duplicateWarning.reason
+                ? duplicateWarning.reason
+                : duplicateWarning.type === "exact_image" || duplicateWarning.type === "exact_image_batch"
+                  ? t("capture.duplicateImageDesc")
+                  : t("capture.duplicateDataDesc")}
             </p>
+
+            {duplicateWarning.type === "ai_detected" && (
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+                <Brain className="w-4 h-4 text-[#8855f6] shrink-0" />
+                <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">{t("capture.aiDetected")}</span>
+              </div>
+            )}
 
             {duplicateEntries.length > 0 && (
               <div className="space-y-2 mb-6 max-h-40 overflow-y-auto">

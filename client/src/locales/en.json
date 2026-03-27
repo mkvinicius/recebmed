@@ -237,7 +237,8 @@
     "duplicateDataTitle": "Possible duplicate detected",
     "duplicateDataDesc": "An entry with the same data (patient, date and procedure) already exists:",
     "duplicateContinue": "Continue anyway",
-    "duplicateCancel": "Cancel"
+    "duplicateCancel": "Cancel",
+    "aiDetected": "Duplicate identified by artificial intelligence"
   },
   "confirm": {
     "title": "Confirm Entries",

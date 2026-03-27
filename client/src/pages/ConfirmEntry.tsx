@@ -549,9 +549,20 @@ export default function ConfirmEntry() {
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t("capture.duplicateDataTitle")}</h3>
             </div>
 
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t("capture.duplicateDataDesc")}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              {duplicateWarning.type === "ai_detected" && duplicateWarning.reason
+                ? duplicateWarning.reason
+                : t("capture.duplicateDataDesc")}
+            </p>
 
-            {duplicateWarning.existingEntries && (
+            {duplicateWarning.type === "ai_detected" && (
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+                <Brain className="w-4 h-4 text-[#8855f6] shrink-0" />
+                <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">{t("capture.aiDetected")}</span>
+              </div>
+            )}
+
+            {duplicateWarning.existingEntries && duplicateWarning.existingEntries.length > 0 && (
               <div className="space-y-2 mb-6 max-h-40 overflow-y-auto">
                 {duplicateWarning.existingEntries.map((entry: any, i: number) => (
                   <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm" data-testid={`data-duplicate-entry-${i}`}>
