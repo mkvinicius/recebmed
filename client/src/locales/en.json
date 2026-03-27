@@ -432,6 +432,7 @@
     "loadPrevious": "Load previous results",
     "valueDiffers": "The reported value differs from the clinic report. Please verify the data.",
     "dataDiffers": "Patient name or date differs from the clinic report. Please verify the data.",
+    "divergenceReason": "Divergence reason",
     "exportReport": "Export Report",
     "exportDateFilter": "Filter by period",
     "exportAllPeriod": "All period",

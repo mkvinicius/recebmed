@@ -30,6 +30,7 @@ interface DoctorEntry {
   entryMethod: string;
   status: string;
   createdAt: string;
+  divergenceReason?: string | null;
 }
 
 const PIE_COLORS = ["#8855f6", "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444", "#ec4899"];
@@ -540,6 +541,11 @@ export default function Reports() {
                       <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
                         {entry.description || entry.insuranceProvider} · {formatDate(entry.procedureDate, "short")}
                       </p>
+                      {entry.status === "divergent" && entry.divergenceReason && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 truncate">
+                          {entry.divergenceReason}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right flex-shrink-0">
                       {entry.procedureValue && (

@@ -298,12 +298,14 @@ export default function Reconciliation() {
 
     const renderSection = (title: string, entries: EntryResult[], color: string) => {
       if (!entries || entries.length === 0) return "";
+      const isDivergent = entries.some(e => e.status === "divergent");
       const rows = entries.map(e => `
         <tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${e.patientName}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;">${fmtDate(e.procedureDate)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;">${e.insuranceProvider || "—"}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmtCurrency(e.procedureValue)}</td>
+          ${isDivergent ? `<td style="padding:8px;border-bottom:1px solid #eee;color:#d97706;font-size:11px;">${e.divergenceReason || "—"}</td>` : ""}
         </tr>
       `).join("");
       return `
@@ -314,6 +316,7 @@ export default function Reconciliation() {
             <th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("common.date")}</th>
             <th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("common.insurance")}</th>
             <th style="padding:8px;text-align:right;border-bottom:2px solid #dee2e6;">${t("common.value")}</th>
+            ${isDivergent ? `<th style="padding:8px;text-align:left;border-bottom:2px solid #dee2e6;">${t("reconciliation.divergenceReason")}</th>` : ""}
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -393,7 +396,11 @@ export default function Reconciliation() {
       if (!entries || entries.length === 0) return;
       lines.push(`${emoji} *${title} (${entries.length}):*`);
       entries.forEach(e => {
-        lines.push(`  • ${e.patientName} — ${fmtDate(e.procedureDate)} — ${fmtCurrency(e.procedureValue)}`);
+        let line = `  • ${e.patientName} — ${fmtDate(e.procedureDate)} — ${fmtCurrency(e.procedureValue)}`;
+        if (e.status === "divergent" && e.divergenceReason) {
+          line += ` ⚠️ ${e.divergenceReason}`;
+        }
+        lines.push(line);
       });
       lines.push("");
     };
@@ -855,7 +862,13 @@ Pedro Oliveira;10/03/2026;SulAmérica;Sleeve;1500.00`}
                             <p className="font-medium text-slate-700 dark:text-slate-300">{entry.description}</p>
                           </div>
                         </div>
-                        <p className="mt-3 text-xs text-amber-600 font-semibold">{t("reconciliation.dataDiffers")}</p>
+                        {entry.divergenceReason && (
+                          <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2">
+                            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-0.5">{t("reconciliation.divergenceReason")}</p>
+                            <p className="text-sm text-amber-600 dark:text-amber-300">{entry.divergenceReason}</p>
+                          </div>
+                        )}
+                        {!entry.divergenceReason && <p className="mt-3 text-xs text-amber-600 font-semibold">{t("reconciliation.dataDiffers")}</p>}
                       </div>
                     )}
                   </div>

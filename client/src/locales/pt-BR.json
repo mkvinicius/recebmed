@@ -432,6 +432,7 @@
     "loadPrevious": "Carregar resultados anteriores",
     "valueDiffers": "O valor informado difere do relatório da clínica. Verifique os dados.",
     "dataDiffers": "Paciente ou data diverge do relatório da clínica. Verifique os dados.",
+    "divergenceReason": "Motivo da divergência",
     "exportReport": "Exportar Relatório",
     "exportDateFilter": "Filtrar por período",
     "exportAllPeriod": "Todo o período",
