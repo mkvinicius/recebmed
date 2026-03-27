@@ -360,6 +360,42 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {(() => {
+          const anomalyNotifs = notifications.filter(n => (n.type === "ai_anomaly_high" || n.type === "ai_anomaly_info") && !n.read);
+          const highCount = anomalyNotifs.filter(n => n.type === "ai_anomaly_high").length;
+          const infoCount = anomalyNotifs.filter(n => n.type === "ai_anomaly_info").length;
+
+          if (anomalyNotifs.length > 0) {
+            return (
+              <div className="mb-4 bg-gradient-to-r from-[#8855f6]/10 via-purple-50 to-[#8855f6]/5 dark:from-[#8855f6]/20 dark:via-slate-800 dark:to-[#8855f6]/10 rounded-2xl p-4 border border-[#8855f6]/20 dark:border-[#8855f6]/30 shadow-card" data-testid="banner-ai-anomalies">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 bg-[#8855f6]/15 rounded-xl flex-shrink-0">
+                    <Brain className="w-5 h-5 text-[#8855f6]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t("dashboard.aiAnomalyBannerTitle")}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      {highCount > 0 && <span className="text-red-600 dark:text-red-400 font-semibold">{t("dashboard.aiAnomalyHighCount", { count: highCount })}</span>}
+                      {highCount > 0 && infoCount > 0 && " · "}
+                      {infoCount > 0 && <span>{t("dashboard.aiAnomalyInfoCount", { count: infoCount })}</span>}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-500 mt-1">{t("dashboard.aiAnomalyBannerHint")}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowNotifications(true)}
+                    className="text-xs font-bold text-[#8855f6] hover:text-[#7744e4] px-3 py-1.5 bg-[#8855f6]/10 hover:bg-[#8855f6]/20 rounded-xl transition-colors flex-shrink-0 whitespace-nowrap"
+                    data-testid="button-view-anomalies"
+                  >
+                    {t("dashboard.aiAnomalyBannerAction")}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        })()}
+
         <ProjectionsPanel />
 
         <div className="mb-6">

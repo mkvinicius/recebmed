@@ -144,7 +144,7 @@ export default function ClinicReports() {
 
         <DocumentTraining />
 
-        <div className="mb-12 space-y-3">
+        <div className="mb-12 space-y-3 mt-6">
           {loading ? (
             <div className="card-float px-6 py-12 flex justify-center">
               <Loader2 className="w-6 h-6 text-[#8855f6] animate-spin" />
