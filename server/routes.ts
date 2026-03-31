@@ -38,21 +38,54 @@ function generateToken(userId: string): string {
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { message: "Muitas tentativas. Tente novamente em 15 minutos." },
+  max: 8,
+  message: { message: "Muitas tentativas de login. Sua conta foi temporariamente bloqueada por 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  skipSuccessfulRequests: true,
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: { message: "Muitas solicitações de redefinição. Tente novamente em 1 hora." },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false },
 });
 
-const resetLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { message: "Muitas solicitações de redefinição. Tente novamente em 15 minutos." },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: { xForwardedForHeader: false },
-});
+const bruteForceTracker = new Map<string, { count: number; blockedUntil: number }>();
+
+function checkBruteForce(identifier: string): boolean {
+  const now = Date.now();
+  const entry = bruteForceTracker.get(identifier);
+  if (entry && entry.blockedUntil > now) return true;
+  return false;
+}
+
+function recordFailedLogin(identifier: string): void {
+  const now = Date.now();
+  const entry = bruteForceTracker.get(identifier) || { count: 0, blockedUntil: 0 };
+  if (entry.blockedUntil > now) return;
+  entry.count++;
+  if (entry.count >= 5) {
+    entry.blockedUntil = now + 30 * 60 * 1000;
+    entry.count = 0;
+  }
+  bruteForceTracker.set(identifier, entry);
+}
+
+function clearFailedLogin(identifier: string): void {
+  bruteForceTracker.delete(identifier);
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of bruteForceTracker) {
+    if (entry.blockedUntil > 0 && entry.blockedUntil < now) bruteForceTracker.delete(key);
+  }
+}, 5 * 60 * 1000);
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
@@ -66,12 +99,14 @@ const apiLimiter = rateLimit({
         return `user:${decoded.id}`;
       } catch {}
     }
-    return req.ip || req.socket.remoteAddress || "unknown";
+    const forwarded = req.headers["x-forwarded-for"];
+    const clientIp = typeof forwarded === "string" ? forwarded.split(",")[0].trim() : (req.socket.remoteAddress || "unknown");
+    return "ip:" + clientIp;
   },
   message: { message: "Limite de requisições atingido. Aguarde alguns segundos e tente novamente." },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { xForwardedForHeader: false },
+  validate: { xForwardedForHeader: false, ip: false, trustProxy: false },
 });
 
 interface ResetCodeEntry {
@@ -121,11 +156,57 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://fonts.googleapis.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https:", "wss:"],
+        mediaSrc: ["'self'", "blob:", "data:"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: [],
+      },
+    },
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "same-origin" },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    noSniff: true,
+    xssFilter: true,
   }));
 
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=(), payment=()");
+    next();
+  });
+
   app.use("/api", apiLimiter);
+
+  app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+    if (req.body && typeof req.body === "object") {
+      const dangerousPatterns = /<script[\s>]/i;
+      const checkValue = (val: unknown): boolean => {
+        if (typeof val === "string" && dangerousPatterns.test(val)) return true;
+        if (Array.isArray(val)) return val.some(checkValue);
+        if (val && typeof val === "object") return Object.values(val).some(checkValue);
+        return false;
+      };
+      const keysToCheck = ["patientName", "description", "insuranceProvider", "name", "email", "title", "message"];
+      for (const key of keysToCheck) {
+        if (key in req.body && checkValue(req.body[key])) {
+          return res.status(400).json({ message: "Conteúdo inválido detectado" });
+        }
+      }
+    }
+    next();
+  });
 
   // ── Auth ──
 
@@ -162,14 +243,23 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Dados inválidos", errors: parsed.error.flatten() });
       }
       const { email, password } = parsed.data;
-      const user = await storage.getUserByEmail(email);
+      const normalizedEmail = email.toLowerCase().trim();
+
+      if (checkBruteForce(normalizedEmail)) {
+        return res.status(429).json({ message: "Conta temporariamente bloqueada por muitas tentativas. Tente novamente em 30 minutos." });
+      }
+
+      const user = await storage.getUserByEmail(normalizedEmail);
       if (!user) {
+        recordFailedLogin(normalizedEmail);
         return res.status(401).json({ message: "Email ou senha incorretos" });
       }
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
+        recordFailedLogin(normalizedEmail);
         return res.status(401).json({ message: "Email ou senha incorretos" });
       }
+      clearFailedLogin(normalizedEmail);
       const token = generateToken(user.id);
       const pwStrong = passwordSchema.safeParse(password);
       const requiresPasswordUpdate = !pwStrong.success;
