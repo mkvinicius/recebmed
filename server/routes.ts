@@ -57,6 +57,17 @@ const resetLimiter = rateLimit({
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 300,
+  keyGenerator: (req: Request) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+        return `user:${decoded.id}`;
+      } catch {}
+    }
+    return req.ip || req.socket.remoteAddress || "unknown";
+  },
   message: { message: "Limite de requisições atingido. Aguarde alguns segundos e tente novamente." },
   standardHeaders: true,
   legacyHeaders: false,
