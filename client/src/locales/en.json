@@ -574,13 +574,10 @@
     "fetchError": "Error fetching entry"
   },
   "projections": {
-    "title": "Production Projections",
-    "next30": "Next 30 days",
-    "next60": "Next 60 days",
-    "next90": "Next 90 days",
-    "reconciledTotal": "Reconciled",
-    "divergentTotal": "Divergent",
-    "totalLabel": "Total"
+    "title": "Your production summary",
+    "currentMonth": "This month",
+    "previousMonth": "Previous month",
+    "cases": "cases"
   },
   "notFound": {
     "title": "Page not found",

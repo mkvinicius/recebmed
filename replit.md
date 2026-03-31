@@ -22,7 +22,7 @@ client/src/
   components/AppLayout.tsx       - Layout wrapper: desktop sidebar (≥768px, 220px wide) + mobile bottom tab bar (<768px)
   components/ReportsTabs.tsx     - Horizontal sub-tabs for Reports section (Produção/Conferência/Clínica/Importar/Histórico) — used across all report pages
   components/EntrySkeleton.tsx   - Skeleton loading components: EntrySkeleton (list items), DashboardCardSkeleton, ReportSkeleton, DetailSkeleton
-  components/ProjectionsPanel.tsx - Production projections panel (30/60/90 day procedure counts)
+  components/ProjectionsPanel.tsx - Production summary panel ("Resumo da sua produção") — shows current month vs previous month case counts with trend indicator
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
   components/DivergencyModal.tsx  - Side-by-side divergency comparison modal (doctor vs clinic data), with accept/manual validation actions
   components/AppTour.tsx          - Custom guided tour for first-time users (3 steps: capture, reports, stats)

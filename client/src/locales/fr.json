@@ -574,13 +574,10 @@
     "fetchError": "Erreur lors de la recherche de l'entrée"
   },
   "projections": {
-    "title": "Projections de Production",
-    "next30": "Proch. 30 jours",
-    "next60": "Proch. 60 jours",
-    "next90": "Proch. 90 jours",
-    "reconciledTotal": "Rapproché",
-    "divergentTotal": "Divergent",
-    "totalLabel": "Total"
+    "title": "Résumé de votre production",
+    "currentMonth": "Ce mois-ci",
+    "previousMonth": "Mois précédent",
+    "cases": "cas"
   },
   "notFound": {
     "title": "Page non trouvée",

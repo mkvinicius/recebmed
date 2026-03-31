@@ -1401,37 +1401,29 @@ export async function registerRoutes(
   app.get("/api/financials/projections", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const entries = await storage.getReconciledAndDivergentEntries(userId);
+      const allEntries = await storage.getDoctorEntries(userId);
       const now = new Date();
 
-      const calculate = (daysAhead: number) => {
-        const cutoff = new Date(now);
-        cutoff.setDate(cutoff.getDate() + daysAhead);
-        return entries
-          .filter(e => {
-            const d = new Date(e.procedureDate);
-            return d >= now && d <= cutoff;
-          }).length;
-      };
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-      const allReconciledTotal = entries
-        .filter(e => e.status === "reconciled").length;
+      const currentMonthCases = allEntries.filter(e => {
+        const d = new Date(e.procedureDate);
+        return d >= currentMonthStart && d < nextMonthStart;
+      }).length;
 
-      const allDivergentTotal = entries
-        .filter(e => e.status === "divergent").length;
+      const previousMonthCases = allEntries.filter(e => {
+        const d = new Date(e.procedureDate);
+        return d >= previousMonthStart && d < currentMonthStart;
+      }).length;
 
       return res.json({
-        projections: {
-          days30: calculate(30),
-          days60: calculate(60),
-          days90: calculate(90),
+        production: {
+          currentMonth: currentMonthCases,
+          previousMonth: previousMonthCases,
         },
-        totals: {
-          reconciled: allReconciledTotal,
-          divergent: allDivergentTotal,
-          total: allReconciledTotal + allDivergentTotal,
-        },
-        entryCount: entries.length,
+        entryCount: allEntries.length,
       });
     } catch (error) {
       console.error("Projections error:", error);
