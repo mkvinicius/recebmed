@@ -56,8 +56,8 @@ const resetLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 120,
-  message: { message: "Limite de requisições excedido. Aguarde um momento." },
+  max: 300,
+  message: { message: "Limite de requisições atingido. Aguarde alguns segundos e tente novamente." },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false },
