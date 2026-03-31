@@ -1276,14 +1276,26 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Nenhum registro encontrado no arquivo. Verifique se o arquivo contém dados de pacientes e procedimentos." });
       }
 
+      const normalizeForDedup = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+      const seenInFile = new Set<string>();
+      const dedupedData = extractedData.filter((item: any) => {
+        if (!item.patientName || item.patientName.length < 2) return false;
+        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.description || "").toLowerCase().trim()}|${(item.insuranceProvider || "").toLowerCase().trim()}`;
+        if (seenInFile.has(key)) {
+          console.log(`[Reconciliation] Duplicata intra-arquivo ignorada: ${item.patientName}`);
+          return false;
+        }
+        seenInFile.add(key);
+        return true;
+      });
+
       const mimeMap: Record<string, string> = { pdf: "application/pdf", image: "image/jpeg", csv: "text/csv" };
       const originalFileUrl = await mediaStorage.uploadBuffer(Buffer.from(base64Data, "base64"), mimeMap[fileType] || "application/octet-stream").catch(err => { console.error("Report upload error:", err); return null; });
 
       let savedCount = 0;
       let skipCount = 0;
-      for (const item of extractedData) {
+      for (const item of dedupedData) {
         try {
-          if (!item.patientName || item.patientName.length < 2) { skipCount++; continue; }
           const procDate = parseLocalDate(item.procedureDate);
           if (isNaN(procDate.getTime())) { skipCount++; continue; }
           await storage.createClinicReport({
