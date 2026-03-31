@@ -129,7 +129,7 @@
     "goodMorning": "Bonjour",
     "goodAfternoon": "Bon après-midi",
     "goodEvening": "Bonsoir",
-    "financialSummary": "Résumé de production de votre cabinet",
+    "financialSummary": "Résumé de votre production",
     "searchPlaceholder": "Rechercher patient, procédure, assurance...",
     "searching": "Recherche...",
     "noResultsFor": "Aucun résultat pour \"{{query}}\"",
