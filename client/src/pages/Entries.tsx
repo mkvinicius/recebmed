@@ -288,7 +288,7 @@ export default function Entries() {
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{entry.description} • {entry.insuranceProvider}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.createdAt, "relative")}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.procedureDate, "medium")}</span>
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
                       </div>
                     </div>
