@@ -46,7 +46,7 @@ server/
   replit_integrations/anthropic/ - Anthropic AI integration (batch processing, chat utilities)
   document-validator.ts - Document structure analysis (AI-powered column detection + template mapping for clinic files)
   reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + template-aware extraction + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance) + sanitizeEntry with payment method detection (PX/PIX/DINHEIRO/CARTÃO → Particular)
-  audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched; respects per-user `aiAuditEnabled` toggle (users.ai_audit_enabled column, default true)
+  audit.ts           - Background AI auditor: hourly cycle (1h interval) + fixed daily scans (13:00 + 22:00 BRT) + 5min after upload; mutex lock; reconciles divergent+pending entries + unmatched clinic records; proactive template suggestion when >30% unmatched; per-user `aiAuditEnabled` toggle; stores findings in `ai_audit_findings` table with cross-run deduplication; loads admin platformDoctrine into AI scan prompt
   storage.ts         - Database storage interface (Drizzle) — includes getDoctorEntriesPaginated(doctorId, {page, limit, status, search, insuranceProvider, dateFrom, dateTo})
   db.ts              - Database connection pool
   jwt-secret.ts      - Shared JWT_SECRET module (single source of truth for main routes + object storage routes)
@@ -66,6 +66,7 @@ shared/
 - **uploaded_reports**: id, userId, fileName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage
 - **audit_logs**: id, doctorId, triggerType (scheduled/post-upload), startedAt, endedAt, reconciledCount, divergentAfter, errorMessage — persists every audit run for traceability
 - **document_templates**: id, userId, name, mappingJson (JSON column mapping array), sampleHash (SHA-256 of sample doc), createdAt — trained document structure templates for clinic file extraction
+- **ai_audit_findings**: id, doctorId, category (duplicate/value_outlier/missing_data/suspicious_pattern), severity (high/medium/low), title, description, entryIds (text array), resolved (boolean), scanTimestamp — individual AI-detected audit findings with ownership-based resolve
 - **conversations**: id, title, createdAt (AI integration)
 - **messages**: id, conversationId, role, content, createdAt (AI integration)
 
@@ -151,6 +152,7 @@ Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 - **Reconciliation**: PDF/image/CSV upload → AI extraction → AI-powered reconciliation matching entries on 5 fields (nome, data atendimento, nascimento, procedimento, convênio). 4 tabs: Conferidos, Recebidos, Divergentes, Pendentes
 - **EntryDetail**: Detailed view of individual entry with image evidence display
 - **Import (Auditoria Retroativa)**: Historical data import — CSV/Excel template download, spreadsheet upload with year selector, multi-PDF upload for clinic reports with bulk reconciliation
+- **AuditReports**: AI audit findings dashboard — 4 category cards (Duplicatas, Anomalias de Valor, Dados Incompletos, Padrões Suspeitos) with totals + pending counts, drill-down into individual findings with severity badges, expandable descriptions, affected entry links, resolve action. Accessible from Settings via "Ver Relatórios de Auditoria" button
 
 ## Design System
 

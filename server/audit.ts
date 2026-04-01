@@ -3,7 +3,7 @@ import { runReconciliation } from "./reconciliation";
 import { aiAnomalyScan, type AIAnomalyResult } from "./llm";
 
 const POST_UPLOAD_DELAY_MS = 5 * 60 * 1000;
-const INTERVAL_MS = 15 * 60 * 1000;
+const INTERVAL_MS = 60 * 60 * 1000;
 const SCHEDULED_HOURS_BRT = [13, 22];
 
 let scheduledTimers: ReturnType<typeof setTimeout>[] = [];
@@ -194,7 +194,7 @@ function scheduleNextRun(targetHour: number) {
 }
 
 export function startAuditScheduler() {
-  console.log(`[Audit] Scheduler iniciado — ciclo a cada 15min + horários fixos ${SCHEDULED_HOURS_BRT.join("h e ")}h BRT + 5min pós-upload`);
+  console.log(`[Audit] Scheduler iniciado — ciclo a cada 1h + horários fixos ${SCHEDULED_HOURS_BRT.join("h e ")}h BRT + 5min pós-upload`);
 
   for (const hour of SCHEDULED_HOURS_BRT) {
     scheduleNextRun(hour);
@@ -206,22 +206,24 @@ export function startAuditScheduler() {
 }
 
 const anomalyScanCooldown = new Map<string, number>();
-const ANOMALY_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const ANOMALY_COOLDOWN_MS = 55 * 60 * 1000;
 
-export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boolean; anomaliesFound: number; notificationsCreated: number; reason?: string }> {
+export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boolean; anomaliesFound: number; notificationsCreated: number; findingsStored: number; reason?: string }> {
   const lastRun = anomalyScanCooldown.get(doctorId) || 0;
   if (Date.now() - lastRun < ANOMALY_COOLDOWN_MS) {
     console.log(`[AI-Scan] Cooldown ativo para ${doctorId}, ignorando`);
-    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, reason: "cooldown" };
+    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, findingsStored: 0, reason: "cooldown" };
   }
 
   const allEntries = await storage.getDoctorEntries(doctorId);
   if (allEntries.length < 3) {
     console.log(`[AI-Scan] Poucos lançamentos (${allEntries.length}), ignorando`);
-    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, reason: "insufficient_data" };
+    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, findingsStored: 0, reason: "insufficient_data" };
   }
 
   console.log(`[AI-Scan] Iniciando varredura inteligente para ${doctorId}`);
+
+  const doctrine = await storage.getAdminDoctrine();
 
   const formatted = allEntries.map(e => ({
     id: e.id,
@@ -242,7 +244,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
     const batch = formatted.slice(i, i + BATCH_SIZE);
     if (batch.length < 2) break;
     try {
-      const result = await aiAnomalyScan(batch);
+      const result = await aiAnomalyScan(batch, doctrine || undefined);
       allAnomalies.push(...result.anomalies);
       successfulBatches++;
     } catch (err) {
@@ -252,7 +254,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
 
   if (successfulBatches === 0) {
     console.warn(`[AI-Scan] Nenhum lote processado com sucesso para ${doctorId}`);
-    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, reason: "provider_error" };
+    return { scanned: false, anomaliesFound: 0, notificationsCreated: 0, findingsStored: 0, reason: "provider_error" };
   }
 
   anomalyScanCooldown.set(doctorId, Date.now());
@@ -267,7 +269,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
 
   if (deduped.length === 0) {
     console.log(`[AI-Scan] Nenhuma anomalia encontrada para ${doctorId}`);
-    return { scanned: true, anomaliesFound: 0, notificationsCreated: 0 };
+    return { scanned: true, anomaliesFound: 0, notificationsCreated: 0, findingsStored: 0 };
   }
 
   console.log(`[AI-Scan] ${deduped.length} anomalia(s) encontrada(s) para ${doctorId}`);
@@ -283,7 +285,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
 
   if (validated.length === 0) {
     console.warn(`[AI-Scan] Todas as anomalias falharam na validação para ${doctorId}`);
-    return { scanned: true, anomaliesFound: 0, notificationsCreated: 0 };
+    return { scanned: true, anomaliesFound: 0, notificationsCreated: 0, findingsStored: 0 };
   }
 
   const typeLabels: Record<string, string> = {
@@ -300,6 +302,40 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
     suspicious_pattern: "🔍",
   };
 
+  const existingFindings = await storage.getAiAuditFindings(doctorId);
+  const existingKeys = new Set(
+    existingFindings.filter(f => !f.resolved).map(f => `${f.category}:${(f.entryIds || []).sort().join(",")}`)
+  );
+
+  const findingsToStore = validated
+    .map(a => ({
+      doctorId,
+      category: a.type,
+      severity: a.severity,
+      title: typeLabels[a.type] || a.type,
+      description: a.description,
+      entryIds: a.entryIds,
+      resolved: false,
+    }))
+    .filter(f => !existingKeys.has(`${f.category}:${f.entryIds.sort().join(",")}`));
+
+  let findingsStored = 0;
+  if (findingsToStore.length > 0) {
+    try {
+      const stored = await storage.createAiAuditFindings(findingsToStore);
+      findingsStored = stored.length;
+      console.log(`[AI-Scan] ${findingsStored} novo(s) achado(s) armazenado(s) para ${doctorId} (${validated.length - findingsToStore.length} já existentes ignorados)`);
+    } catch (err) {
+      console.error(`[AI-Scan] Erro ao armazenar achados:`, err);
+    }
+  } else {
+    console.log(`[AI-Scan] ${validated.length} achado(s) já existiam como pendentes para ${doctorId}`);
+  }
+
+  try {
+    await storage.clearOldFindings(doctorId);
+  } catch {}
+
   const highSeverity = validated.filter(a => a.severity === "high");
   const otherAnomalies = validated.filter(a => a.severity !== "high");
 
@@ -314,7 +350,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
       doctorId,
       type: "ai_anomaly_high",
       title: `🚨 ${highSeverity.length} anomalia(s) crítica(s) detectada(s)`,
-      message: `A inteligência artificial identificou problemas que precisam da sua atenção:\n\n${details}\n\nRevise os lançamentos na aba de Lançamentos para tomar uma decisão.`,
+      message: `A inteligência artificial identificou problemas que precisam da sua atenção:\n\n${details}\n\nRevise os lançamentos na aba de Lançamentos ou consulte a página de Auditoria Inteligente para detalhes.`,
       read: false,
     });
     notificationsCreated++;
@@ -329,13 +365,13 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
       doctorId,
       type: "ai_anomaly_info",
       title: `🔎 ${otherAnomalies.length} observação(ões) encontrada(s)`,
-      message: `A IA encontrou pontos de atenção nos seus lançamentos:\n\n${details}\n\nNenhuma ação imediata é necessária, mas vale verificar.`,
+      message: `A IA encontrou pontos de atenção nos seus lançamentos:\n\n${details}\n\nConsulte a página de Auditoria Inteligente para ver o relatório completo.`,
       read: false,
     });
     notificationsCreated++;
   }
 
-  return { scanned: true, anomaliesFound: validated.length, notificationsCreated };
+  return { scanned: true, anomaliesFound: validated.length, notificationsCreated, findingsStored };
 }
 
 export function stopAuditScheduler() {

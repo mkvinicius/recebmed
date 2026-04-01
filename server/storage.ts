@@ -7,9 +7,10 @@ import {
   type AuditLog, type InsertAuditLog, auditLogs,
   type UploadedReport, type InsertUploadedReport, uploadedReports,
   type DocumentTemplate, type InsertDocumentTemplate, documentTemplates,
+  type AiAuditFinding, type InsertAiAuditFinding, aiAuditFindings,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, inArray, or, ilike, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, inArray, or, ilike, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface PaginationOptions {
@@ -90,6 +91,17 @@ export interface IStorage {
   getDocumentTemplates(userId: string): Promise<DocumentTemplate[]>;
   getDocumentTemplate(id: string): Promise<DocumentTemplate | undefined>;
   deleteDocumentTemplate(id: string): Promise<boolean>;
+
+  createAiAuditFinding(finding: InsertAiAuditFinding): Promise<AiAuditFinding>;
+  createAiAuditFindings(findings: InsertAiAuditFinding[]): Promise<AiAuditFinding[]>;
+  getAiAuditFindings(doctorId: string, category?: string): Promise<AiAuditFinding[]>;
+  getAiAuditFinding(id: string): Promise<AiAuditFinding | undefined>;
+  resolveAiAuditFinding(id: string, doctorId: string): Promise<boolean>;
+  clearOldFindings(doctorId: string): Promise<number>;
+
+  getUserPlatformDoctrine(id: string): Promise<string | null>;
+  updatePlatformDoctrine(id: string, doctrine: string): Promise<User | undefined>;
+  getAdminDoctrine(): Promise<string | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -529,6 +541,57 @@ export class DatabaseStorage implements IStorage {
   async deleteDocumentTemplate(id: string): Promise<boolean> {
     const result = await db.delete(documentTemplates).where(eq(documentTemplates.id, id)).returning();
     return result.length > 0;
+  }
+
+  async createAiAuditFinding(finding: InsertAiAuditFinding): Promise<AiAuditFinding> {
+    const [result] = await db.insert(aiAuditFindings).values(finding).returning();
+    return result;
+  }
+
+  async createAiAuditFindings(findings: InsertAiAuditFinding[]): Promise<AiAuditFinding[]> {
+    if (findings.length === 0) return [];
+    return db.insert(aiAuditFindings).values(findings).returning();
+  }
+
+  async getAiAuditFindings(doctorId: string, category?: string): Promise<AiAuditFinding[]> {
+    const conditions = [eq(aiAuditFindings.doctorId, doctorId)];
+    if (category) conditions.push(eq(aiAuditFindings.category, category));
+    return db.select().from(aiAuditFindings).where(and(...conditions)).orderBy(desc(aiAuditFindings.scanTimestamp));
+  }
+
+  async getAiAuditFinding(id: string): Promise<AiAuditFinding | undefined> {
+    const [result] = await db.select().from(aiAuditFindings).where(eq(aiAuditFindings.id, id));
+    return result;
+  }
+
+  async resolveAiAuditFinding(id: string, doctorId: string): Promise<boolean> {
+    const result = await db.update(aiAuditFindings).set({ resolved: true }).where(and(eq(aiAuditFindings.id, id), eq(aiAuditFindings.doctorId, doctorId))).returning();
+    return result.length > 0;
+  }
+
+  async clearOldFindings(doctorId: string): Promise<number> {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const result = await db.delete(aiAuditFindings).where(and(
+      eq(aiAuditFindings.doctorId, doctorId),
+      eq(aiAuditFindings.resolved, true),
+      lte(aiAuditFindings.scanTimestamp, cutoff)
+    )).returning();
+    return result.length;
+  }
+
+  async getUserPlatformDoctrine(id: string): Promise<string | null> {
+    const [user] = await db.select({ platformDoctrine: users.platformDoctrine }).from(users).where(eq(users.id, id));
+    return user?.platformDoctrine ?? null;
+  }
+
+  async updatePlatformDoctrine(id: string, doctrine: string): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ platformDoctrine: doctrine }).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async getAdminDoctrine(): Promise<string | null> {
+    const [admin] = await db.select({ platformDoctrine: users.platformDoctrine }).from(users).where(eq(users.isAdmin, true));
+    return admin?.platformDoctrine ?? null;
   }
 }
 

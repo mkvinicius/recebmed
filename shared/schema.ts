@@ -10,6 +10,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   profilePhotoUrl: text("profile_photo_url"),
   aiAuditEnabled: boolean("ai_audit_enabled").notNull().default(true),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  platformDoctrine: text("platform_doctrine"),
 });
 
 export const entryMethodEnum = pgEnum("entry_method", ["photo", "audio", "manual"]);
@@ -163,5 +165,21 @@ export const documentTemplates = pgTable("document_templates", {
 export const insertDocumentTemplateSchema = createInsertSchema(documentTemplates).omit({ id: true, createdAt: true });
 export type DocumentTemplate = typeof documentTemplates.$inferSelect;
 export type InsertDocumentTemplate = z.infer<typeof insertDocumentTemplateSchema>;
+
+export const aiAuditFindings = pgTable("ai_audit_findings", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  category: text("category").notNull(),
+  severity: text("severity").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  entryIds: text("entry_ids").array().notNull(),
+  resolved: boolean("resolved").notNull().default(false),
+  scanTimestamp: timestamp("scan_timestamp").defaultNow().notNull(),
+});
+
+export const insertAiAuditFindingSchema = createInsertSchema(aiAuditFindings).omit({ id: true, scanTimestamp: true });
+export type AiAuditFinding = typeof aiAuditFindings.$inferSelect;
+export type InsertAiAuditFinding = z.infer<typeof insertAiAuditFindingSchema>;
 
 export * from "./models/chat";

@@ -435,6 +435,95 @@ export async function registerRoutes(
     }
   });
 
+  // ── AI Audit Findings ──
+
+  app.get("/api/audit-findings", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const category = req.query.category as string | undefined;
+      const findings = await storage.getAiAuditFindings(userId, category);
+      return res.json(findings);
+    } catch (error) {
+      console.error("Get audit findings error:", error);
+      return res.status(500).json({ message: "Erro ao buscar achados" });
+    }
+  });
+
+  app.get("/api/audit-findings/summary", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const findings = await storage.getAiAuditFindings(userId);
+      const summary = {
+        duplicate: { total: 0, unresolved: 0 },
+        value_outlier: { total: 0, unresolved: 0 },
+        missing_data: { total: 0, unresolved: 0 },
+        suspicious_pattern: { total: 0, unresolved: 0 },
+      } as Record<string, { total: number; unresolved: number }>;
+      for (const f of findings) {
+        if (!summary[f.category]) summary[f.category] = { total: 0, unresolved: 0 };
+        summary[f.category].total++;
+        if (!f.resolved) summary[f.category].unresolved++;
+      }
+      return res.json(summary);
+    } catch (error) {
+      console.error("Get audit summary error:", error);
+      return res.status(500).json({ message: "Erro ao buscar resumo" });
+    }
+  });
+
+  app.put("/api/audit-findings/:id/resolve", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const ok = await storage.resolveAiAuditFinding(req.params.id, userId);
+      if (!ok) return res.status(404).json({ message: "Achado não encontrado" });
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Resolve finding error:", error);
+      return res.status(500).json({ message: "Erro ao resolver achado" });
+    }
+  });
+
+  // ── Platform Doctrine (admin only) ──
+
+  app.get("/api/auth/platform-doctrine", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Acesso negado" });
+      return res.json({ doctrine: user.platformDoctrine || "" });
+    } catch (error) {
+      console.error("Get doctrine error:", error);
+      return res.status(500).json({ message: "Erro ao buscar doutrina" });
+    }
+  });
+
+  app.put("/api/auth/platform-doctrine", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Acesso negado" });
+      const { doctrine } = req.body;
+      if (typeof doctrine !== "string") return res.status(400).json({ message: "Campo 'doctrine' obrigatório" });
+      if (doctrine.length > 5000) return res.status(400).json({ message: "Doutrina muito longa (máx 5000 caracteres)" });
+      const updated = await storage.updatePlatformDoctrine(userId, doctrine);
+      if (!updated) return res.status(404).json({ message: "Usuário não encontrado" });
+      return res.json({ doctrine: updated.platformDoctrine || "" });
+    } catch (error) {
+      console.error("Update doctrine error:", error);
+      return res.status(500).json({ message: "Erro ao atualizar doutrina" });
+    }
+  });
+
+  app.get("/api/auth/is-admin", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      return res.json({ isAdmin: user?.isAdmin ?? false });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro" });
+    }
+  });
+
   // ── AI Extraction ──
 
   async function getCorrectionHints(doctorId: string): Promise<CorrectionHint[]> {

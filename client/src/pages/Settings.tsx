@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft, Brain,
+  BookOpen, ChevronRight,
 } from "lucide-react";
 import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,10 @@ export default function Settings() {
   const [requiresPwUpdate, setRequiresPwUpdate] = useState(getRequiresPasswordUpdate());
   const [aiAuditEnabled, setAiAuditEnabled] = useState(true);
   const [aiAuditLoading, setAiAuditLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [doctrine, setDoctrine] = useState("");
+  const [doctrineOriginal, setDoctrineOriginal] = useState("");
+  const [savingDoctrine, setSavingDoctrine] = useState(false);
 
   const passwordChecks = [
     { ok: newPassword.length >= 8, label: t("forgotPassword.rule8chars") },
@@ -43,10 +48,27 @@ export default function Settings() {
     if (user) setName(user.name);
     (async () => {
       try {
-        const res = await fetch("/api/auth/ai-audit", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) {
-          const data = await res.json();
+        const [auditRes, adminRes] = await Promise.all([
+          fetch("/api/auth/ai-audit", { headers: { Authorization: `Bearer ${token}` } }),
+          fetch("/api/auth/is-admin", { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (auditRes.ok) {
+          const data = await auditRes.json();
           setAiAuditEnabled(data.aiAuditEnabled);
+        }
+        if (adminRes.ok) {
+          const data = await adminRes.json();
+          setIsAdmin(data.isAdmin);
+          if (data.isAdmin) {
+            try {
+              const docRes = await fetch("/api/auth/platform-doctrine", { headers: { Authorization: `Bearer ${token}` } });
+              if (docRes.ok) {
+                const docData = await docRes.json();
+                setDoctrine(docData.doctrine || "");
+                setDoctrineOriginal(docData.doctrine || "");
+              }
+            } catch {}
+          }
         }
       } catch {}
     })();
@@ -101,6 +123,30 @@ export default function Settings() {
       toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally {
       setAiAuditLoading(false);
+    }
+  };
+
+  const handleSaveDoctrine = async () => {
+    const token = getToken();
+    if (!token) return;
+    setSavingDoctrine(true);
+    try {
+      const res = await fetch("/api/auth/platform-doctrine", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ doctrine }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDoctrineOriginal(data.doctrine || "");
+        toast({ title: t("common.success"), description: t("settings.doctrineSaved") });
+      } else {
+        toast({ title: t("common.error"), description: t("settings.doctrineError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally {
+      setSavingDoctrine(false);
     }
   };
 
@@ -231,7 +277,56 @@ export default function Settings() {
               </span>
             </button>
           </div>
+
+          <button
+            onClick={() => setLocation("/audit-reports")}
+            className="w-full mt-4 flex items-center justify-between p-4 rounded-xl bg-[#8855f6]/5 dark:bg-[#8855f6]/10 border border-[#8855f6]/20 hover:bg-[#8855f6]/10 dark:hover:bg-[#8855f6]/20 transition-colors group"
+            data-testid="button-view-audit-reports"
+          >
+            <div className="flex items-center gap-3">
+              <Brain className="w-4 h-4 text-[#8855f6]" />
+              <span className="text-sm font-semibold text-[#8855f6]">{t("settings.viewAuditReports")}</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#8855f6] group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
+
+        {isAdmin && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-doctrine-section">{t("settings.doctrineSection")}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.doctrineSectionDesc")}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 leading-relaxed">{t("settings.doctrineHelp")}</p>
+
+            <textarea
+              value={doctrine}
+              onChange={(e) => setDoctrine(e.target.value)}
+              rows={8}
+              placeholder={t("settings.doctrinePlaceholder")}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/50 resize-y"
+              data-testid="textarea-doctrine"
+            />
+
+            <div className="flex justify-end mt-3">
+              <Button
+                onClick={handleSaveDoctrine}
+                disabled={savingDoctrine || doctrine === doctrineOriginal}
+                className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl gap-2"
+                data-testid="button-save-doctrine"
+              >
+                {savingDoctrine ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {savingDoctrine ? t("settings.savingDoctrine") : t("settings.saveDoctrine")}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-12">
           <div className="flex items-center gap-3 mb-6">

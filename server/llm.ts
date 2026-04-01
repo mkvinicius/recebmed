@@ -182,6 +182,7 @@ export interface AIAnomalyResult {
 
 export async function aiAnomalyScan(
   entries: Array<{ id: string; patientName: string; procedureDate: string; description: string | null; insuranceProvider: string; procedureValue: string | null; status: string }>,
+  doctrine?: string,
 ): Promise<AIAnomalyResult> {
   if (entries.length < 2) {
     return { anomalies: [] };
@@ -201,7 +202,7 @@ export async function aiAnomalyScan(
       {
         role: "system",
         content: `Você é um auditor financeiro especializado em consultórios médicos brasileiros.
-
+${doctrine ? `\nDOUTRINA DA PLATAFORMA (instruções do administrador — leia, aprenda e siga ANTES de analisar):\n${doctrine}\n\nApós seguir a doutrina acima, use também seu conhecimento e liberdade para encontrar problemas que a doutrina não previu.\n` : ""}
 TAREFA: Analise os lançamentos e identifique ANOMALIAS reais.
 
 TIPOS DE ANOMALIA:
