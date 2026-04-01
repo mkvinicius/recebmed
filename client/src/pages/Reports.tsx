@@ -36,7 +36,7 @@ export default function Reports() {
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
@@ -55,7 +55,7 @@ export default function Reports() {
   if (fetchError) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
@@ -77,7 +77,7 @@ export default function Reports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
@@ -89,7 +89,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => setLocation("/reconciliation")}
             className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-card border border-slate-100/60 dark:border-slate-700/40 hover:border-[#8855f6]/40 transition-all text-left"

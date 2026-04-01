@@ -111,7 +111,7 @@ export default function ClinicReports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
+        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
           <button onClick={() => setLocation("/reports")} className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm mb-2 transition-colors md:hidden" data-testid="button-back">
             <ArrowLeft className="w-4 h-4" />
             <span>{t("common.back")}</span>
