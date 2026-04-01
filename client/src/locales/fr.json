@@ -411,7 +411,7 @@
   },
   "reconciliation": {
     "title": "Vérifier Production",
-    "subtitle": "Envoyez le fichier de la clinique pour comparer avec vos entrées",
+    "subtitle": "Envoyez le rapport de production que vous avez reçu pour vérifier votre production",
     "dragOrClick": "Glissez le fichier ici ou cliquez pour sélectionner",
     "fileSupport": "PDF, Photo (JPG/PNG) ou CSV — jusqu'à 20 Mo",
     "selectFile": "Sélectionner un fichier",

@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getLocale } from "@/lib/i18n";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DivergencyModal from "@/components/DivergencyModal";
-import ReportsTabs from "@/components/ReportsTabs";
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -466,7 +465,6 @@ export default function Reconciliation() {
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("reconciliation.title")}</h2>
           <p className="text-white/80 mt-1 text-sm">{t("reconciliation.subtitle")}</p>
         </div>
-        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
 
         {initialLoading ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">

@@ -411,7 +411,7 @@
   },
   "reconciliation": {
     "title": "Check Production",
-    "subtitle": "Upload the clinic file to compare with your entries",
+    "subtitle": "Upload the production report you received to check your production",
     "dragOrClick": "Drag the file here or click to select",
     "fileSupport": "PDF, Photo (JPG/PNG) or CSV — up to 20 MB",
     "selectFile": "Select File",
