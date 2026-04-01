@@ -213,7 +213,7 @@
   },
   "capture": {
     "title": "New Entry",
-    "subtitle": "Choose how to record the procedure",
+    "subtitle": "Choose how to record your production",
     "photoTitle": "Photo",
     "photoDesc": "Take photos of receipts or documents — select multiple at once for batch extraction",
     "audioTitle": "Audio",
