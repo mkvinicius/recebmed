@@ -1,79 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
   Stethoscope, CheckCircle2, TrendingUp, FileUp, History
 } from "lucide-react";
-import { getToken, clearAuth } from "@/lib/auth";
-import ErrorState from "@/components/ErrorState";
-import { ReportSkeleton } from "@/components/EntrySkeleton";
+import { getToken } from "@/lib/auth";
 
 export default function Reports() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
-
-
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { setLocation("/login"); return; }
-    (async () => {
-      setFetchError(false);
-      try {
-        const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } });
-        if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
-        if (!res.ok) setFetchError(true);
-      } catch { setFetchError(true); }
-      finally { setLoading(false); }
-    })();
+    if (!getToken()) setLocation("/login");
   }, [setLocation]);
-
-
-
-
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold">{t("reports.title")}</h2>
-              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
-            </div>
-          </div>
-        </div>
-        <ReportSkeleton />
-      </div>
-    );
-  }
-
-  if (fetchError) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold">{t("reports.title")}</h2>
-              <p className="text-sm opacity-90">{t("reports.subtitle")}</p>
-            </div>
-          </div>
-        </div>
-        <div className="py-8">
-          <ErrorState onRetry={() => { setLoading(true); const token = getToken(); if (token) { (async () => { setFetchError(false); try { const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } }); if (res.status === 401) { clearAuth(); setLocation("/login"); return; } const data = await res.json(); if (res.ok) setEntries(data.entries || []); else setFetchError(true); } catch { setFetchError(true); } finally { setLoading(false); } })(); } }} />
-        </div>
-      </div>
-    );
-  }
-
-
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
