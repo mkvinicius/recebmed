@@ -469,7 +469,7 @@ export default function Reconciliation() {
         </div>
 
         {initialLoading ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 mb-4 mt-4 text-center">
             <div className="flex items-center justify-center gap-3">
               <Loader2 className="w-5 h-5 text-[#8855f6] animate-spin" />
               <p className="text-sm text-slate-400">{t("common.loading")}</p>
@@ -477,7 +477,7 @@ export default function Reconciliation() {
           </div>
         ) : (!uploadCollapsed || !results) ? (
           <div
-            className={`bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed p-8 mb-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
+            className={`bg-white dark:bg-slate-900 rounded-2xl shadow-card border-2 border-dashed p-8 mb-4 mt-4 text-center transition-all cursor-pointer ${isDragging ? "border-[#8855f6] bg-[#8855f6]/5 dark:bg-[#8855f6]/10 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-[#8855f6]/40"}`}
             onClick={() => !isProcessing && fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
