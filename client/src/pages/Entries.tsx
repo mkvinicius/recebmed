@@ -17,6 +17,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 import EditEntryModal from "@/components/EditEntryModal";
 import DivergencyModal from "@/components/DivergencyModal";
 import ErrorState from "@/components/ErrorState";
+import ProductionOverview from "@/components/ProductionOverview";
 
 interface DoctorEntry {
   id: string;
@@ -256,6 +257,8 @@ export default function Entries() {
             ))}
           </div>
         </div>
+
+        <ProductionOverview />
 
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3 px-1">
