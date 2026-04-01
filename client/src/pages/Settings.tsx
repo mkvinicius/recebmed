@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft,
+  Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft, Brain,
 } from "lucide-react";
 import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,8 @@ export default function Settings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [requiresPwUpdate, setRequiresPwUpdate] = useState(getRequiresPasswordUpdate());
+  const [aiAuditEnabled, setAiAuditEnabled] = useState(true);
+  const [aiAuditLoading, setAiAuditLoading] = useState(false);
 
   const passwordChecks = [
     { ok: newPassword.length >= 8, label: t("forgotPassword.rule8chars") },
@@ -39,6 +41,15 @@ export default function Settings() {
     if (!token) { setLocation("/login"); return; }
     const user = getUser();
     if (user) setName(user.name);
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/ai-audit", { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setAiAuditEnabled(data.aiAuditEnabled);
+        }
+      } catch {}
+    })();
   }, [setLocation]);
 
   const handleSaveProfile = async () => {
@@ -66,6 +77,30 @@ export default function Settings() {
       toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleToggleAiAudit = async () => {
+    const token = getToken();
+    if (!token) return;
+    setAiAuditLoading(true);
+    try {
+      const res = await fetch("/api/auth/ai-audit", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !aiAuditEnabled }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiAuditEnabled(data.aiAuditEnabled);
+        toast({ title: t("common.success"), description: data.aiAuditEnabled ? t("settings.aiAuditActivated") : t("settings.aiAuditDeactivated") });
+      } else {
+        toast({ title: t("common.error"), description: t("settings.aiAuditError"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+    } finally {
+      setAiAuditLoading(false);
     }
   };
 
@@ -164,6 +199,37 @@ export default function Settings() {
               {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {savingProfile ? t("settings.savingProfile") : t("settings.saveProfile")}
             </Button>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
+              <Brain className="w-5 h-5 text-[#8855f6]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-ai-audit-section">{t("settings.aiAuditSection")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.aiAuditSectionDesc")}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
+            <div className="flex-1 min-w-0 mr-4">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200" data-testid="text-ai-audit-status">
+                {aiAuditEnabled ? t("settings.aiAuditEnabled") : t("settings.aiAuditDisabled")}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">{t("settings.aiAuditToggleDesc")}</p>
+            </div>
+            <button
+              onClick={handleToggleAiAudit}
+              disabled={aiAuditLoading}
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${aiAuditEnabled ? "bg-[#8855f6]" : "bg-slate-300 dark:bg-slate-600"}`}
+              data-testid="toggle-ai-audit"
+            >
+              <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${aiAuditEnabled ? "translate-x-5" : "translate-x-0"}`}>
+                {aiAuditLoading && <Loader2 className="w-4 h-4 text-[#8855f6] animate-spin absolute top-1 left-1" />}
+              </span>
+            </button>
           </div>
         </div>
 

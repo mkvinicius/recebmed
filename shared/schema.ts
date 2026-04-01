@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   profilePhotoUrl: text("profile_photo_url"),
+  aiAuditEnabled: boolean("ai_audit_enabled").notNull().default(true),
 });
 
 export const entryMethodEnum = pgEnum("entry_method", ["photo", "audio", "manual"]);

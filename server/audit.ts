@@ -26,7 +26,7 @@ export function schedulePostUploadAudit(doctorId: string) {
   pendingAudits.set(doctorId, timer);
 }
 
-async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-upload") {
+async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-upload", aiEnabled = true) {
   const startedAt = new Date();
   try {
     const pending = await storage.getPendingDoctorEntries(doctorId);
@@ -44,7 +44,7 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
         errorMessage: null,
       });
 
-      if (trigger === "scheduled") {
+      if (trigger === "scheduled" && aiEnabled) {
         try {
           await runAIAnomalyScan(doctorId);
         } catch (scanErr) {
@@ -75,7 +75,7 @@ async function runUserAudit(doctorId: string, trigger: "scheduled" | "post-uploa
       errorMessage: null,
     });
 
-    if (trigger === "scheduled") {
+    if (trigger === "scheduled" && aiEnabled) {
       try {
         await runAIAnomalyScan(doctorId);
       } catch (scanErr) {
@@ -148,7 +148,8 @@ async function runScheduledAudit(silent = false) {
       if (pendingAudits.has(doctorId)) {
         continue;
       }
-      await runUserAudit(doctorId, "scheduled");
+      const aiEnabled = await storage.isAiAuditEnabled(doctorId);
+      await runUserAudit(doctorId, "scheduled", aiEnabled);
     }
 
     if (!silent) console.log(`[Audit] Varredura concluída`);

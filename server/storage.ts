@@ -36,6 +36,8 @@ export interface IStorage {
   updateUserName(id: string, name: string): Promise<User | undefined>;
   updateUserPassword(id: string, hashedPassword: string): Promise<boolean>;
   updateUserProfilePhoto(id: string, profilePhotoUrl: string | null): Promise<User | undefined>;
+  updateUserAiAudit(id: string, enabled: boolean): Promise<User | undefined>;
+  isAiAuditEnabled(id: string): Promise<boolean>;
 
   createDoctorEntry(entry: InsertDoctorEntry): Promise<DoctorEntry>;
   getDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
@@ -119,6 +121,16 @@ export class DatabaseStorage implements IStorage {
   async updateUserProfilePhoto(id: string, profilePhotoUrl: string | null): Promise<User | undefined> {
     const [user] = await db.update(users).set({ profilePhotoUrl }).where(eq(users.id, id)).returning();
     return user;
+  }
+
+  async updateUserAiAudit(id: string, enabled: boolean): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ aiAuditEnabled: enabled }).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async isAiAuditEnabled(id: string): Promise<boolean> {
+    const [user] = await db.select({ aiAuditEnabled: users.aiAuditEnabled }).from(users).where(eq(users.id, id));
+    return user?.aiAuditEnabled ?? true;
   }
 
   async createDoctorEntry(entry: InsertDoctorEntry): Promise<DoctorEntry> {

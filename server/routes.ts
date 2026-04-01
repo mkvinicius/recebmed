@@ -408,6 +408,33 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/auth/ai-audit", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const enabled = await storage.isAiAuditEnabled(userId);
+      return res.json({ aiAuditEnabled: enabled });
+    } catch (error) {
+      console.error("Get AI audit status error:", error);
+      return res.status(500).json({ message: "Erro ao buscar configuração" });
+    }
+  });
+
+  app.put("/api/auth/ai-audit", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { enabled } = req.body;
+      if (typeof enabled !== "boolean") {
+        return res.status(400).json({ message: "Campo 'enabled' obrigatório" });
+      }
+      const user = await storage.updateUserAiAudit(userId, enabled);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+      return res.json({ aiAuditEnabled: user.aiAuditEnabled });
+    } catch (error) {
+      console.error("Update AI audit error:", error);
+      return res.status(500).json({ message: "Erro ao atualizar configuração" });
+    }
+  });
+
   // ── AI Extraction ──
 
   async function getCorrectionHints(doctorId: string): Promise<CorrectionHint[]> {

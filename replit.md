@@ -46,7 +46,7 @@ server/
   replit_integrations/anthropic/ - Anthropic AI integration (batch processing, chat utilities)
   document-validator.ts - Document structure analysis (AI-powered column detection + template mapping for clinic files)
   reconciliation.ts  - PDF/image/CSV extraction (pdf-parse + OpenAI) + template-aware extraction + AI-powered reconciliation engine (matches on 5 fields: patient name, procedure date, birth date, procedure, insurance) + sanitizeEntry with payment method detection (PX/PIX/DINHEIRO/CARTÃO → Particular)
-  audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched
+  audit.ts           - Background AI auditor: continuous loop every 15min + fixed daily scans (13:00 + 22:00 BRT) + 5min after any upload; mutex lock prevents overlapping runs; re-analyzes divergent+pending entries + unmatched clinic records, auto-reconciles, sends notifications; proactive template suggestion notification when >30% unmatched; respects per-user `aiAuditEnabled` toggle (users.ai_audit_enabled column, default true)
   storage.ts         - Database storage interface (Drizzle) — includes getDoctorEntriesPaginated(doctorId, {page, limit, status, search, insuranceProvider, dateFrom, dateTo})
   db.ts              - Database connection pool
   jwt-secret.ts      - Shared JWT_SECRET module (single source of truth for main routes + object storage routes)
