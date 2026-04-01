@@ -7,8 +7,6 @@ import {
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import DocumentTraining from "@/components/DocumentTraining";
-import ReportsTabs from "@/components/ReportsTabs";
 
 interface ClinicReport {
   id: string;
@@ -121,7 +119,6 @@ export default function ClinicReports() {
           <h2 className="text-2xl font-extrabold" data-testid="text-page-title">{t("clinicReports.title")}</h2>
           <p className="text-white/80 text-sm mt-1">{t("clinicReports.subtitle")}</p>
         </div>
-        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
 
         <div className="mb-4 flex items-center justify-between px-3 py-3 bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40">
           <div className="flex items-center gap-3">
@@ -142,7 +139,6 @@ export default function ClinicReports() {
           </button>
         </div>
 
-        <DocumentTraining />
 
         <div className="mb-12 space-y-3 mt-6">
           {loading ? (

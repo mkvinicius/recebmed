@@ -6,13 +6,14 @@ import {
   Upload, FileText, Loader2, CheckCircle2, AlertCircle, Clock,
   ChevronDown, ChevronUp, Stethoscope, Image, Table, Download, HelpCircle,
   Share2, Mail, MessageCircle, FileDown, ClipboardCheck, CircleDollarSign, Ban,
-  UserPlus, CheckCheck, BarChart3, ArrowLeft, CalendarDays, X
+  UserPlus, CheckCheck, BarChart3, ArrowLeft, CalendarDays, X, Brain
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocale } from "@/lib/i18n";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DivergencyModal from "@/components/DivergencyModal";
+import DocumentTraining from "@/components/DocumentTraining";
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -72,6 +73,7 @@ export default function Reconciliation() {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptingAll, setAcceptingAll] = useState(false);
   const [isReReconciling, setIsReReconciling] = useState(false);
+  const [showTraining, setShowTraining] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
   const [exportDateFrom, setExportDateFrom] = useState<string>("");
@@ -572,8 +574,8 @@ export default function Reconciliation() {
           </div>
         )}
 
-        {results && ((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
-          <div className="flex justify-center mb-4">
+        <div className="flex justify-center gap-3 mb-4">
+          {results && ((results.divergent?.length || 0) > 0 || (results.pending?.length || 0) > 0) && (
             <button
               onClick={handleReReconcile}
               disabled={isReReconciling}
@@ -583,6 +585,24 @@ export default function Reconciliation() {
               {isReReconciling ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
               {t("reconciliation.reReconcile")}
             </button>
+          )}
+          <button
+            onClick={() => setShowTraining(!showTraining)}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm ${
+              showTraining
+                ? "bg-[#8855f6] text-white hover:bg-[#7744e0]"
+                : "bg-white dark:bg-slate-900 text-[#8855f6] hover:bg-[#8855f6]/10 border border-[#8855f6]/30 dark:border-[#8855f6]/40"
+            }`}
+            data-testid="button-train-ai"
+          >
+            <Brain className="w-4 h-4" />
+            {t("documentTraining.title")}
+          </button>
+        </div>
+
+        {showTraining && (
+          <div className="mb-6">
+            <DocumentTraining />
           </div>
         )}
 

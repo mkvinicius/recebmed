@@ -487,7 +487,7 @@
   },
   "clinicReports": {
     "title": "Rapports de la Clinique",
-    "subtitle": "Enregistrements extraits des PDF des cliniques",
+    "subtitle": "Relevés de production reçus des payeurs",
     "addReport": "Ajouter un Rapport",
     "newReport": "Nouveau Rapport",
     "cancelAdd": "Annuler",

@@ -487,7 +487,7 @@
   },
   "clinicReports": {
     "title": "Extratos de Produção",
-    "subtitle": "Arquivos enviados e registros extraídos das clínicas",
+    "subtitle": "Extratos de produção recebidos pelas fontes pagadoras",
     "addReport": "Adicionar Relatório",
     "newReport": "Novo Relatório",
     "cancelAdd": "Cancelar",
