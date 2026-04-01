@@ -81,7 +81,9 @@ export default function EntryDetail() {
           <h2 className="text-2xl font-extrabold">{t("entryDetail.title")}</h2>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden mt-4">
+        <div className="h-10" />
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`size-10 rounded-full flex items-center justify-center ${statusBadgeStyle(entry.status)}`}>

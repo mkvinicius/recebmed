@@ -115,6 +115,8 @@ export default function AuditReports() {
         </div>
       </div>
 
+      <div className="h-10" />
+
       {!selectedCategory ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
           {categories.map(cat => {
