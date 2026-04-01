@@ -1,12 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
   Activity, DollarSign, CheckCircle2, Stethoscope,
-  BarChart3, ChevronDown, ChevronUp, X, User
+  BarChart3, ChevronDown, ChevronUp, X, User,
+  PieChart as PieChartIcon, ChevronLeft, ChevronRight
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
 } from "recharts";
 import { getToken, clearAuth } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
@@ -26,6 +28,7 @@ interface DoctorEntry {
 }
 
 const PRODUCTION_COLORS = { particular: "#8855f6", sus: "#3b82f6", convenio: "#22c55e" };
+const PIE_COLORS = ["#8855f6", "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444", "#ec4899"];
 
 type PeriodMode = "weekly" | "monthly" | "yearly";
 
@@ -36,6 +39,16 @@ function classifyInsurance(provider: string): "particular" | "sus" | "convenio" 
   return "convenio";
 }
 
+function classifyProcedureType(description: string): string {
+  const lower = (description || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (lower.includes("consult")) return "consulta";
+  if (lower.includes("exame") || lower.includes("exam") || lower.includes("ultrassom") || lower.includes("ultrassonografia") || lower.includes("raio") || lower.includes("tomografia") || lower.includes("ressonancia") || lower.includes("endoscopia") || lower.includes("colonoscopia")) return "exame";
+  if (lower.includes("cirurgi") || lower.includes("surgery") || lower.includes("cirugia")) return "cirurgia";
+  if (lower.includes("balao") || lower.includes("balloon") || lower.includes("balon")) return "balao";
+  if (lower.includes("procedimento") || lower.includes("procedure") || lower.includes("biopsia") || lower.includes("drenagem") || lower.includes("puncao") || lower.includes("sutura") || lower.includes("curetagem")) return "procedimento";
+  return "outros";
+}
+
 export default function ProductionOverview() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -43,6 +56,8 @@ export default function ProductionOverview() {
   const [loading, setLoading] = useState(true);
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [activeFilter, setActiveFilter] = useState<"all" | "particular" | "sus" | "convenio" | null>(null);
+  const [pieSlide, setPieSlide] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const locale = getLocale();
 
   const formatCurrency = (value: number): string => fmtCurrency(value) || "—";
@@ -91,6 +106,38 @@ export default function ProductionOverview() {
     if (activeFilter === "all") return entries;
     return entries.filter(e => classifyInsurance(e.insuranceProvider) === activeFilter);
   }, [entries, activeFilter]);
+
+  const insuranceCountData = useMemo(() => {
+    const map: Record<string, number> = {};
+    entries.forEach(e => {
+      const provider = e.insuranceProvider || t("reports.noInsurance");
+      map[provider] = (map[provider] || 0) + 1;
+    });
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [entries, t]);
+
+  const procedureTypeData = useMemo(() => {
+    const typeLabels: Record<string, string> = {
+      consulta: t("reports.typeConsulta"),
+      exame: t("reports.typeExame"),
+      cirurgia: t("reports.typeCirurgia"),
+      balao: t("reports.typeBalao"),
+      procedimento: t("reports.typeProcedimento"),
+      outros: t("reports.typeOutros"),
+    };
+    const map: Record<string, number> = {};
+    entries.forEach(e => {
+      const type = classifyProcedureType(e.description);
+      const label = typeLabels[type] || typeLabels.outros;
+      map[label] = (map[label] || 0) + 1;
+    });
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [entries, t]);
 
   const now = new Date();
   const productionData = useMemo(() => {
@@ -161,6 +208,19 @@ export default function ProductionOverview() {
     { key: "yearly", label: t("reports.yearly") },
   ];
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      setPieSlide(prev => diff > 0 ? Math.min(prev + 1, 1) : Math.max(prev - 1, 0));
+    }
+    touchStartX.current = null;
+  }, []);
+
   if (loading) {
     return (
       <div className="mb-6">
@@ -173,6 +233,11 @@ export default function ProductionOverview() {
   }
 
   if (entries.length === 0) return null;
+
+  const pieCharts = [
+    { key: "insurance", title: t("reports.insuranceDistribution"), data: insuranceCountData },
+    { key: "procedureType", title: t("reports.procedureTypeDistribution"), data: procedureTypeData },
+  ];
 
   return (
     <div className="mb-6" data-testid="production-overview">
@@ -270,6 +335,99 @@ export default function ProductionOverview() {
           )}
         </div>
       )}
+
+      <div
+        className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border border-slate-100/60 dark:border-slate-700/40 mb-4 overflow-hidden"
+        data-testid="pie-charts-carousel"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <PieChartIcon className="w-5 h-5 text-[#8855f6]" />
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">{pieCharts[pieSlide].title}</h3>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPieSlide(0)}
+              className={`p-1 rounded-lg transition-colors ${pieSlide === 0 ? "text-slate-300 dark:text-slate-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              disabled={pieSlide === 0}
+              data-testid="pie-prev"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex gap-1.5 mx-1">
+              {pieCharts.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPieSlide(i)}
+                  className={`w-2 h-2 rounded-full transition-all ${pieSlide === i ? "bg-[#8855f6] w-4" : "bg-slate-200 dark:bg-slate-700"}`}
+                  data-testid={`pie-dot-${i}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setPieSlide(1)}
+              className={`p-1 rounded-lg transition-colors ${pieSlide === 1 ? "text-slate-300 dark:text-slate-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+              disabled={pieSlide === 1}
+              data-testid="pie-next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden">
+          <div
+            className="flex transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${pieSlide * 100}%)` }}
+          >
+            {pieCharts.map(chart => (
+              <div key={chart.key} className="w-full flex-shrink-0" data-testid={`pie-${chart.key}`}>
+                {chart.data.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={chart.data}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={50}
+                        outerRadius={85}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {chart.data.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [value, t("reports.procedures")]}
+                        contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        iconType="circle"
+                        iconSize={10}
+                        formatter={(value: string) => {
+                          const item = chart.data.find(d => d.name === value);
+                          const total = chart.data.reduce((s, d) => s + d.value, 0);
+                          const pct = item && total > 0 ? ((item.value / total) * 100).toFixed(0) : "0";
+                          return `${value} (${pct}%)`;
+                        }}
+                        wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
+                    {t("reports.noDataForPeriod")}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-card border border-slate-100/60 dark:border-slate-700/40" data-testid="chart-production">
         <div className="flex items-center justify-between mb-4">

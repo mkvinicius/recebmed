@@ -20,9 +20,9 @@ client/src/
   pages/             - Login, Register, Dashboard, Entries, Capture, Profile, ConfirmEntry, Settings, ClinicReports, Reports, Reconciliation, EntryDetail, Import, ReportHistory
   components/ui/     - shadcn/ui components
   components/AppLayout.tsx       - Layout wrapper: desktop sidebar (≥768px, 220px wide) + mobile bottom tab bar (<768px)
-  components/ReportsTabs.tsx     - Horizontal sub-tabs for Reports section (Produção/Conferência/Clínica/Importar/Histórico) — used across all report pages
   components/EntrySkeleton.tsx   - Skeleton loading components: EntrySkeleton (list items), DashboardCardSkeleton, ReportSkeleton, DetailSkeleton
   components/ProjectionsPanel.tsx - Production summary panel ("Resumo da sua produção") — shows current month vs previous month case counts with trend indicator
+  components/ProductionOverview.tsx - Production overview (4 summary cards + 2 swipeable pie charts + stacked bar chart) — self-contained, fetches all entries; used on Entries page
   components/EditEntryModal.tsx   - Shared edit entry modal (used by Dashboard + Entries), includes "View Details" link
   components/DivergencyModal.tsx  - Side-by-side divergency comparison modal (doctor vs clinic data), with accept/manual validation actions
   components/AppTour.tsx          - Custom guided tour for first-time users (3 steps: capture, reports, stats)
