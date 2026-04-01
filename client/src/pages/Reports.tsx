@@ -16,7 +16,7 @@ export default function Reports() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col" style={{ minHeight: "calc(100vh - 120px)" }}>
-        <div className="min-h-[5rem] md:min-h-[10.5rem] flex flex-col justify-end pb-4 text-white">
+        <div className="min-h-[8rem] md:min-h-[10.5rem] flex flex-col justify-end pb-6 text-white">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <TrendingUp className="w-6 h-6" />
