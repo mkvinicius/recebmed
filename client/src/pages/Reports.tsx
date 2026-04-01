@@ -17,7 +17,7 @@ import { useDateFilter } from "@/hooks/use-date-filter";
 import type { QuickFilterKey } from "@/hooks/use-date-filter";
 import { formatCurrency as fmtCurrency, formatDate } from "@/lib/utils";
 import ErrorState from "@/components/ErrorState";
-import ReportsTabs from "@/components/ReportsTabs";
+
 import { ReportSkeleton } from "@/components/EntrySkeleton";
 
 interface DoctorEntry {
@@ -265,7 +265,6 @@ export default function Reports() {
             </div>
           </div>
         </div>
-        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
         <ReportSkeleton />
       </div>
     );
@@ -285,7 +284,6 @@ export default function Reports() {
             </div>
           </div>
         </div>
-        <div className="relative z-20 -mt-6 mb-4"><ReportsTabs /></div>
         <div className="py-8">
           <ErrorState onRetry={() => { setLoading(true); const token = getToken(); if (token) { (async () => { setFetchError(false); try { const res = await fetch("/api/entries", { headers: { Authorization: `Bearer ${token}` } }); if (res.status === 401) { clearAuth(); setLocation("/login"); return; } const data = await res.json(); if (res.ok) setEntries(data.entries || []); else setFetchError(true); } catch { setFetchError(true); } finally { setLoading(false); } })(); } }} />
         </div>
@@ -329,8 +327,6 @@ export default function Reports() {
             </button>
           )}
         </div>
-
-        <div className="mb-4"><ReportsTabs /></div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-4 mb-6">
           <div className="flex flex-wrap gap-2 mb-3">
