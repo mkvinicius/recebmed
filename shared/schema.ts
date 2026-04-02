@@ -32,6 +32,7 @@ export const doctorEntries = pgTable("doctor_entries", {
   imageHash: varchar("image_hash", { length: 64 }),
   matchedReportId: varchar("matched_report_id", { length: 36 }),
   divergenceReason: text("divergence_reason"),
+  matchConfidence: integer("match_confidence"),
   status: entryStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

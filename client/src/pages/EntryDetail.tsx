@@ -17,6 +17,7 @@ interface EntryData {
   entryMethod: string;
   sourceUrl: string | null;
   status: string;
+  matchConfidence: number | null;
   createdAt: string;
 }
 
@@ -94,9 +95,16 @@ export default function EntryDetail() {
                 <p className="text-sm text-slate-400 dark:text-slate-500">ID: {entry.id.slice(0, 8)}...</p>
               </div>
             </div>
-            <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${statusBadgeStyle(entry.status)}`} data-testid="text-entry-status">
-              {statusLabel(entry.status)}
-            </span>
+            <div className="flex items-center gap-2">
+              {entry.matchConfidence != null && (entry.status === "reconciled" || entry.status === "divergent") && (
+                <span className={`text-[11px] font-bold px-2 py-1 rounded-lg ${entry.matchConfidence >= 80 ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400" : entry.matchConfidence >= 50 ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400" : "bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400"}`} data-testid="text-match-confidence">
+                  {t("common.matchConfidence", { value: entry.matchConfidence })}
+                </span>
+              )}
+              <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${statusBadgeStyle(entry.status)}`} data-testid="text-entry-status">
+                {statusLabel(entry.status)}
+              </span>
+            </div>
           </div>
 
           {entry.sourceUrl && (entry.entryMethod === "photo" || entry.entryMethod === "audio") && (

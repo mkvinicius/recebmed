@@ -397,6 +397,13 @@ interface MatchScore {
   matchedFields: string[];
   divergentFields: string[];
   nameMatched: boolean;
+  confidence: number;
+}
+
+function nameMatchThreshold(nameLen: number): number {
+  if (nameLen <= 5) return 1;
+  if (nameLen <= 10) return 2;
+  return Math.max(3, Math.ceil(nameLen * 0.2));
 }
 
 function scoreMatch(entry: any, report: any): MatchScore {
@@ -406,7 +413,8 @@ function scoreMatch(entry: any, report: any): MatchScore {
   const divergentFields: string[] = [];
 
   const nameDistance = levenshteinDistance(entry.patientName, report.patientName);
-  const nameMatched = nameDistance <= 3;
+  const nameLen = Math.max(normalizeStr(entry.patientName).length, normalizeStr(report.patientName).length);
+  const nameMatched = nameDistance <= nameMatchThreshold(nameLen);
   filledFields++;
   if (nameMatched) {
     score++;
@@ -467,7 +475,13 @@ function scoreMatch(entry: any, report: any): MatchScore {
   }
 
   const totalFields = filledFields;
-  return { report, score, totalFields, matchedFields, divergentFields, nameMatched };
+  const confidence = totalFields > 0 ? Math.round((score / totalFields) * 100) : 0;
+  return { report, score, totalFields, matchedFields, divergentFields, nameMatched, confidence };
+}
+
+function computeAiMatchConfidence(entry: any, report: any): number {
+  const ms = scoreMatch(entry, report);
+  return ms.confidence;
 }
 
 const AI_RECONCILIATION_PROMPT = `Você é um assistente de conferência financeira médica.
@@ -610,16 +624,19 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         const report = availableReports[aiMatch.reportIndex];
         if (!report || usedReports.has(report.id)) continue;
 
-        const nameCheck = levenshteinDistance(
-          normalizeStr(entry.patientName),
-          normalizeStr(report.patientName)
-        );
-        if (nameCheck > 5) {
-          console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck})`);
+        const entryNameNorm = normalizeStr(entry.patientName);
+        const reportNameNorm = normalizeStr(report.patientName);
+        const nameCheck = levenshteinDistance(entryNameNorm, reportNameNorm);
+        const safetyLen = Math.max(entryNameNorm.length, reportNameNorm.length);
+        const safetyLimit = nameMatchThreshold(safetyLen) + 2;
+        if (nameCheck > safetyLimit) {
+          console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck}, threshold=${safetyLimit})`);
           continue;
         }
 
         usedReports.add(report.id);
+
+        const aiConfidence = computeAiMatchConfidence(entry, report);
 
         if (aiMatch.status === "received") {
           result.reconciled.push({
@@ -630,7 +647,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             entryValue: entry.procedureValue,
             reportValue: report.reportedValue,
           });
-          statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null });
+          statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null, matchConfidence: aiConfidence });
           reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
         } else if (aiMatch.status === "divergent") {
           const reason = aiMatch.divergenceReason || "Dados parcialmente diferentes";
@@ -643,7 +660,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             reportValue: report.reportedValue,
             divergenceReason: reason,
           });
-          statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: reason });
+          statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: reason, matchConfidence: aiConfidence });
           reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
         }
       }
@@ -679,7 +696,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         reportValue: bestMatch.report.reportedValue,
         matchDetails: bestMatch.matchedFields.join(", "),
       });
-      statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null });
+      statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null, matchConfidence: bestMatch.confidence });
       reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
     } else if (bestMatch && bestMatch.nameMatched && bestMatch.divergentFields.length > 0) {
       usedReports.add(bestMatch.report.id);
@@ -693,7 +710,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         reportValue: bestMatch.report.reportedValue,
         divergenceReason: reason,
       });
-      statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason });
+      statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason, matchConfidence: bestMatch.confidence });
       reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
     } else {
       result.pending.push({

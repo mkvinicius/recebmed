@@ -28,6 +28,7 @@ interface DoctorEntry {
   procedureValue: string | null;
   entryMethod: string;
   status: string;
+  matchConfidence: number | null;
   createdAt: string;
 }
 
@@ -293,6 +294,11 @@ export default function Entries() {
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.procedureDate, "medium")}</span>
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">{methodIcon(entry.entryMethod)} {methodLabel(entry.entryMethod)}</span>
+                        {entry.matchConfidence != null && (entry.status === "reconciled" || entry.status === "divergent") && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${entry.matchConfidence >= 80 ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400" : entry.matchConfidence >= 50 ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400" : "bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400"}`} data-testid={`confidence-${entry.id}`}>
+                            {t("common.matchConfidence", { value: entry.matchConfidence })}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
