@@ -1,397 +1,193 @@
-# 📊 Comparativo de Custo por FORMATO DE ARQUIVO
+# 💰 Qual o Custo de Cada Tipo de Arquivo?
 
-**Análise baseada no código atual do RecebMed - Abril 2026**
-
----
-
-## 🎯 RESUMO RÁPIDO (Por Arquivo/Evento)
-
-| Formato | IA Usada? | Custo/Evento | Tempo | Tokens |
-|---------|-----------|-----------|-------|--------|
-| **XLS** | ❌ NÃO | **R$ 0** | ~2s | 0 |
-| **CSV** | ❌ NÃO | **R$ 0** | ~3s | 0 |
-| **PDF Digital** | ❌ NÃO | **R$ 0** | ~5s | 0 |
-| **PDF Scaneado** | ✅ SIM | **R$ 0.005-0.009** | ~30s | 6.000 |
-| **FOTO** | ✅ SIM | **R$ 0.0024** | ~10s | 900 |
-
-**🏆 VENCEDOR:** XLS/CSV/PDF Digital = **GRÁTIS** 🚀
+**Comparativo Simples - Abril 2026**
 
 ---
 
-## 📋 PROCESSAMENTO DETALHADO
+## 📊 RESUMO RÁPIDO
 
-### **1️⃣ XLS (Excel)**
-
-```
-FLUXO:
-├─ Usuário upload: arquivo.xlsx
-├─ normalizeSpreadsheetRows()
-│  ├─ xlsx.js library (LOCAL)
-│  ├─ Parse de linhas/colunas
-│  └─ Regex para data/valor
-├─ Sem validação de IA
-└─ Insere direto no BD
-
-CUSTO:
-  - IA utilizada: ❌ NENHUMA
-  - Processamento local: ✅ Grátis
-  - Tempo: ~2 segundos
-  - Tokens gastos: 0
-  - CUSTO TOTAL: R$ 0.00 ✅
-```
-
-**Tokens por tipo de dado:**
-```
-Cabeçalho detectado:    ~50 tokens
-Regex parsing:          ~100 tokens (LOCAL, sem IA)
-Validação de valores:   ~0 tokens (sem IA)
-────────────────────
-TOTAL IA:               0 tokens
-CUSTO IA:               R$ 0.00
-```
+| Tipo de Arquivo | Custa IA? | Custo | Tempo |
+|---------|-----------|--------|-------|
+| **Excel** | Não | **GRÁTIS** ✅ | 2 segundos |
+| **CSV** | Não | **GRÁTIS** ✅ | 3 segundos |
+| **PDF Normal** | Não | **GRÁTIS** ✅ | 5 segundos |
+| **Foto** | Sim | **0,2 centavos** | 10 segundos |
+| **PDF Escaneado** | Sim | **2,2 centavos** | 30 segundos |
 
 ---
 
-### **2️⃣ CSV (Planilha de Texto)**
+## 🎯 O QUE SIGNIFICA ISSO?
 
+### **GRÁTIS = Não usa IA**
+Quando você importa um Excel, CSV ou PDF normal, o sistema **lê direto** sem precisar de IA. É como ler um texto em um papel — não precisa de nada especial.
+
+### **PAGO = Usa IA**
+Quando você tira uma **foto** ou importa um **PDF fotografado/escaneado**, o sistema precisa de IA para entender a imagem. É como pedir para alguém ler um papel ruim/borrado.
+
+---
+
+## 💾 EXPLICAÇÃO DE CADA TIPO
+
+### **1️⃣ EXCEL (arquivo .xlsx)**
 ```
-FLUXO:
-├─ Usuário upload: relatório.csv
-├─ papa parse (Papa Parse library - LOCAL)
-├─ Opção A: extractCsvData()
-│  └─ Regex simples, sem IA → R$ 0.00 ✅
-│
-└─ Opção B: extractCsvWithAI() (se estrutura desconhecida)
-   ├─ Claude analisa cabeçalho
-   ├─ Identifica colunas
-   └─ R$ 0.15-0.30 (1.500-3.000 tokens)
+O que é: Planilha com dados organizados em linhas e colunas
+Custo: R$ 0.00 (grátis)
+Exemplo: Relatório que o hospital envia em Excel
 
-CUSTO PADRÃO:
-  - IA utilizada: ❌ NENHUMA (modo automático)
-  - Processamento local: ✅ Grátis
-  - Tempo: ~3 segundos
-  - Tokens gastos: 0
-  - CUSTO TOTAL: R$ 0.00 ✅
-
-CUSTO COM IA (apenas se desconhecido):
-  - IA utilizada: ✅ Claude
-  - Tokens: ~2.000 input + 300 output
-  - CUSTO: R$ 0.15-0.30
+Simples: Você clica, o sistema lê, pronto!
 ```
 
-**Tokens por tipo de dado (com IA):**
+### **2️⃣ CSV (arquivo .csv)**
 ```
-System prompt:          ~400 tokens
-CSV header analysis:    ~500 tokens
-5 linhas de exemplo:    ~800 tokens
-Column mapping:         ~300 tokens
-────────────────────
-TOTAL INPUT:            ~2.000 tokens
-Response mapping:       ~300 tokens
-────────────────────
-TOTAL CUSTO: R$ 0.15
+O que é: Planilha simples de texto com dados separados
+Custo: R$ 0.00 (grátis)
+Exemplo: Você exporta dados de um sistema e envia
+
+Simples: Igual ao Excel, mas arquivo mais leve
+```
+
+### **3️⃣ PDF NORMAL (com texto)**
+```
+O que é: Relatório em PDF que você consegue copiar o texto
+Custo: R$ 0.00 (grátis)
+Exemplo: Documento PDF que chegou por email
+
+Simples: O sistema lê o texto direto, sem usar IA
+```
+
+### **4️⃣ FOTO (tirada com celular)**
+```
+O que é: Foto de etiqueta, rótulo ou papel
+Custo: R$ 0.0024 por foto (menos de 1 centavo!)
+Exemplo: Você tira foto de uma etiqueta de procedimento
+
+Como funciona:
+  1. Tira a foto
+  2. IA lê a imagem
+  3. Extrai os dados
+  4. Custa muito pouco!
+
+Mês com 30 fotos: R$ 0.07 (7 centavos)
+```
+
+### **5️⃣ PDF ESCANEADO (documento fotografado)**
+```
+O que é: PDF de um papel que foi fotografado/escaneado
+Custo: R$ 0.022 por documento (2,2 centavos)
+Exemplo: Histórico antigo que você escaneou com scanner
+
+Como funciona:
+  1. Sistema detecta que é imagem
+  2. IA tenta ler o texto
+  3. Se conseguir: custa 2,2 centavos
+  4. Se não conseguir: tenta de novo (pode custar mais)
+
+Um PDF de 50 páginas: R$ 0.022
 ```
 
 ---
 
-### **3️⃣ PDF DIGITAL (com Texto)**
+## 📈 COMPARATIVO MENSAL (Exemplo Real)
+
+### **Médico com 120 lançamentos por mês:**
 
 ```
-FLUXO:
-├─ Usuário upload: relatório.pdf (COM texto)
-├─ pdfjs library
-├─ parsePdfText()
-│  ├─ Extrai texto puro
-│  ├─ SEM scanning/OCR
-│  └─ SEM chamada IA
-├─ Estrutura reconhecida
-└─ Insere no BD (opcionalmente com Claude se customizado)
+40 Excels (relatórios)      →  R$ 0.00
+30 Fotos (etiquetas)        →  R$ 0.07
+20 PDFs normais             →  R$ 0.00
+20 CSVs (exportação)        →  R$ 0.00
+10 PDFs escaneados          →  R$ 0.22
+                            ──────────
+TOTAL/MÊS                   →  R$ 0.29
 
-CUSTO PADRÃO (Automático):
-  - IA utilizada: ❌ NENHUMA
-  - Processamento local: ✅ Grátis
-  - Tempo: ~5 segundos (50 páginas)
-  - Tokens gastos: 0
-  - CUSTO TOTAL: R$ 0.00 ✅
-
-CUSTO COM IA (Template-Aware - Opcional):
-  - Detecta + aplica template de extração
-  - Tokens: ~5.500 input + 500 output
-  - CUSTO: R$ 0.022
+EM REAIS (USD × 5):         R$ 1.45/mês
 ```
 
-**Tokens por tipo de dado:**
+**Resultado:** Praticamente **grátis**! 🎉
+
+---
+
+## 🎯 QUAL USAR PARA ECONOMIZAR?
+
+### **SE QUER GASTAR ZERO:**
 ```
-System prompt:          ~400 tokens
-PDF texto (50 págs):    ~4.000 tokens
-Template rules:         ~1.000 tokens
-────────────────────
-TOTAL INPUT:            ~5.400 tokens
-Extraction result:      ~500 tokens
-────────────────────
-TOTAL CUSTO: R$ 0.022 (com IA opcional)
-CUSTO PADRÃO: R$ 0.00 (sem IA)
+✅ USE:
+  • Excel (planilha estruturada)
+  • CSV (exportação de sistema)
+  • PDF Normal (documento com texto)
+
+❌ EVITE:
+  • Fotos (custa um pouco)
+  • PDFs escaneados (custa mais)
+```
+
+### **SE QUER FACILIDADE + BARATO:**
+```
+✅ USE:
+  • Fotos (muito barato, muito prático!)
+  • PDFs normais (grátis)
+  • CSVs (grátis)
+
+⚠️ COM MODERAÇÃO:
+  • PDFs escaneados (só quando necessário)
 ```
 
 ---
 
-### **4️⃣ PDF SCANEADO (Imagem/OCR)**
+## 📊 CUSTO ANUAL (100 eventos)
 
+| Tipo | Custo/Evento | 100/ano | Total/Ano |
+|------|------------|---------|----------|
+| Excel | R$ 0 | 100 | **R$ 0** |
+| CSV | R$ 0 | 100 | **R$ 0** |
+| PDF Normal | R$ 0 | 100 | **R$ 0** |
+| Foto | R$ 0.0024 | 100 | **R$ 0.24** |
+| PDF Escaneado | R$ 0.022 | 100 | **R$ 2.20** |
+
+**Total anual com tudo misto:** Menos de **R$ 5/ano**! 💰
+
+---
+
+## 🎬 EXEMPLOS PRÁTICOS
+
+### **Cenário 1: Clínica que recebe relatório por email**
 ```
-FLUXO:
-├─ Usuário upload: relatorio_escaneado.pdf
-├─ Detecta: PDF sem texto extraível
-├─ ocrPdfPages()
-│  ├─ pdftoppm: converte cada página → PNG
-│  ├─ Tesseract.js: OCR português (LOCAL) ✅
-│  ├─ Confiança ≥60% + texto ≥30 chars?
-│  │  ├─ SIM → envia texto para Claude
-│  │  └─ NÃO → usa Vision API como fallback
-│  └─ Claude parsing estruturado
-└─ Insere no BD
-
-CUSTO PADRÃO (Tesseract.js Bem-Sucedido):
-  - OCR Local: ✅ Grátis (Tesseract.js)
-  - IA: Claude parsing
-  - Tokens: ~5.500 input + 500 output
-  - Tempo: ~30 segundos (50 páginas)
-  - CUSTO TOTAL: R$ 0.022 ✅
-
-CUSTO FALLBACK (Tesseract Falha → Vision):
-  - Vision API: Claude Vision
-  - Tokens: ~8.000 input + 600 output
-  - CUSTO TOTAL: R$ 0.033
+Hospital envia: PDF + Excel
+Você faz: Clica para importar
+Custo: R$ 0.00
+Tempo: 10 segundos
+Result: ✅ PERFEITO!
 ```
 
-**Tokens por tipo de dado (PDF Scaneado 50 págs):**
+### **Cenário 2: Médico que tira foto de etiqueta**
 ```
-System prompt:          ~400 tokens
-OCR output (50 págs):   ~4.500 tokens
-Document structure:     ~600 tokens
-────────────────────
-TOTAL INPUT:            ~5.500 tokens
-Extraction result:      ~500 tokens
-────────────────────
-CUSTO PADRÃO: R$ 0.022 ✅
+Você faz: Tira foto com celular
+Sistema faz: Lê automaticamente
+Custo: R$ 0.0024 (quase nada!)
+Tempo: 15 segundos
+Result: ✅ MUITO BOM!
+```
 
-FALLBACK (Vision):
-  System prompt:        ~400 tokens
-  50 page images:       ~7.000 tokens (Vision charges more)
-  ─────────────────
-  TOTAL INPUT:          ~7.400 tokens
-  Response:             ~600 tokens
-  ─────────────────
-  CUSTO FALLBACK: R$ 0.033
+### **Cenário 3: Hospital com arquivos antigos em PDF**
+```
+Você tem: PDFs antigos escaneados
+Sistema faz: Tenta ler com IA
+Custo: R$ 0.022 por documento
+Tempo: 30 segundos
+Result: ⚠️ BOM, MAS MAIS CARO
 ```
 
 ---
 
-### **5️⃣ FOTO (Captura Direta)**
+## 💡 DICA FINAL
 
-```
-FLUXO:
-├─ Usuário: tira foto de etiqueta/rótulo
-├─ Compressão client-side (max 2048px, JPEG 82%)
-├─ Upload base64
-├─ extractDataFromImage()
-│  ├─ Tesseract.js: OCR para detectar texto
-│  │  ├─ Confiança ≥60% + texto ≥30 chars?
-│  │  │  ├─ SIM → envia texto para Claude
-│  │  │  └─ NÃO → usa Vision direto
-│  │  └─ LOCAL, grátis ✅
-│  └─ Claude parsing
-└─ Insere no BD
+**O melhor negócio:**
+- Use **Excel/CSV/PDF Normal** (grátis!)
+- Use **Fotos** quando precisar (muito barato!)
+- Evite **PDFs escaneados** se tiver opção
 
-CUSTO PADRÃO (OCR Bem-Sucedido):
-  - Tesseract.js: ✅ Grátis
-  - Claude parsing: ✅ $0.003/1K tokens
-  - Tokens: ~700 input + 200 output
-  - Tempo: ~10 segundos
-  - CUSTO TOTAL: R$ 0.0024 ✅
-
-CUSTO FALLBACK (Tesseract Falha → Vision Direto):
-  - Vision API: Claude Vision
-  - Tokens: ~1.500 input + 200 output
-  - CUSTO TOTAL: R$ 0.007
-```
-
-**Tokens por tipo de dado (Foto):**
-```
-System prompt:          ~400 tokens
-Foto analysis (OCR):    ~200 tokens
-Correction context:     ~100 tokens
-────────────────────
-TOTAL INPUT:            ~700 tokens
-JSON response:          ~200 tokens
-────────────────────
-CUSTO PADRÃO: R$ 0.0024 ✅
-
-FALLBACK (Vision direto):
-  System prompt:        ~400 tokens
-  Imagem Vision:        ~1.000 tokens
-  Correction hints:     ~100 tokens
-  ─────────────────
-  TOTAL INPUT:          ~1.500 tokens
-  Response:             ~200 tokens
-  ─────────────────
-  CUSTO FALLBACK: R$ 0.007
-```
+**Resultado:** Custo praticamente **ZERO** por mês! 🎉
 
 ---
 
-## 💰 COMPARATIVO VISUAL
-
-```
-XLS:            ▌ R$ 0.00       (GRÁTIS)
-CSV:            ▌ R$ 0.00       (GRÁTIS)
-PDF Digital:    ▌ R$ 0.00       (GRÁTIS)
-PDF Scaneado:   ███ R$ 0.022    (0,2¢)
-FOTO:           ██ R$ 0.0024    (0,024¢)
-```
-
----
-
-## 📊 CENÁRIO MENSAL (120 entradas)
-
-### **Distribuição Realista de Médico**
-
-```
-40 entradas manuais (XLS) ────────→ R$ 0.00
-30 fotos (etiqueta) ───────────────→ R$ 0.07
-20 PDF conciliação ────────────────→ R$ 0.44
-20 CSV importação ─────────────────→ R$ 0.00
-10 PDF scaneado ──────────────────→ R$ 0.22
-──────────────────────────────────────
-TOTAL/MÊS: R$ 0.73 (em dólar)
-```
-
-**Em Reais (USD × 5):** R$ 3.65/mês
-
----
-
-## 🎯 RECOMENDAÇÃO: QUAL USAR?
-
-### **Para Máxima Economia (R$ 0.00/mês):**
-```
-✅ USAR SEMPRE:
-  • XLS (Excel) - Relatórios estruturados
-  • CSV - Exportações de sistema
-  • PDF Digital - Relatórios impressos digitalmente
-  
-❌ EVITAR:
-  • PDF Scaneado (não é tão grátis: R$ 0.022)
-  • Foto (pequeno custo: R$ 0.0024)
-```
-
-### **Para Máxima Facilidade (com baixo custo):**
-```
-✅ USAR:
-  • Foto + etiqueta (R$ 0.0024 = muito barato!)
-  • PDF Digital (R$ 0.00)
-  • CSV bem formatado (R$ 0.00)
-  
-⚠️  USAR COM CAUTELA:
-  • PDF Scaneado (R$ 0.022 - gastoso se usado muito)
-```
-
----
-
-## 📈 CUSTO ANUAL POR FORMATO (100 eventos)
-
-| Formato | Custo/Evento | 100 eventos/ano | Custo Total |
-|---------|-----------|--------|----------|
-| **XLS** | R$ 0 | 100 | **R$ 0.00** ✅ |
-| **CSV** | R$ 0 | 100 | **R$ 0.00** ✅ |
-| **PDF Digital** | R$ 0 | 100 | **R$ 0.00** ✅ |
-| **Foto** | R$ 0.0024 | 100 | **R$ 0.24** ✅ |
-| **PDF Scaneado** | R$ 0.022 | 100 | **R$ 2.20** ✅ |
-| **Híbrido (recomendado)** | R$ 0.005 | 100 | **R$ 0.50** ✅ |
-
----
-
-## 🔍 ANÁLISE PROFUNDA POR CENÁRIO
-
-### **Cenário 1: Clínica que Recebe Relatórios Digitais**
-```
-Entrada: Email com PDF digital + CSV
-Formato: PDF Digital + CSV
-Custo: R$ 0.00 (100% GRÁTIS!)
-Processamento: ~8 segundos
-Recomendação: ⭐⭐⭐⭐⭐ IDEAL
-```
-
-### **Cenário 2: Médico que Fotografa Etiqueta**
-```
-Entrada: Foto de etiqueta de procedimento
-Formato: FOTO
-Custo: R$ 0.0024/foto = R$ 0.07/mês (30 fotos)
-Processamento: ~10 segundos
-Recomendação: ⭐⭐⭐⭐⭐ EXCELENTE
-```
-
-### **Cenário 3: Hospital com Arquivos Antigos Escaneados**
-```
-Entrada: PDF de arquivo escaneado (50 págs)
-Formato: PDF SCANEADO
-Custo: R$ 0.022/evento = R$ 0.44/mês (20 eventos)
-Processamento: ~30 segundos (OCR)
-Recomendação: ⭐⭐⭐⭐ BOM (mas caro para volume)
-```
-
-### **Cenário 4: Misto (Realista)**
-```
-40 XLS (relatórios)    ────→ R$ 0.00
-30 Fotos (etiquetas)   ────→ R$ 0.07
-20 PDF Digital         ────→ R$ 0.00
-20 CSV (exportação)    ────→ R$ 0.00
-10 PDF Scaneado        ────→ R$ 0.22
-                       ─────────────
-TOTAL/MÊS: R$ 0.29
-
-Custo/entrada: R$ 0.0024 (muito barato!)
-Recomendação: ⭐⭐⭐⭐⭐ PERFEITO
-```
-
----
-
-## 🚀 OTIMIZAÇÕES FUTURAS
-
-### **Batch Processing para Reduzir Ainda Mais**
-
-```
-PDF Scaneado (20 eventos):
-  ├─ Individual: R$ 0.022 × 20 = R$ 0.44
-  └─ Batch API: R$ 0.022 × 20 × 0.5 = R$ 0.22 (-50%)
-
-XLS/CSV (40 eventos):
-  ├─ Já é R$ 0.00 (não há o que otimizar)
-  └─ Apenas normalizar estrutura
-```
-
-### **Prompt Caching (Claude V2)**
-
-```
-Se mesmo template de PDF é processado 5x/mês:
-  ├─ Sem cache: R$ 0.022 × 5 = R$ 0.11
-  └─ Com cache: R$ 0.0044 × 5 = R$ 0.022 (-80%)
-
-Economia potencial: R$ 15-20/ano por template
-```
-
----
-
-## ✅ CONCLUSÃO
-
-| Formato | Custo | Recomendação |
-|---------|-------|----------|
-| **XLS** | 🟢 R$ 0.00 | Use sempre |
-| **CSV** | 🟢 R$ 0.00 | Use sempre |
-| **PDF Digital** | 🟢 R$ 0.00 | Use sempre |
-| **FOTO** | 🟡 R$ 0.0024 | Use frequentemente |
-| **PDF Scaneado** | 🟠 R$ 0.022 | Use ocasionalmente |
-
-**🏆 Melhor custo-benefício:** XLS/CSV/PDF Digital + Fotos = **R$ 0.01-0.03/mês**
-
----
-
-_Análise técnica: Abril 2026 | Baseada em código src real_
+_Relatório Executivo - Abril 2026_
