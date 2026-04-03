@@ -558,7 +558,11 @@
     "totalRecords": "enregistrements",
     "records": "enregistrements",
     "manualEntries": "Entrées manuelles",
-    "noDescription": "Pas de description"
+    "noDescription": "Pas de description",
+    "rename": "Renommer",
+    "renamed": "Nom mis à jour",
+    "confirmDeleteFile": "Supprimer ce fichier et tous les enregistrements associés ?",
+    "noRecordsInFile": "Aucun enregistrement extrait de ce fichier"
   },
   "import": {
     "title": "Audit Rétroactif",

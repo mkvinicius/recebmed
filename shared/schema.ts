@@ -130,6 +130,7 @@ export const uploadedReports = pgTable("uploaded_reports", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id", { length: 36 }).notNull(),
   fileName: text("file_name").notNull(),
+  customName: text("custom_name"),
   originalFileUrl: text("original_file_url").notNull(),
   extractedRecordCount: integer("extracted_record_count").notNull().default(0),
   uploadDate: timestamp("upload_date").defaultNow().notNull(),

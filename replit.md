@@ -63,7 +63,7 @@ shared/
 - **clinic_reports**: id, doctorId, patientName, procedureDate, reportedValue, description, sourcePdfUrl, matched (boolean, default false), matchedEntryId (FK to doctor_entries.id), createdAt
 - **notifications**: id, doctorId, type, title, message, read (boolean), createdAt
 - **ai_corrections**: id, doctorId, field, originalValue, correctedValue, entryMethod (photo/audio), createdAt — tracks user corrections to AI-extracted data for learning
-- **uploaded_reports**: id, userId, fileName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage
+- **uploaded_reports**: id, userId, fileName, customName, originalFileUrl, extractedRecordCount, uploadDate — tracks every clinic report file upload with link to original file in object storage; customName allows inline rename
 - **audit_logs**: id, doctorId, triggerType (scheduled/post-upload), startedAt, endedAt, reconciledCount, divergentAfter, errorMessage — persists every audit run for traceability
 - **document_templates**: id, userId, name, mappingJson (JSON column mapping array), sampleHash (SHA-256 of sample doc), createdAt — trained document structure templates for clinic file extraction
 - **ai_audit_findings**: id, doctorId, category (duplicate/value_outlier/missing_data/suspicious_pattern), severity (high/medium/low), title, description, entryIds (text array), resolved (boolean), scanTimestamp — individual AI-detected audit findings with ownership-based resolve
@@ -147,7 +147,7 @@ Pages without tab bar: Login, Register, ForgotPassword, ConfirmEntry
 - **Profile (Perfil)**: User info with profile photo upload (camera button + remove), dark mode toggle, links to Settings/ClinicReports/Reconciliation, logout
 - **ConfirmEntry**: Review/edit AI-extracted or manual entry data before saving (includes procedureValue field); shows per-field AI confidence indicators (green/amber/red dots) and overall confidence banner for photo/audio entries
 - **Settings**: Profile name edit + password change
-- **ClinicReports**: Add, list, delete clinic reports (patient name, date, value, description)
+- **ClinicReports**: Monthly-grouped view of uploaded files with inline rename; orphan/manual entries shown in separate virtual group; expand to see records per file; delete file cascades
 - **Reports (Relatórios de Produção)**: Production charts with recharts — stacked bar chart showing procedure count by type (Particular/SUS/Convênio) with period selector (weekly/monthly/yearly), pie chart showing production distribution by insurance. Summary cards: Total Production, Particular, SUS, Convênio counts. Top insurers table sorted by procedure count
 - **Reconciliation**: PDF/image/CSV upload → AI extraction → AI-powered reconciliation matching entries on 5 fields (nome, data atendimento, nascimento, procedimento, convênio). 4 tabs: Conferidos, Recebidos, Divergentes, Pendentes
 - **EntryDetail**: Detailed view of individual entry with image evidence display

@@ -558,7 +558,11 @@
     "records": "records",
     "manualEntries": "Manual entries",
     "noDescription": "No description",
-    "connectionError": "Connection failed."
+    "connectionError": "Connection failed.",
+    "rename": "Rename",
+    "renamed": "Name updated",
+    "confirmDeleteFile": "Delete this file and all associated records?",
+    "noRecordsInFile": "No records extracted from this file"
   },
   "import": {
     "title": "Retroactive Audit",

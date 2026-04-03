@@ -558,7 +558,11 @@
     "totalRecords": "registros",
     "records": "registros",
     "manualEntries": "Entradas manuales",
-    "noDescription": "Sin descripción"
+    "noDescription": "Sin descripción",
+    "rename": "Renombrar",
+    "renamed": "Nombre actualizado",
+    "confirmDeleteFile": "¿Eliminar este archivo y todos los registros asociados?",
+    "noRecordsInFile": "No se extrajeron registros de este archivo"
   },
   "import": {
     "title": "Auditoría Retroactiva",

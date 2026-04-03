@@ -1475,6 +1475,23 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/uploaded-reports/:id/rename", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const reportId = req.params.id;
+      const { customName } = req.body;
+      if (!customName || typeof customName !== "string" || customName.trim().length === 0) {
+        return res.status(400).json({ message: "Nome inválido" });
+      }
+      const updated = await storage.renameUploadedReport(reportId, userId, customName.trim());
+      if (!updated) return res.status(404).json({ message: "Relatório não encontrado" });
+      return res.json({ report: updated });
+    } catch (error) {
+      console.error("Rename uploaded report error:", error);
+      return res.status(500).json({ message: "Erro ao renomear relatório" });
+    }
+  });
+
   app.delete("/api/uploaded-reports/:id", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;

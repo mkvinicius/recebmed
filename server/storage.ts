@@ -85,6 +85,7 @@ export interface IStorage {
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   resetDivergentAndPendingEntries(doctorId: string): Promise<number>;
 
+  renameUploadedReport(reportId: string, userId: string, customName: string): Promise<UploadedReport | null>;
   deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }>;
 
   createDocumentTemplate(template: InsertDocumentTemplate): Promise<DocumentTemplate>;
@@ -441,6 +442,14 @@ export class DatabaseStorage implements IStorage {
 
   async getUploadedReports(userId: string): Promise<UploadedReport[]> {
     return db.select().from(uploadedReports).where(eq(uploadedReports.userId, userId)).orderBy(desc(uploadedReports.uploadDate));
+  }
+
+  async renameUploadedReport(reportId: string, userId: string, customName: string): Promise<UploadedReport | null> {
+    const [result] = await db.update(uploadedReports)
+      .set({ customName })
+      .where(and(eq(uploadedReports.id, reportId), eq(uploadedReports.userId, userId)))
+      .returning();
+    return result || null;
   }
 
   async deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }> {

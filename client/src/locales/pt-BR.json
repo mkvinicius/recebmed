@@ -558,7 +558,11 @@
     "totalRecords": "registros",
     "records": "registros",
     "manualEntries": "Entradas manuais",
-    "noDescription": "Sem descrição"
+    "noDescription": "Sem descrição",
+    "rename": "Renomear",
+    "renamed": "Nome atualizado",
+    "confirmDeleteFile": "Excluir este arquivo e todos os registros associados?",
+    "noRecordsInFile": "Nenhum registro extraído neste arquivo"
   },
   "import": {
     "title": "Auditoria Retroativa",
