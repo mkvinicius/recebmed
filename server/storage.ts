@@ -276,13 +276,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async batchUpdateDoctorEntryStatus(updates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null; matchConfidence?: number | null }>): Promise<void> {
-    for (const update of updates) {
-      const setData: any = { status: update.status as any };
-      if (update.matchedReportId !== undefined) setData.matchedReportId = update.matchedReportId;
-      if (update.divergenceReason !== undefined) setData.divergenceReason = update.divergenceReason;
-      if (update.matchConfidence !== undefined) setData.matchConfidence = update.matchConfidence;
-      await db.update(doctorEntries).set(setData).where(eq(doctorEntries.id, update.id));
-    }
+    if (updates.length === 0) return;
+    await db.transaction(async (tx) => {
+      for (const update of updates) {
+        const setData: any = { status: update.status as any };
+        if (update.matchedReportId !== undefined) setData.matchedReportId = update.matchedReportId;
+        if (update.divergenceReason !== undefined) setData.divergenceReason = update.divergenceReason;
+        if (update.matchConfidence !== undefined) setData.matchConfidence = update.matchConfidence;
+        await tx.update(doctorEntries).set(setData).where(eq(doctorEntries.id, update.id));
+      }
+    });
   }
 
   async getReconciledAndDivergentEntries(doctorId: string): Promise<DoctorEntry[]> {
@@ -489,11 +492,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void> {
-    for (const u of updates) {
-      await db.update(clinicReports)
-        .set({ matched: true, matchedEntryId: u.entryId })
-        .where(eq(clinicReports.id, u.reportId));
-    }
+    if (updates.length === 0) return;
+    await db.transaction(async (tx) => {
+      for (const u of updates) {
+        await tx.update(clinicReports)
+          .set({ matched: true, matchedEntryId: u.entryId })
+          .where(eq(clinicReports.id, u.reportId));
+      }
+    });
   }
 
   async getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]> {

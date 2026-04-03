@@ -4,6 +4,7 @@ import { Camera, Mic, PenLine, Loader2, Sparkles, Stethoscope, AlertTriangle, X,
 import { getToken, getUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlobToWavBase64 } from "@/lib/audioUtils";
+import { compressImage } from "@/lib/imageCompression";
 import { useTranslation } from "react-i18next";
 import { getLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
@@ -142,14 +143,16 @@ export default function Capture() {
       return;
     }
     if (files.length === 1) {
-      const base64 = await readFileAsDataURL(files[0]);
+      const raw = await readFileAsDataURL(files[0]);
+      const base64 = await compressImage(raw);
       await processPhoto(base64, false);
     } else {
       setProcessingPhoto(true);
       setPhotoProgress(t("capture.readingImages", { count: files.length }));
       const images: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        images.push(await readFileAsDataURL(files[i]));
+        const raw = await readFileAsDataURL(files[i]);
+        images.push(await compressImage(raw));
       }
       await processBatchPhotos(images, false);
     }

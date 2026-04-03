@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
   Search, FileText, Clock, CheckCircle2, AlertCircle,
-  Camera, Mic, PenLine, Loader2, X, Calendar, ChevronLeft, ChevronRight, Trash2
+  Camera, Mic, PenLine, Loader2, X, Calendar, ChevronLeft, ChevronRight, Trash2, Download
 } from "lucide-react";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -40,17 +40,40 @@ export default function Entries() {
   const [fetchError, setFetchError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState(() => {
+  const [statusFilter, setStatusFilterState] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("status") || "all";
   });
   const { dateFrom, dateTo, quickFilter, setDateFrom, setDateTo, applyQuickFilter, clearDates } = useDateFilter();
-  const [insuranceFilter, setInsuranceFilter] = useState("all");
+  const [insuranceFilter, setInsuranceFilterState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("insurance") || "all";
+  });
+
+  const updateUrlParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(window.location.search);
+    for (const [k, v] of Object.entries(updates)) {
+      if (v && v !== "all") params.set(k, v);
+      else params.delete(k);
+    }
+    const qs = params.toString();
+    window.history.replaceState({}, "", qs ? `?${qs}` : window.location.pathname);
+  };
+
+  const setStatusFilter = (v: string) => {
+    setStatusFilterState(v);
+    updateUrlParams({ status: v });
+  };
+  const setInsuranceFilter = (v: string) => {
+    setInsuranceFilterState(v);
+    updateUrlParams({ insurance: v });
+  };
   const [editingEntry, setEditingEntry] = useState<DoctorEntry | null>(null);
   const [divergentEntry, setDivergentEntry] = useState<DoctorEntry | null>(null);
   const [quickStatusEntry, setQuickStatusEntry] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const quickStatusRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
@@ -180,6 +203,33 @@ export default function Entries() {
     }
   };
 
+  const handleExport = async (format: "xlsx" | "csv") => {
+    const token = getToken();
+    if (!token) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ format });
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (insuranceFilter !== "all") params.set("insuranceProvider", insuranceFilter);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+      const res = await fetch(`/api/entries/export?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lancamentos-${new Date().toISOString().slice(0, 10)}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: t("entries.exportSuccess") });
+    } catch {
+      toast({ title: t("common.error"), description: t("entries.exportError"), variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const uniqueInsurances = Array.from(new Set(entries.map(e => e.insuranceProvider).filter(Boolean)));
   const methodIcon = (m: string) => m === "photo" ? <Camera className="w-4 h-4" /> : m === "audio" ? <Mic className="w-4 h-4" /> : <PenLine className="w-4 h-4" />;
   const methodLabel = (m: string) => m === "photo" ? t("common.photo") : m === "audio" ? t("common.audio") : t("common.manual");
@@ -264,9 +314,35 @@ export default function Entries() {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3 px-1">
             <span className="font-bold text-slate-800 dark:text-slate-200">{t("entries.allEntries")}</span>
-            <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
-              {t("entries.recordCount", { count: totalEntries })}
-            </span>
+            <div className="flex items-center gap-2">
+              {totalEntries > 0 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleExport("xlsx")}
+                    disabled={exporting}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all disabled:opacity-50"
+                    data-testid="button-export-xlsx"
+                    title={t("entries.exportExcel")}
+                  >
+                    {exporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                    Excel
+                  </button>
+                  <button
+                    onClick={() => handleExport("csv")}
+                    disabled={exporting}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all disabled:opacity-50"
+                    data-testid="button-export-csv"
+                    title={t("entries.exportCSV")}
+                  >
+                    {exporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                    CSV
+                  </button>
+                </div>
+              )}
+              <span className="text-[#8855f6] text-sm font-bold" data-testid="text-entry-count">
+                {t("entries.recordCount", { count: totalEntries })}
+              </span>
+            </div>
           </div>
           <div className="space-y-3">
             {loadingEntries ? (

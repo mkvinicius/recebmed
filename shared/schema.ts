@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, numeric, pgEnum, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, numeric, pgEnum, boolean, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,7 +35,14 @@ export const doctorEntries = pgTable("doctor_entries", {
   matchConfidence: integer("match_confidence"),
   status: entryStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_doctor_entries_doctor_id").on(table.doctorId),
+  index("idx_doctor_entries_status").on(table.status),
+  index("idx_doctor_entries_procedure_date").on(table.procedureDate),
+  index("idx_doctor_entries_doctor_status").on(table.doctorId, table.status),
+  index("idx_doctor_entries_doctor_date").on(table.doctorId, table.procedureDate),
+  index("idx_doctor_entries_image_hash").on(table.imageHash),
+]);
 
 export const clinicReports = pgTable("clinic_reports", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
@@ -51,7 +58,12 @@ export const clinicReports = pgTable("clinic_reports", {
   matched: boolean("matched").notNull().default(false),
   matchedEntryId: varchar("matched_entry_id", { length: 36 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_clinic_reports_doctor_id").on(table.doctorId),
+  index("idx_clinic_reports_matched").on(table.matched),
+  index("idx_clinic_reports_doctor_matched").on(table.doctorId, table.matched),
+  index("idx_clinic_reports_procedure_date").on(table.procedureDate),
+]);
 
 export const notifications = pgTable("notifications", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
@@ -61,7 +73,10 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_notifications_doctor_id").on(table.doctorId),
+  index("idx_notifications_doctor_read").on(table.doctorId, table.read),
+]);
 
 export const passwordSchema = z
   .string()

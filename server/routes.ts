@@ -988,6 +988,69 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/entries/export", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const format = (req.query.format as string) || "xlsx";
+      const status = req.query.status as string | undefined;
+      const dateFrom = req.query.dateFrom as string | undefined;
+      const dateTo = req.query.dateTo as string | undefined;
+      const insuranceProvider = req.query.insuranceProvider as string | undefined;
+
+      const result = await storage.getDoctorEntriesPaginated(userId, {
+        page: 1,
+        limit: 10000,
+        status: status && status !== "all" ? status : undefined,
+        dateFrom,
+        dateTo,
+        insuranceProvider: insuranceProvider && insuranceProvider !== "all" ? insuranceProvider : undefined,
+      });
+
+      const sanitizeCell = (val: string | null | undefined): string => {
+        if (!val) return "";
+        const s = val.trim();
+        if (/^[=+\-@\t\r]/.test(s)) return "'" + s;
+        return s;
+      };
+
+      const rows = result.entries.map(e => ({
+        Paciente: sanitizeCell(e.patientName),
+        "Data do Procedimento": e.procedureDate ? new Date(e.procedureDate).toLocaleDateString("pt-BR") : "",
+        Procedimento: sanitizeCell(e.description),
+        Convênio: sanitizeCell(e.insuranceProvider),
+        Valor: e.procedureValue ? parseFloat(e.procedureValue) : "",
+        Status: e.status === "reconciled" ? "Conciliado" : e.status === "divergent" ? "Divergente" : e.status === "validated" ? "Validado" : "Pendente",
+        Método: e.entryMethod === "photo" ? "Foto" : e.entryMethod === "audio" ? "Áudio" : "Manual",
+        "Confiança (%)": e.matchConfidence ?? "",
+        "Data de Criação": e.createdAt ? new Date(e.createdAt).toLocaleDateString("pt-BR") : "",
+      }));
+
+      if (format === "csv") {
+        const csv = Papa.unparse(rows, { delimiter: ";" });
+        const bom = "\uFEFF";
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="lancamentos-${new Date().toISOString().slice(0, 10)}.csv"`);
+        return res.send(bom + csv);
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const colWidths = [
+        { wch: 30 }, { wch: 18 }, { wch: 40 }, { wch: 20 },
+        { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 18 },
+      ];
+      ws["!cols"] = colWidths;
+      XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
+      const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="lancamentos-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+      return res.send(buffer);
+    } catch (error) {
+      console.error("Export entries error:", error);
+      return res.status(500).json({ message: "Erro ao exportar lançamentos" });
+    }
+  });
+
   app.put("/api/entries/:id", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
