@@ -1,5 +1,6 @@
 import { parsePdfText } from "./pdf-util";
 import { getComplexParsingProvider } from "./llm";
+import { extractTextFromImage } from "./ocr";
 import { storage } from "./storage";
 import { buildTemplatePrompt } from "./document-validator";
 
@@ -281,23 +282,40 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 3000): 
 
 export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {
   const provider = getComplexParsingProvider();
+
+  const rawBase64 = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+  const ocr = await extractTextFromImage(rawBase64);
+
   try {
-    const result = await withRetry(() => provider.chatCompletion({
-      messages: [
-        { role: "system", content: EXTRACTION_PROMPT },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Analise esta imagem de relatório de clínica médica e extraia todos os registros:" },
-            { type: "image_url", image_url: { url: base64Image } },
-          ],
-        },
-      ],
-      maxTokens: 16000,
-    }));
+    let result;
+    if (ocr.usable) {
+      console.log(`[OCR+LLM] OCR ok (${ocr.confidence.toFixed(0)}%), enviando texto extraído para IA`);
+      result = await withRetry(() => provider.chatCompletion({
+        messages: [
+          { role: "system", content: EXTRACTION_PROMPT },
+          { role: "user", content: `Texto extraído via OCR de relatório de clínica médica:\n\n${ocr.text}` },
+        ],
+        maxTokens: 16000,
+      }));
+    } else {
+      console.log(`[Vision] OCR insuficiente (${ocr.confidence.toFixed(0)}%), enviando imagem para IA`);
+      result = await withRetry(() => provider.chatCompletion({
+        messages: [
+          { role: "system", content: EXTRACTION_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Analise esta imagem de relatório de clínica médica e extraia todos os registros:" },
+              { type: "image_url", image_url: { url: base64Image } },
+            ],
+          },
+        ],
+        maxTokens: 16000,
+      }));
+    }
 
     const results = parseAIResponse(result.content);
-    console.log(`[${provider.name}] Image AI extraction: ${results.length} entries`);
+    console.log(`[${provider.name}] Image extraction: ${results.length} entries (OCR: ${ocr.usable ? "sim" : "não"})`);
     return results;
   } catch (aiErr: any) {
     console.error("Image AI extraction error:", aiErr?.message || aiErr);

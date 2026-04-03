@@ -1,5 +1,6 @@
 import OpenAI, { toFile } from "openai";
 import { getComplexParsingProvider } from "./llm";
+import { extractTextFromImage } from "./ocr";
 
 export function getOpenAIClient() {
   return new OpenAI({
@@ -90,14 +91,26 @@ Exemplo:
 
 export async function extractDataFromImage(base64Image: string, corrections: CorrectionHint[] = []): Promise<ExtractedEntry[]> {
   const correctionContext = buildCorrectionContext(corrections);
-  const systemContent = IMAGE_SYSTEM_PROMPT + correctionContext;
-  const userContent = "Extraia os dados de TODOS os pacientes/procedimentos deste documento.";
-
   const complexProvider = getComplexParsingProvider();
   let content: string;
 
-  if (complexProvider.name === "anthropic") {
-    console.log("[LLM] Usando Claude (Anthropic) para extração de imagem");
+  const ocr = await extractTextFromImage(base64Image);
+
+  if (ocr.usable) {
+    console.log(`[OCR+LLM] OCR ok (${ocr.confidence.toFixed(0)}%), enviando texto para IA`);
+    const systemContent = IMAGE_SYSTEM_PROMPT + correctionContext;
+    const result = await complexProvider.chatCompletion({
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: `Texto extraído via OCR de etiqueta/documento médico:\n\n${ocr.text}` },
+      ],
+      maxTokens: 4000,
+    });
+    content = result.content;
+  } else {
+    console.log(`[Vision] OCR insuficiente (${ocr.confidence.toFixed(0)}%), enviando imagem para IA`);
+    const systemContent = IMAGE_SYSTEM_PROMPT + correctionContext;
+    const userContent = "Extraia os dados de TODOS os pacientes/procedimentos deste documento.";
     const result = await complexProvider.chatCompletion({
       messages: [
         { role: "system", content: systemContent },
@@ -112,24 +125,6 @@ export async function extractDataFromImage(base64Image: string, corrections: Cor
       maxTokens: 4000,
     });
     content = result.content;
-  } else {
-    console.log("[LLM] Usando OpenAI para extração de imagem");
-    const client = getOpenAIClient();
-    const response = await client.chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        { role: "system", content: systemContent },
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
-            { type: "text", text: userContent },
-          ],
-        },
-      ],
-      max_completion_tokens: 4000,
-    });
-    content = response.choices[0]?.message?.content || "[]";
   }
 
   try {
