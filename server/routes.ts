@@ -17,6 +17,45 @@ function parseLocalDate(dateStr: string): Date {
   }
   return new Date(dateStr);
 }
+
+const MAX_ENTRY_VALUE = 500000;
+const VALID_ENTRY_STATUSES = ["pending", "reconciled", "divergent", "unmatched"];
+
+function sanitizeEntryValue(val: string | null | undefined): string | null {
+  if (!val) return null;
+  let v = val.toString().replace(/[R$\s€£¥]/g, "").trim();
+  if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(v)) {
+    v = v.replace(/\./g, "").replace(",", ".");
+  } else {
+    v = v.replace(",", ".");
+  }
+  const num = parseFloat(v);
+  if (isNaN(num) || num < 0) return "0.00";
+  if (num > MAX_ENTRY_VALUE) return MAX_ENTRY_VALUE.toFixed(2);
+  return num.toFixed(2);
+}
+
+function validateProcedureDate(dateStr: string): { valid: boolean; error?: string } {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, day] = dateStr.split("-").map(Number);
+    const check = new Date(y, m - 1, day);
+    if (check.getFullYear() !== y || check.getMonth() !== m - 1 || check.getDate() !== day) {
+      return { valid: false, error: "Data inválida" };
+    }
+  }
+  const d = parseLocalDate(dateStr);
+  if (isNaN(d.getTime())) return { valid: false, error: "Data inválida" };
+  const now = new Date();
+  const maxFuture = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+  if (d > maxFuture) return { valid: false, error: "Data não pode ser mais de 3 meses no futuro" };
+  const minPast = new Date(2000, 0, 1);
+  if (d < minPast) return { valid: false, error: "Data anterior ao ano 2000 não é permitida" };
+  return { valid: true };
+}
+
+function isValidDate(dateStr: string): boolean {
+  return validateProcedureDate(dateStr).valid;
+}
 import { extractPdfData, extractPdfDataWithTemplate, extractImageData, extractCsvData, extractCsvWithAI, generateCsvTemplate, runReconciliation } from "./reconciliation";
 import { analyzeDocumentStructure, computeDocumentHash } from "./document-validator";
 import { schedulePostUploadAudit, runAIAnomalyScan } from "./audit";
@@ -696,6 +735,11 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Nome, data e convênio são obrigatórios" });
       }
 
+      const dateCheck = validateProcedureDate(procedureDate);
+      if (!dateCheck.valid) {
+        return res.status(400).json({ message: dateCheck.error });
+      }
+
       if (!skipDuplicateCheck) {
         const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description, insuranceProvider);
         if (dataDups.length > 0) {
@@ -754,7 +798,7 @@ export async function registerRoutes(
         procedureName: procedureName || null,
         insuranceProvider,
         description,
-        procedureValue: procedureValue || null,
+        procedureValue: sanitizeEntryValue(procedureValue),
         entryMethod: entryMethod || "manual",
         sourceUrl: req.body.sourceUrl || null,
         imageHash: _imageHash || null,
@@ -796,7 +840,7 @@ export async function registerRoutes(
       }
 
       const validEntries = entriesData.filter((item: any) =>
-        item.patientName && item.procedureDate && item.insuranceProvider
+        item.patientName && item.procedureDate && item.insuranceProvider && isValidDate(item.procedureDate)
       );
 
       if (validEntries.length === 0) {
@@ -862,7 +906,7 @@ export async function registerRoutes(
             procedureName: item.procedureName || null,
             insuranceProvider: item.insuranceProvider,
             description: item.description,
-            procedureValue: item.procedureValue || null,
+            procedureValue: sanitizeEntryValue(item.procedureValue),
             entryMethod: entryMethod || "manual",
             sourceUrl: item.sourceUrl || null,
             imageHash: item._imageHash || null,
@@ -1063,11 +1107,22 @@ export async function registerRoutes(
       const { patientName, procedureDate, insuranceProvider, description, status, procedureValue } = req.body;
       const updates: any = {};
       if (patientName !== undefined) updates.patientName = patientName;
-      if (procedureDate !== undefined) updates.procedureDate = parseLocalDate(procedureDate);
+      if (procedureDate !== undefined) {
+        const dateCheck = validateProcedureDate(procedureDate);
+        if (!dateCheck.valid) {
+          return res.status(400).json({ message: dateCheck.error });
+        }
+        updates.procedureDate = parseLocalDate(procedureDate);
+      }
       if (insuranceProvider !== undefined) updates.insuranceProvider = insuranceProvider;
       if (description !== undefined) updates.description = description;
-      if (status !== undefined) updates.status = status;
-      if (procedureValue !== undefined) updates.procedureValue = procedureValue;
+      if (status !== undefined) {
+        if (!VALID_ENTRY_STATUSES.includes(status)) {
+          return res.status(400).json({ message: "Status inválido" });
+        }
+        updates.status = status;
+      }
+      if (procedureValue !== undefined) updates.procedureValue = sanitizeEntryValue(procedureValue);
 
       if (status === "divergent" && existing.status !== "divergent") {
         await storage.createNotification({
@@ -1191,7 +1246,7 @@ export async function registerRoutes(
         procedureName: report.procedureName || null,
         insuranceProvider: report.insuranceProvider || "Particular",
         description: report.description || report.procedureName || "Aceito do extrato da clínica",
-        procedureValue: report.reportedValue,
+        procedureValue: sanitizeEntryValue(report.reportedValue),
         entryMethod: "manual",
         sourceUrl: null,
         imageHash: null,
@@ -1231,7 +1286,7 @@ export async function registerRoutes(
           procedureName: report.procedureName || null,
           insuranceProvider: report.insuranceProvider || "Particular",
           description: report.description || report.procedureName || "Aceito do extrato da clínica",
-          procedureValue: report.reportedValue,
+          procedureValue: sanitizeEntryValue(report.reportedValue),
           entryMethod: "manual",
           sourceUrl: null,
           imageHash: null,
@@ -1793,7 +1848,7 @@ export async function registerRoutes(
             procedureName: item.procedureName || null,
             insuranceProvider: item.insuranceProvider || "Não informado",
             description: item.description || "Procedimento importado",
-            procedureValue: item.reportedValue && item.reportedValue !== "0.00" ? item.reportedValue : null,
+            procedureValue: sanitizeEntryValue(item.reportedValue && item.reportedValue !== "0.00" ? item.reportedValue : null),
             entryMethod: "manual",
             sourceUrl: null,
             status: "pending",
@@ -1819,7 +1874,7 @@ export async function registerRoutes(
             procedureDate: mapped.procedureDate,
             insuranceProvider: mapped.insuranceProvider,
             description: mapped.description,
-            procedureValue: mapped.procedureValue,
+            procedureValue: sanitizeEntryValue(mapped.procedureValue),
             entryMethod: "manual",
             sourceUrl: null,
             status: "pending",

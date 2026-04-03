@@ -86,7 +86,7 @@ function sanitizeValue(val: string | undefined | null): string {
   }
   const num = parseFloat(v);
   if (isNaN(num) || num < 0) return "0.00";
-  if (num > MAX_PROCEDURE_VALUE) return "0.00";
+  if (num > MAX_PROCEDURE_VALUE) return MAX_PROCEDURE_VALUE.toFixed(2);
   return num.toFixed(2);
 }
 
