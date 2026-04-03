@@ -226,14 +226,14 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
 
   const client = getOpenAIClient();
   try {
-    const response = await client.chat.completions.create({
+    const response = await withRetry(() => client.chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
         { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
       ],
       max_completion_tokens: 16000,
-    });
+    }));
 
     const content = response.choices[0]?.message?.content || "[]";
     const results = parseAIResponse(content);
@@ -246,17 +246,46 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
     return results;
   } catch (aiErr: any) {
     console.error("AI extraction error:", aiErr?.message || aiErr);
-    if (aiErr?.status === 429 || aiErr?.message?.includes("rate")) {
-      throw new Error("Limite de requisições atingido. Aguarde alguns segundos e tente novamente.");
-    }
-    throw new Error("Erro na extração com IA. Tente novamente em alguns instantes.");
+    throw handleAIError(aiErr);
   }
+}
+
+function handleAIError(aiErr: any): Error {
+  const msg = (aiErr?.message || "").toLowerCase();
+  const isQuota = msg.includes("quota") || msg.includes("billing") || msg.includes("exceeded your current");
+  const isRateLimit = aiErr?.status === 429 || msg.includes("rate");
+  if (isQuota) {
+    return new Error("Cota da API de IA excedida. O serviço será retomado automaticamente quando a cota for renovada. Tente novamente mais tarde.");
+  }
+  if (isRateLimit) {
+    return new Error("Serviço de IA temporariamente sobrecarregado. Aguarde 1 minuto e tente novamente.");
+  }
+  return new Error("Erro na extração com IA. Tente novamente em alguns instantes.");
+}
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 3000): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const msg = (err?.message || "").toLowerCase();
+      const isRetryable = err?.status === 429 && !msg.includes("quota") && !msg.includes("billing") && !msg.includes("exceeded your current");
+      if (isRetryable && attempt < retries) {
+        const wait = delayMs * Math.pow(2, attempt);
+        console.log(`Rate limited, retrying in ${wait}ms (attempt ${attempt + 1}/${retries})`);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Unreachable");
 }
 
 export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {
   const client = getOpenAIClient();
   try {
-    const response = await client.chat.completions.create({
+    const response = await withRetry(() => client.chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
@@ -269,7 +298,7 @@ export async function extractImageData(base64Image: string): Promise<PdfExtracte
         },
       ],
       max_completion_tokens: 16000,
-    });
+    }));
 
     const content = response.choices[0]?.message?.content || "[]";
     const results = parseAIResponse(content);
@@ -277,10 +306,7 @@ export async function extractImageData(base64Image: string): Promise<PdfExtracte
     return results;
   } catch (aiErr: any) {
     console.error("Image AI extraction error:", aiErr?.message || aiErr);
-    if (aiErr?.status === 429 || aiErr?.message?.includes("rate")) {
-      throw new Error("Limite de requisições atingido. Aguarde alguns segundos e tente novamente.");
-    }
-    throw new Error("Erro na extração da imagem com IA. Tente novamente em alguns instantes.");
+    throw handleAIError(aiErr);
   }
 }
 
