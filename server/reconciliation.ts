@@ -74,6 +74,8 @@ REGRAS IMPORTANTES:
 
 Responda APENAS com um array JSON válido. Sem markdown, sem explicações, sem texto antes ou depois do JSON.`;
 
+const MAX_PROCEDURE_VALUE = 500000;
+
 function sanitizeValue(val: string | undefined | null): string {
   if (!val) return "0.00";
   let v = val.toString().replace(/[R$\s€£¥]/g, "").trim();
@@ -83,7 +85,9 @@ function sanitizeValue(val: string | undefined | null): string {
     v = v.replace(",", ".");
   }
   const num = parseFloat(v);
-  return isNaN(num) ? "0.00" : num.toFixed(2);
+  if (isNaN(num) || num < 0) return "0.00";
+  if (num > MAX_PROCEDURE_VALUE) return "0.00";
+  return num.toFixed(2);
 }
 
 function sanitizeDate(dateStr: string | undefined | null): string | null {

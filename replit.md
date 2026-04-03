@@ -14,6 +14,8 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Data Export**: Excel (XLSX) and CSV export via `/api/entries/export` with cell sanitization against formula injection; respects active filters (status, insurance, date range)
 - **Database Indexes**: Composite indexes on doctor_entries (doctorId, status, procedureDate, imageHash), clinic_reports (doctorId, matched, procedureDate), notifications (doctorId, read) for query performance at scale
 - **Image Compression**: Client-side image compression (max 2048px, JPEG 82% quality) before upload via `client/src/lib/imageCompression.ts` — reduces upload size ~70% on mobile
+- **Performance**: GZIP compression (compression middleware), code splitting with React.lazy + Suspense for route-based lazy loading, client-side image compression before upload
+- **Health Check**: `GET /health` returns `{ status: "ok", timestamp }` for deploy monitoring
 - **Charts**: recharts for financial reports
 
 ## Project Structure

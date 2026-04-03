@@ -1284,7 +1284,11 @@ export async function registerRoutes(
 
   app.put("/api/notifications/:id/read", authMiddleware, async (req: Request, res: Response) => {
     try {
-      await storage.markNotificationRead(req.params.id);
+      const userId = (req as any).userId;
+      const success = await storage.markNotificationReadForUser(req.params.id, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Notificação não encontrada" });
+      }
       return res.json({ success: true });
     } catch (error) {
       console.error("Mark read error:", error);

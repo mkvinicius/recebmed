@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -6,6 +7,12 @@ import { startAuditScheduler } from "./audit";
 
 const app = express();
 const httpServer = createServer(app);
+
+app.use(compression());
+
+app.get("/health", (_req: Request, res: Response) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 declare module "http" {
   interface IncomingMessage {

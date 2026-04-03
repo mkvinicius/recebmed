@@ -3,28 +3,38 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect, Component } from "react";
+import { useEffect, Component, lazy, Suspense } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import "./lib/i18n";
-import NotFound from "@/pages/not-found";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Dashboard from "@/pages/Dashboard";
-import ConfirmEntry from "@/pages/ConfirmEntry";
-import ClinicReports from "@/pages/ClinicReports";
-import Settings from "@/pages/Settings";
-import Reports from "@/pages/Reports";
-import Reconciliation from "@/pages/Reconciliation";
-import EntryDetail from "@/pages/EntryDetail";
-import Entries from "@/pages/Entries";
-import Capture from "@/pages/Capture";
-import Profile from "@/pages/Profile";
-import Import from "@/pages/Import";
-import ReportHistory from "@/pages/ReportHistory";
-import ForgotPassword from "@/pages/ForgotPassword";
-import AuditReports from "@/pages/AuditReports";
 import AppLayout from "@/components/AppLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Spinner } from "@/components/ui/spinner";
+
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const ConfirmEntry = lazy(() => import("@/pages/ConfirmEntry"));
+const ClinicReports = lazy(() => import("@/pages/ClinicReports"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Reports = lazy(() => import("@/pages/Reports"));
+const Reconciliation = lazy(() => import("@/pages/Reconciliation"));
+const EntryDetail = lazy(() => import("@/pages/EntryDetail"));
+const Entries = lazy(() => import("@/pages/Entries"));
+const Capture = lazy(() => import("@/pages/Capture"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Import = lazy(() => import("@/pages/Import"));
+const ReportHistory = lazy(() => import("@/pages/ReportHistory"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const AuditReports = lazy(() => import("@/pages/AuditReports"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Spinner className="w-8 h-8 text-[#8855f6]" />
+    </div>
+  );
+}
 
 function RouteRedirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -37,37 +47,41 @@ function RouteRedirect({ to }: { to: string }) {
 function AppRoutes() {
   return (
     <AppLayout>
-      <Switch>
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/entries" component={Entries} />
-        <Route path="/capture" component={Capture} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/clinic-reports" component={ClinicReports} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/reconciliation" component={Reconciliation} />
-        <Route path="/entry/:id" component={EntryDetail} />
-        <Route path="/import" component={Import} />
-        <Route path="/reports/history" component={ReportHistory} />
-        <Route path="/audit-reports" component={AuditReports} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<PageLoader />}>
+        <Switch>
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/entries" component={Entries} />
+          <Route path="/capture" component={Capture} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/clinic-reports" component={ClinicReports} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/reconciliation" component={Reconciliation} />
+          <Route path="/entry/:id" component={EntryDetail} />
+          <Route path="/import" component={Import} />
+          <Route path="/reports/history" component={ReportHistory} />
+          <Route path="/audit-reports" component={AuditReports} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </AppLayout>
   );
 }
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/">
-        <RouteRedirect to="/login" />
-      </Route>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/confirm-entry" component={ConfirmEntry} />
-      <Route component={AppRoutes} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/">
+          <RouteRedirect to="/login" />
+        </Route>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/confirm-entry" component={ConfirmEntry} />
+        <Route component={AppRoutes} />
+      </Switch>
+    </Suspense>
   );
 }
 
