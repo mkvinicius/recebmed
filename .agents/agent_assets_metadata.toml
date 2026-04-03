@@ -30,3 +30,9 @@ id = "RtvCT3g4kopZ3UKt2HfpQ"
 uri = "file://AUDITORIA_RECEBMED.md"
 type = "text"
 title = "Auditoria Completa RecebMed"
+
+[[outputs]]
+id = "m_tGE-UH_Ybsh2sqph5X9"
+uri = "file://attached_assets/Relatorio_IA_DrFelipe.md"
+type = "text"
+title = "Relatório IA - Apresentação para Dr. Felipe"
