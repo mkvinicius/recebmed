@@ -1,6 +1,7 @@
 import { parsePdfText } from "./pdf-util";
 import { getComplexParsingProvider } from "./llm";
 import { extractTextFromImage } from "./ocr";
+import { ocrPdfPages } from "./pdf-ocr";
 import { storage } from "./storage";
 import { buildTemplatePrompt } from "./document-validator";
 
@@ -186,7 +187,13 @@ export async function extractPdfDataWithTemplate(pdfBuffer: Buffer, templateMapp
   }
 
   if (!text || text.trim().length < 20) {
-    throw new Error("O PDF não contém texto extraível.");
+    console.log("[PDF-Template] Texto insuficiente, tentando OCR em PDF escaneado...");
+    const ocrText = await ocrPdfPages(pdfBuffer);
+    if (ocrText) {
+      text = ocrText;
+    } else {
+      throw new Error("O PDF não contém texto extraível e o OCR não conseguiu ler.");
+    }
   }
 
   const templateHint = buildTemplatePrompt(templateMappingJson);
@@ -218,7 +225,13 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
   }
 
   if (!text || text.trim().length < 20) {
-    throw new Error("O PDF não contém texto extraível. Tente enviar como imagem (foto/screenshot).");
+    console.log("[PDF] Texto insuficiente, tentando OCR em PDF escaneado...");
+    const ocrText = await ocrPdfPages(pdfBuffer);
+    if (ocrText) {
+      text = ocrText;
+    } else {
+      throw new Error("O PDF não contém texto extraível e o OCR não conseguiu ler. Tente enviar como imagem (foto/screenshot).");
+    }
   }
 
   console.log(`PDF text extracted: ${text.length} chars, first 200: ${text.substring(0, 200)}`);
