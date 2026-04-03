@@ -9,7 +9,7 @@ Plataforma SaaS de gestão financeira inteligente para profissionais de saúde. 
 - **Database**: PostgreSQL (Replit) + Drizzle ORM
 - **Auth**: JWT (jsonwebtoken, persistent `JWT_SECRET` env var) + bcryptjs (12 rounds) for password hashing + express-rate-limit (per-user via JWT key) + helmet security headers
 - **Security**: Full CSP headers, HSTS (1yr, preload), X-Frame-Options DENY, Permissions-Policy, XSS input filter on text fields, brute-force login protection (5 fails → 30min block per email), rate limiting 300 req/min per authenticated user, anti-DDoS protections
-- **AI**: LLM abstraction layer (server/llm.ts) with dual provider support — Anthropic Claude (via Replit AI Integrations, `AI_INTEGRATIONS_ANTHROPIC_API_KEY`) preferred for complex parsing (PDFs/images) + OpenAI (gpt-5-mini vision/text, gpt-4o-mini-transcribe for audio STT). `getComplexParsingProvider()` auto-selects Claude when available.
+- **AI**: LLM abstraction layer (server/llm.ts) with dual provider support — Anthropic Claude Sonnet (via Replit AI Integrations, `AI_INTEGRATIONS_ANTHROPIC_API_KEY`) is the PRIMARY provider for ALL text/image/PDF/CSV extraction, reconciliation, duplicate check, and audit. OpenAI is used ONLY for audio transcription (gpt-4o-mini-transcribe STT). `getComplexParsingProvider()` auto-selects Claude when available. All reconciliation.ts functions migrated from direct OpenAI calls to use llm.ts provider abstraction with withRetry().
 - **Object Storage**: Replit Object Storage (GCS) for media evidence (photos/audio attached to entries)
 - **Charts**: recharts for financial reports
 

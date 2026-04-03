@@ -1,5 +1,5 @@
 import { parsePdfText } from "./pdf-util";
-import { getOpenAIClient } from "./openai";
+import { getComplexParsingProvider } from "./llm";
 import { storage } from "./storage";
 import { buildTemplatePrompt } from "./document-validator";
 
@@ -189,23 +189,21 @@ export async function extractPdfDataWithTemplate(pdfBuffer: Buffer, templateMapp
   }
 
   const templateHint = buildTemplatePrompt(templateMappingJson);
-  const client = getOpenAIClient();
+  const provider = getComplexParsingProvider();
   try {
-    const response = await client.chat.completions.create({
-      model: "gpt-5-mini",
+    const result = await withRetry(() => provider.chatCompletion({
       messages: [
         { role: "system", content: EXTRACTION_PROMPT + templateHint },
         { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
       ],
-      max_completion_tokens: 16000,
-    });
-    const content = response.choices[0]?.message?.content || "[]";
-    const results = parseAIResponse(content);
-    console.log(`PDF template-aware extraction: ${results.length} entries`);
+      maxTokens: 16000,
+    }));
+    const results = parseAIResponse(result.content);
+    console.log(`[${provider.name}] PDF template-aware extraction: ${results.length} entries`);
     return results;
   } catch (aiErr: any) {
     console.error("Template-aware AI extraction error:", aiErr?.message || aiErr);
-    throw new Error("Erro na extração com template. Tente novamente.");
+    throw handleAIError(aiErr);
   }
 }
 
@@ -224,20 +222,19 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
 
   console.log(`PDF text extracted: ${text.length} chars, first 200: ${text.substring(0, 200)}`);
 
-  const client = getOpenAIClient();
+  const provider = getComplexParsingProvider();
   try {
-    const response = await withRetry(() => client.chat.completions.create({
-      model: "gpt-5-mini",
+    const result = await withRetry(() => provider.chatCompletion({
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
         { role: "user", content: `Texto extraído do PDF do relatório da clínica:\n\n${text}` },
       ],
-      max_completion_tokens: 16000,
+      maxTokens: 16000,
     }));
 
-    const content = response.choices[0]?.message?.content || "[]";
+    const content = result.content;
     const results = parseAIResponse(content);
-    console.log(`PDF AI extraction: ${results.length} entries from ${text.length} chars`);
+    console.log(`[${provider.name}] PDF AI extraction: ${results.length} entries from ${text.length} chars`);
 
     if (results.length === 0 && text.length > 100) {
       console.warn("AI returned 0 entries from non-empty PDF. Response:", content.substring(0, 500));
@@ -283,10 +280,9 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 3000): 
 }
 
 export async function extractImageData(base64Image: string): Promise<PdfExtractedEntry[]> {
-  const client = getOpenAIClient();
+  const provider = getComplexParsingProvider();
   try {
-    const response = await withRetry(() => client.chat.completions.create({
-      model: "gpt-5-mini",
+    const result = await withRetry(() => provider.chatCompletion({
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
         {
@@ -297,12 +293,11 @@ export async function extractImageData(base64Image: string): Promise<PdfExtracte
           ],
         },
       ],
-      max_completion_tokens: 16000,
+      maxTokens: 16000,
     }));
 
-    const content = response.choices[0]?.message?.content || "[]";
-    const results = parseAIResponse(content);
-    console.log(`Image AI extraction: ${results.length} entries`);
+    const results = parseAIResponse(result.content);
+    console.log(`[${provider.name}] Image AI extraction: ${results.length} entries`);
     return results;
   } catch (aiErr: any) {
     console.error("Image AI extraction error:", aiErr?.message || aiErr);
@@ -357,22 +352,21 @@ export function extractCsvData(csvText: string): PdfExtractedEntry[] {
 
 export async function extractCsvWithAI(csvText: string): Promise<PdfExtractedEntry[]> {
   const preview = csvText.substring(0, 5000);
-  const client = getOpenAIClient();
+  const provider = getComplexParsingProvider();
   try {
-    const response = await client.chat.completions.create({
-      model: "gpt-5-mini",
+    const result = await withRetry(() => provider.chatCompletion({
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
         { role: "user", content: `Conteúdo de planilha CSV/Excel exportada de sistema de clínica. Identifique as colunas automaticamente e extraia os registros:\n\n${preview}` },
       ],
-      max_completion_tokens: 16000,
-    });
-    const results = parseAIResponse(response.choices[0]?.message?.content || "[]");
-    console.log(`CSV AI fallback extraction: ${results.length} entries`);
+      maxTokens: 16000,
+    }));
+    const results = parseAIResponse(result.content);
+    console.log(`[${provider.name}] CSV AI fallback extraction: ${results.length} entries`);
     return results;
   } catch (aiErr: any) {
     console.error("CSV AI extraction error:", aiErr?.message || aiErr);
-    throw new Error("Não foi possível interpretar o formato da planilha. Tente usar o modelo CSV padrão.");
+    throw handleAIError(aiErr);
   }
 }
 
@@ -572,19 +566,18 @@ async function aiReconciliationBatch(
   }));
 
   try {
-    const client = getOpenAIClient();
-    const response = await client.chat.completions.create({
-      model: "gpt-5-mini",
+    const provider = getComplexParsingProvider();
+    const result = await withRetry(() => provider.chatCompletion({
       messages: [
         { role: "system", content: AI_RECONCILIATION_PROMPT },
         { role: "user", content: `Lançamentos do médico (${entries.length}):\n${JSON.stringify(entrySummary, null, 2)}\n\nRegistros da clínica (${reports.length}):\n${JSON.stringify(reportSummary, null, 2)}` },
       ],
-      max_completion_tokens: 8000,
-    });
+      maxTokens: 8000,
+    }));
 
-    const content = response.choices[0]?.message?.content || "[]";
-    const cleaned = content.replace(/```json\s*|```\s*/g, "").trim();
+    const cleaned = result.content.replace(/```json\s*|```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
+    console.log(`[${provider.name}] AI reconciliation: ${Array.isArray(parsed) ? parsed.length : 0} matches`);
     return Array.isArray(parsed) ? parsed.map((r: any) => ({ ...r, entryIndex: r.entryIndex + entryOffset })) : [];
   } catch (err) {
     console.error("AI reconciliation batch error:", err);
