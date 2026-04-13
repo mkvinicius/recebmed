@@ -36,3 +36,9 @@ id = "m_tGE-UH_Ybsh2sqph5X9"
 uri = "file://attached_assets/Relatorio_IA_DrFelipe.md"
 type = "text"
 title = "Relatório IA - Apresentação para Dr. Felipe"
+
+[[outputs]]
+id = "SFmF9c4v8_KBJKZBXI57q"
+uri = "file://context.md"
+type = "text"
+title = "RecebMed - Documento de Contexto Completo"
