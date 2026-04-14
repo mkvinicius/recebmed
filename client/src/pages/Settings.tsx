@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft, Brain,
-  BookOpen, ChevronRight,
+  BookOpen, ChevronRight, RotateCcw, AlertTriangle,
 } from "lucide-react";
 import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,9 @@ export default function Settings() {
   const [doctrine, setDoctrine] = useState("");
   const [doctrineOriginal, setDoctrineOriginal] = useState("");
   const [savingDoctrine, setSavingDoctrine] = useState(false);
+  const [fullResetConfirm, setFullResetConfirm] = useState("");
+  const [isFullResetting, setIsFullResetting] = useState(false);
+  const [fullResetResult, setFullResetResult] = useState<{ entriesReset: number; reportsReset: number; reconciled: number; divergent: number; pending: number } | null>(null);
 
   const passwordChecks = [
     { ok: newPassword.length >= 8, label: t("forgotPassword.rule8chars") },
@@ -191,6 +194,38 @@ export default function Settings() {
     }
   };
 
+  const handleFullReset = async () => {
+    const token = getToken();
+    if (!token) return;
+    setIsFullResetting(true);
+    setFullResetResult(null);
+    try {
+      const res = await fetch("/api/reconciliation/full-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ confirm: fullResetConfirm }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFullResetConfirm("");
+        setFullResetResult({
+          entriesReset: data.entriesReset,
+          reportsReset: data.reportsReset,
+          reconciled: data.reconciliation?.reconciled?.length ?? 0,
+          divergent: data.reconciliation?.divergent?.length ?? 0,
+          pending: data.reconciliation?.pending?.length ?? 0,
+        });
+        toast({ title: "Reset concluído", description: `${data.entriesReset} lançamentos reprocessados com a nova lógica.` });
+      } else {
+        toast({ title: "Erro", description: data.message || "Falha ao realizar reset", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro", description: "Falha na conexão com o servidor", variant: "destructive" });
+    } finally {
+      setIsFullResetting(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-1 pb-4 text-white">
@@ -327,6 +362,67 @@ export default function Settings() {
             </div>
           </div>
         )}
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-red-200/60 dark:border-red-800/40 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Reprocessar conferência completa</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Zona de risco — use somente quando necessário</p>
+            </div>
+          </div>
+
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+            <p className="text-sm text-red-800 dark:text-red-300 font-semibold mb-1">O que esta ação faz:</p>
+            <ul className="text-xs text-red-700 dark:text-red-400 space-y-1 list-disc list-inside">
+              <li>Volta <strong>todos</strong> os lançamentos (incluindo já conferidos) para "Pendente"</li>
+              <li>Desmarca todos os relatórios da clínica como não conferidos</li>
+              <li>Roda a reconciliação do zero com a lógica atualizada</li>
+              <li>Lançamentos "Validado" pelo médico <strong>não são tocados</strong></li>
+            </ul>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">Use após atualização do sistema para corrigir conferências incorretas feitas pela lógica antiga.</p>
+          </div>
+
+          {fullResetResult && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4">
+              <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">Reset concluído com sucesso</p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-green-700 dark:text-green-400">
+                <span>Lançamentos reprocessados: <strong>{fullResetResult.entriesReset}</strong></span>
+                <span>Relatórios liberados: <strong>{fullResetResult.reportsReset}</strong></span>
+                <span>Conferidos: <strong>{fullResetResult.reconciled}</strong></span>
+                <span>Divergentes: <strong>{fullResetResult.divergent}</strong></span>
+                <span>Pendentes: <strong>{fullResetResult.pending}</strong></span>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Digite <span className="font-mono text-red-600 dark:text-red-400">CONFIRMAR</span> para habilitar o botão
+              </Label>
+              <Input
+                type="text"
+                value={fullResetConfirm}
+                onChange={(e) => { setFullResetConfirm(e.target.value); setFullResetResult(null); }}
+                placeholder="CONFIRMAR"
+                className="mt-1.5 rounded-xl border-red-200 dark:border-red-700 dark:bg-slate-800 dark:text-slate-100 focus:border-red-500 focus:ring-red-500 font-mono"
+                data-testid="input-full-reset-confirm"
+              />
+            </div>
+            <Button
+              onClick={handleFullReset}
+              disabled={fullResetConfirm !== "CONFIRMAR" || isFullResetting}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white rounded-full px-6 font-bold shadow-lg shadow-red-600/20"
+              data-testid="button-full-reset"
+            >
+              {isFullResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+              {isFullResetting ? "Reprocessando..." : "Reprocessar tudo agora"}
+            </Button>
+          </div>
+        </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-12">
           <div className="flex items-center gap-3 mb-6">

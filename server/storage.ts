@@ -87,6 +87,7 @@ export interface IStorage {
   batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void>;
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
   resetDivergentAndPendingEntries(doctorId: string): Promise<number>;
+  resetAllEntriesForReconciliation(doctorId: string): Promise<{ entriesReset: number; reportsReset: number }>;
 
   renameUploadedReport(reportId: string, userId: string, customName: string): Promise<UploadedReport | null>;
   deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }>;
@@ -615,6 +616,27 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       return result.length;
+    });
+  }
+
+  async resetAllEntriesForReconciliation(doctorId: string): Promise<{ entriesReset: number; reportsReset: number }> {
+    return await db.transaction(async (tx) => {
+      // Reset all non-validated doctor entries to pending
+      const resetEntries = await tx.update(doctorEntries)
+        .set({ status: "pending", matchedReportId: null, divergenceReason: null, matchConfidence: null })
+        .where(and(
+          eq(doctorEntries.doctorId, doctorId),
+          inArray(doctorEntries.status, ["pending", "reconciled", "divergent"])
+        ))
+        .returning();
+
+      // Reset all clinic reports to unmatched
+      const resetReports = await tx.update(clinicReports)
+        .set({ matched: false, matchedEntryId: null })
+        .where(eq(clinicReports.doctorId, doctorId))
+        .returning();
+
+      return { entriesReset: resetEntries.length, reportsReset: resetReports.length };
     });
   }
 

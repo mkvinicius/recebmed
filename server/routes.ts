@@ -1457,6 +1457,40 @@ export async function registerRoutes(
     }
   });
 
+  // ── Full Reset + Re-Reconciliation (resets ALL entries including already reconciled) ──
+
+  app.post("/api/reconciliation/full-reset", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { confirm } = req.body;
+      if (confirm !== "CONFIRMAR") {
+        return res.status(400).json({ message: "Confirmação inválida" });
+      }
+
+      const { entriesReset, reportsReset } = await storage.resetAllEntriesForReconciliation(userId);
+      console.log(`[Full Reset] ${entriesReset} entries + ${reportsReset} reports reset for user ${userId}`);
+
+      const reconciliationResult = await runReconciliation(userId);
+
+      const allEntries = await storage.getDoctorEntries(userId);
+      const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
+      return res.json({
+        success: true,
+        entriesReset,
+        reportsReset,
+        reconciliation: {
+          reconciled: allEntries.filter(e => e.status === "reconciled" || e.status === "validated"),
+          divergent: allEntries.filter(e => e.status === "divergent"),
+          pending: allEntries.filter(e => e.status === "pending"),
+          unmatchedClinic: unmatchedReports,
+        },
+      });
+    } catch (error) {
+      console.error("Full reset error:", error);
+      return res.status(500).json({ message: "Erro ao realizar reset completo" });
+    }
+  });
+
   // ── File Reconciliation (PDF, Image, CSV) ──
 
   app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {
