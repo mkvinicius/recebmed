@@ -21,7 +21,7 @@
 
 -- Altere para o role que a aplicação usa para conectar ao banco.
 -- Geralmente é o valor de current_user na string de conexão.
-\set APP_ROLE 'neondb_owner'
+\set APP_ROLE 'postgres'
 
 -- ---------------------------------------------------------------------------
 -- doctor_entries
