@@ -569,6 +569,17 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/audit-findings/resolve-all", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const deleted = await storage.resolveAllAiAuditFindings(userId);
+      return res.json({ success: true, cleared: deleted });
+    } catch (error) {
+      console.error("Resolve all findings error:", error);
+      return res.status(500).json({ message: "Erro ao limpar achados" });
+    }
+  });
+
   // ── Platform Doctrine (admin only) ──
 
   app.get("/api/auth/platform-doctrine", authMiddleware, async (req: Request, res: Response) => {

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
   Brain, ArrowLeft, Copy, DollarSign, AlertTriangle, Search,
-  CheckCircle2, Loader2, ChevronDown, ChevronUp, Shield
+  CheckCircle2, Loader2, ChevronDown, ChevronUp, Shield, Trash2
 } from "lucide-react";
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,7 @@ export default function AuditReports() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [clearingAll, setClearingAll] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -87,6 +88,25 @@ export default function AuditReports() {
     } catch {} finally { setResolvingId(null); }
   };
 
+  const handleClearAll = async () => {
+    const token = getToken();
+    if (!token) return;
+    if (!window.confirm("Limpar todos os alertas pendentes? A IA irá reanalisar seus lançamentos na próxima varredura com as regras atuais.")) return;
+    setClearingAll(true);
+    try {
+      const res = await fetch("/api/audit-findings/resolve-all", { method: "PUT", headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setSummary({});
+        setFindings([]);
+        setSelectedCategory(null);
+        toast({ title: "Histórico limpo", description: `${data.cleared} alerta(s) removido(s). A IA reanalisará em breve com as regras atuais.` });
+      }
+    } catch {
+      toast({ title: "Erro", description: "Não foi possível limpar os alertas.", variant: "destructive" });
+    } finally { setClearingAll(false); }
+  };
+
   const goBack = () => {
     if (selectedCategory) {
       setSelectedCategory(null);
@@ -119,6 +139,19 @@ export default function AuditReports() {
 
       {!selectedCategory ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
+          {Object.values(summary).some(s => s.unresolved > 0) && (
+            <div className="col-span-full flex justify-end mb-1">
+              <button
+                onClick={handleClearAll}
+                disabled={clearingAll}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                data-testid="button-clear-all-findings"
+              >
+                {clearingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Limpar histórico da IA
+              </button>
+            </div>
+          )}
           {categories.map(cat => {
             const config = categoryConfig[cat];
             const data = summary[cat] || { total: 0, unresolved: 0 };

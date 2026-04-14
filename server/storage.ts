@@ -102,6 +102,7 @@ export interface IStorage {
   getAiAuditFindings(doctorId: string, category?: string): Promise<AiAuditFinding[]>;
   getAiAuditFinding(id: string): Promise<AiAuditFinding | undefined>;
   resolveAiAuditFinding(id: string, doctorId: string): Promise<boolean>;
+  resolveAllAiAuditFindings(doctorId: string): Promise<number>;
   clearOldFindings(doctorId: string): Promise<number>;
 
   getUserPlatformDoctrine(id: string): Promise<string | null>;
@@ -684,6 +685,14 @@ export class DatabaseStorage implements IStorage {
   async resolveAiAuditFinding(id: string, doctorId: string): Promise<boolean> {
     const result = await db.update(aiAuditFindings).set({ resolved: true }).where(and(eq(aiAuditFindings.id, id), eq(aiAuditFindings.doctorId, doctorId))).returning();
     return result.length > 0;
+  }
+
+  async resolveAllAiAuditFindings(doctorId: string): Promise<number> {
+    // Mark all pending findings as resolved, then immediately delete them to give a clean slate
+    const result = await db.delete(aiAuditFindings)
+      .where(and(eq(aiAuditFindings.doctorId, doctorId), eq(aiAuditFindings.resolved, false)))
+      .returning();
+    return result.length;
   }
 
   async clearOldFindings(doctorId: string): Promise<number> {
