@@ -172,7 +172,7 @@ Para cada paciente, extraia:
 - confidence: um objeto com o nível de confiança de cada campo extraído. Valores possíveis: "high" (claramente ditado/identificado), "medium" (parcialmente audível, possível inferência), "low" (inaudível, incerto ou deduzido). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
-Se não conseguir identificar algum campo, use "Não identificado" como valor e confidence "low".${buildCorrectionContext(corrections)}`;
+Se não conseguir identificar algum campo, retorne null para ele — NUNCA use "Não identificado".${buildCorrectionContext(corrections)}`;
 
   const complexProvider = getComplexParsingProvider();
   let content: string;

@@ -569,9 +569,13 @@ export class DatabaseStorage implements IStorage {
     if (updates.length === 0) return;
     await db.transaction(async (tx) => {
       for (const u of updates) {
+        // Only update if not already matched to a different entry
         await tx.update(clinicReports)
           .set({ matched: true, matchedEntryId: u.entryId })
-          .where(eq(clinicReports.id, u.reportId));
+          .where(and(
+            eq(clinicReports.id, u.reportId),
+            eq(clinicReports.matched, false)
+          ));
       }
     });
   }

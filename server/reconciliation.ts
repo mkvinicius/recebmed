@@ -88,9 +88,14 @@ const MAX_PROCEDURE_VALUE = 500000;
 function sanitizeValue(val: string | undefined | null): string {
   if (!val) return "0.00";
   let v = val.toString().replace(/[R$\s€£¥]/g, "").trim();
+  // Brazilian format: 1.234,56 or 1.234 (dot as thousands, comma as decimal)
   if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(v)) {
     v = v.replace(/\./g, "").replace(",", ".");
+  // US format: 1,234.56 or 1,234 (comma as thousands, dot as decimal)
+  } else if (/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(v)) {
+    v = v.replace(/,/g, "");
   } else {
+    // Single comma as decimal separator: 1234,56
     v = v.replace(",", ".");
   }
   const num = parseFloat(v);
@@ -659,7 +664,9 @@ function groupInstallmentReports(reports: any[]): {
     if (report.matched) continue;
     const namePart = normalizeStr(report.patientName);
     const cpfPart = ((report.patientCpf || "").replace(/\D/g, "") || namePart);
-    const datePart = new Date(report.procedureDate).toISOString().split("T")[0];
+    // Use UTC date parts to avoid timezone shifting (procedureDate may include time component)
+    const d = new Date(report.procedureDate);
+    const datePart = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
     const groupKey = `${cpfPart}|${datePart}`;
 
     if (seenGroups.has(groupKey)) {
