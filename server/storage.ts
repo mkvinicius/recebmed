@@ -70,8 +70,10 @@ export interface IStorage {
   getRecentAiCorrections(doctorId: string, limit?: number): Promise<AiCorrection[]>;
 
   findByImageHash(doctorId: string, hash: string): Promise<DoctorEntry[]>;
-  findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, insuranceProvider?: string): Promise<DoctorEntry[]>;
+  findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, procedureName?: string): Promise<DoctorEntry[]>;
   findSimilarEntriesForAI(doctorId: string, procedureDate: Date, patientName: string): Promise<DoctorEntry[]>;
+  revertEntriesLinkedToReport(reportId: string, doctorId: string): Promise<number>;
+  revertEntriesLinkedToReports(reportIds: string[], doctorId: string): Promise<number>;
   getDistinctPatientNames(doctorId: string, query?: string): Promise<string[]>;
   getActiveUserIds(): Promise<string[]>;
   getDivergentDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
@@ -332,7 +334,7 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(doctorEntries.createdAt)).limit(5);
   }
 
-  async findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, insuranceProvider?: string): Promise<DoctorEntry[]> {
+  async findDuplicatesByData(doctorId: string, patientName: string, procedureDate: Date, description: string | null, procedureName?: string): Promise<DoctorEntry[]> {
     const dayStart = new Date(procedureDate);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(procedureDate);
@@ -351,13 +353,51 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(doctorEntries.createdAt)).limit(50);
 
     return allSameDay.filter(e => {
+      // Must have the same patient name
       if (normalizePatientName(e.patientName) !== normalized) return false;
+
+      // Same procedure name (if both provided) — different procedure = different lançamento, not a duplicate
+      const normProc = (s: string | null | undefined) => (s || "").toLowerCase().trim();
+      const hasProcedureOnBothSides = procedureName && e.procedureName;
+      if (hasProcedureOnBothSides) {
+        if (normProc(procedureName) !== normProc(e.procedureName)) return false;
+      }
+
+      // Same description (if both provided)
       const descMatch = (!description && !e.description) ||
         (description && e.description && e.description.toLowerCase().trim() === description.toLowerCase().trim());
-      const insMatch = !insuranceProvider || !e.insuranceProvider ||
-        e.insuranceProvider.toLowerCase().trim() === insuranceProvider.toLowerCase().trim();
-      return descMatch && insMatch;
+
+      // NOTE: insuranceProvider is intentionally NOT used as a dedup key.
+      // The same patient on the same day can have multiple payments with different methods.
+      return descMatch;
     }).slice(0, 5);
+  }
+
+  async revertEntriesLinkedToReport(reportId: string, doctorId: string): Promise<number> {
+    return await db.transaction(async (tx) => {
+      const result = await tx.update(doctorEntries)
+        .set({ status: "pending", matchedReportId: null, divergenceReason: null, matchConfidence: null })
+        .where(and(
+          eq(doctorEntries.doctorId, doctorId),
+          eq(doctorEntries.matchedReportId, reportId),
+        ))
+        .returning();
+      return result.length;
+    });
+  }
+
+  async revertEntriesLinkedToReports(reportIds: string[], doctorId: string): Promise<number> {
+    if (reportIds.length === 0) return 0;
+    return await db.transaction(async (tx) => {
+      const result = await tx.update(doctorEntries)
+        .set({ status: "pending", matchedReportId: null, divergenceReason: null, matchConfidence: null })
+        .where(and(
+          eq(doctorEntries.doctorId, doctorId),
+          inArray(doctorEntries.matchedReportId, reportIds),
+        ))
+        .returning();
+      return result.length;
+    });
   }
 
   async findSimilarEntriesForAI(doctorId: string, procedureDate: Date, patientName: string): Promise<DoctorEntry[]> {
@@ -461,7 +501,7 @@ export class DatabaseStorage implements IStorage {
     return result || null;
   }
 
-  async deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number }> {
+  async deleteUploadedReportCascade(reportId: string, userId: string): Promise<{ deletedEntries: number; deletedClinicReports: number; revertedEntries: number }> {
     return await db.transaction(async (tx) => {
       const [report] = await tx.select().from(uploadedReports)
         .where(and(eq(uploadedReports.id, reportId), eq(uploadedReports.userId, userId)));
@@ -469,17 +509,45 @@ export class DatabaseStorage implements IStorage {
 
       const fileUrl = report.originalFileUrl;
 
+      // Find all clinic reports associated with this uploaded file
+      const clinicReportsToDelete = await tx.select({ id: clinicReports.id })
+        .from(clinicReports)
+        .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)));
+
+      const clinicReportIds = clinicReportsToDelete.map(r => r.id);
+
+      // Revert any doctor entries that were matched/reconciled against these clinic reports
+      let revertedCount = 0;
+      if (clinicReportIds.length > 0) {
+        const reverted = await tx.update(doctorEntries)
+          .set({ status: "pending", matchedReportId: null, divergenceReason: null, matchConfidence: null })
+          .where(and(
+            eq(doctorEntries.doctorId, userId),
+            inArray(doctorEntries.matchedReportId, clinicReportIds),
+          ))
+          .returning();
+        revertedCount = reverted.length;
+      }
+
+      // Delete doctor entries that were originally imported FROM this file
       const deletedEntriesResult = await tx.delete(doctorEntries)
         .where(and(eq(doctorEntries.doctorId, userId), eq(doctorEntries.sourceUrl, fileUrl)))
         .returning();
 
-      const deletedClinicResult = await tx.delete(clinicReports)
-        .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)))
-        .returning();
+      // Delete the clinic reports
+      const deletedClinicResult = clinicReportIds.length > 0
+        ? await tx.delete(clinicReports)
+            .where(and(eq(clinicReports.doctorId, userId), eq(clinicReports.sourcePdfUrl, fileUrl)))
+            .returning()
+        : [];
 
       await tx.delete(uploadedReports).where(eq(uploadedReports.id, reportId));
 
-      return { deletedEntries: deletedEntriesResult.length, deletedClinicReports: deletedClinicResult.length };
+      return {
+        deletedEntries: deletedEntriesResult.length,
+        deletedClinicReports: deletedClinicResult.length,
+        revertedEntries: revertedCount,
+      };
     });
   }
 

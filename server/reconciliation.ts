@@ -8,9 +8,11 @@ import { buildTemplatePrompt } from "./document-validator";
 export interface PdfExtractedEntry {
   patientName: string;
   patientBirthDate?: string;
+  patientCpf?: string;
   procedureDate: string;
   procedureName?: string;
   insuranceProvider?: string;
+  paymentMethod?: string;
   reportedValue: string;
   description?: string;
 }
@@ -27,12 +29,13 @@ FORMATOS COMUNS QUE VOCÊ VAI ENCONTRAR:
 - Relatórios de repasse: profissional, paciente, convênio, procedimento, valor pago
 - Planilhas exportadas de sistemas hospitalares (qualquer formato)
 
-PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
+PARA CADA REGISTRO, EXTRAIA ESTES 8 CAMPOS:
 
 1. patientName (OBRIGATÓRIO): Nome do paciente/beneficiário/cliente.
    Pode estar em colunas como: "Paciente", "Beneficiário", "Cliente", "Nome", "Tomador"
 
-2. procedureDate (OBRIGATÓRIO): Data do procedimento no formato YYYY-MM-DD.
+2. procedureDate (OBRIGATÓRIO): Data do relatório/repasse no formato YYYY-MM-DD.
+   ATENÇÃO: Esta é a data em que a clínica registrou o pagamento, pode ser diferente da data do procedimento.
    Pode estar em: "Data", "Dt. Atendimento", "Data Procedimento", "Competência"
    Se o relatório tem UMA data no cabeçalho para TODOS os registros, use essa data para todos.
 
@@ -40,16 +43,20 @@ PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
    Pode estar em: "Procedimento", "Serviço", "Tipo", "Descrição", "Código"
    Se NÃO existir coluna de procedimento, use null — NÃO invente.
 
-4. insuranceProvider: Convênio ou forma de pagamento.
-   REGRAS DE CLASSIFICAÇÃO:
-   - Se tem coluna "Convênio" com nome do plano (Unimed, Amil, etc.) → use o nome do convênio
-   - Se tem coluna "Repasse" ou "Espécie" com formas de pagamento (PIX, Dinheiro, Cartão, Redecard, PACOTE, "PX - PIX", "DN - DINHEIRO", "CC - CARTAO CREDITO") → use "Particular"
+4. insuranceProvider: APENAS o convênio/plano de saúde — NÃO a forma de pagamento.
+   REGRAS:
+   - Se tem coluna "Convênio" com nome do plano (Unimed, Amil, SulAmérica, etc.) → use o nome
    - Se a coluna diz "SUS" ou "Sistema Único de Saúde" → use "SUS"
-   - Se NÃO tem nenhuma informação de convênio → use null
-   - NUNCA confunda forma de pagamento (PIX, Redecard) com convênio de saúde
-   - Quando encontrar código de espécie (ex: "PX", "DN", "CC", "RE"), mapeie: qualquer forma de pagamento direto = "Particular"
+   - Se NÃO tem coluna de convênio separada → use "Particular"
+   - NUNCA coloque PIX, Redecard, Dinheiro, Cartão, Pacote neste campo
 
-5. reportedValue: Valor financeiro em formato decimal com ponto.
+5. paymentMethod: Forma de pagamento usada pela clínica.
+   Pode estar em: "Espécie", "Repasse", "Forma Pgto", "Tipo"
+   Exemplos: "PIX", "Dinheiro", "Redecard", "Cartão Crédito", "PACOTE", "Depósito", "Cheque"
+   Códigos comuns: "PX"=PIX, "DN"=Dinheiro, "CC"=Cartão Crédito, "RE"=Redecard, "DP"=Depósito, "CH"=Cheque
+   Se NÃO há forma de pagamento → use null
+
+6. reportedValue: Valor financeiro em formato decimal com ponto.
    Pode estar em: "Valor", "Total", "Repasse", "Valor Pago", "Valor Líquido"
    CONVERSÃO DE VALORES BRASILEIROS:
    - "600,00" → "600.00"
@@ -58,19 +65,21 @@ PARA CADA REGISTRO, EXTRAIA ESTES 7 CAMPOS:
    - "R$ 350,00" → "350.00"
    Se NÃO tem valor → use "0.00"
 
-6. patientBirthDate: Data de nascimento no formato YYYY-MM-DD. Se não disponível → null
+7. patientBirthDate: Data de nascimento no formato YYYY-MM-DD. Se não disponível → null
 
-7. description: Observações/notas adicionais. Se não disponível → null
+8. patientCpf: CPF do paciente no formato "000.000.000-00". Se não disponível → null
+
+9. description: Observações/notas adicionais. Se não disponível → null
 
 REGRAS IMPORTANTES:
 - Extraia TODAS as linhas de pacientes, mesmo repetidas ou com dados parciais
+- ATENÇÃO: Se o mesmo paciente aparece N vezes no mesmo dia (ex: pagou em parcelas, formas de pagamento diferentes) → extraia TODAS as N ocorrências separadamente com seus respectivos valores e formas de pagamento
 - Ignore SEMPRE: cabeçalhos, rodapés, totais, subtotais, resumos
 - Ignore linhas que começam com "Observação:" ou "Obs:" — NÃO são registros de pacientes
 - Cada linha de paciente/transação é um registro ÚNICO — trate separadamente
-- Se um paciente aparece 2x com valores diferentes → extraia as 2 ocorrências separadas
 - Se o documento tem múltiplas páginas, extraia de TODAS
 - Se uma coluna não existe naquele formato → use null, NUNCA invente dados
-- Em documentos NOTAFLMED ou "Conta Corrente": a coluna "Espécie" indica forma de pagamento, NÃO convênio
+- Em documentos "Conta Corrente": a coluna "Espécie" indica forma de pagamento (paymentMethod), NÃO convênio
 
 Responda APENAS com um array JSON válido. Sem markdown, sem explicações, sem texto antes ou depois do JSON.`;
 
@@ -127,6 +136,13 @@ function isPaymentMethod(value: string): boolean {
   return parts.some(p => PAYMENT_METHOD_KEYWORDS.includes(p));
 }
 
+function sanitizeCpf(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  const digits = raw.toString().replace(/\D/g, "");
+  if (digits.length !== 11) return undefined;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
 function sanitizeEntry(raw: any): PdfExtractedEntry | null {
   if (!raw || typeof raw !== "object") return null;
   const name = (raw.patientName || raw.patient_name || raw.nome || raw.paciente || "").toString().trim();
@@ -138,7 +154,12 @@ function sanitizeEntry(raw: any): PdfExtractedEntry | null {
   let insurance = (raw.insuranceProvider || raw.insurance_provider || raw.convenio || raw.convênio || raw.insurance || "").toString().trim();
   const procedure = (raw.procedureName || raw.procedure_name || raw.procedimento || raw.procedure || "").toString().trim();
 
+  // paymentMethod is kept separately — never merged into insuranceProvider
+  let paymentMethod = (raw.paymentMethod || raw.payment_method || raw.especie || raw.espécie || raw.repasse || raw.forma_pagamento || "").toString().trim() || undefined;
+
+  // If insurance field accidentally contains a payment method, move it to paymentMethod
   if (isPaymentMethod(insurance)) {
+    if (!paymentMethod) paymentMethod = insurance;
     insurance = "Particular";
   }
   if (isPaymentMethod(procedure) && !insurance) {
@@ -148,9 +169,11 @@ function sanitizeEntry(raw: any): PdfExtractedEntry | null {
   return {
     patientName: name,
     patientBirthDate: sanitizeDate(raw.patientBirthDate || raw.patient_birth_date || raw.nascimento || raw.birthdate) || undefined,
+    patientCpf: sanitizeCpf(raw.patientCpf || raw.patient_cpf || raw.cpf) || undefined,
     procedureDate: procDate,
     procedureName: procedure || undefined,
     insuranceProvider: insurance || undefined,
+    paymentMethod: paymentMethod || undefined,
     reportedValue: sanitizeValue(raw.reportedValue || raw.reported_value || raw.valor || raw.value),
     description: (raw.description || raw.descricao || raw.descrição || raw.observacao || raw.obs || "").toString().trim() || undefined,
   };
@@ -467,9 +490,28 @@ function scoreMatch(entry: any, report: any): MatchScore {
   const matchedFields: string[] = [];
   const divergentFields: string[] = [];
 
+  // ── CPF: strongest identifier — if both sides have it and it matches, override name check ──
+  const entryCpfDigits = ((entry.patientCpf || entry.cpf) || "").replace(/\D/g, "");
+  const reportCpfDigits = ((report.patientCpf || report.cpf) || "").replace(/\D/g, "");
+  const hasCpfBoth = entryCpfDigits.length === 11 && reportCpfDigits.length === 11;
+  const cpfMatch = hasCpfBoth && entryCpfDigits === reportCpfDigits;
+  const cpfConflict = hasCpfBoth && !cpfMatch;
+
+  if (hasCpfBoth) {
+    filledFields++;
+    if (cpfMatch) {
+      score += 2; // CPF match gives 2 points — very strong signal
+      matchedFields.push("cpf");
+    } else {
+      divergentFields.push(`CPF: "${entry.patientCpf || entry.cpf}" ≠ "${report.patientCpf || report.cpf}"`);
+    }
+  }
+
+  // ── Patient name: primary text identifier ──
   const nameDistance = levenshteinDistance(entry.patientName, report.patientName);
   const nameLen = Math.max(normalizeStr(entry.patientName).length, normalizeStr(report.patientName).length);
-  const nameMatched = nameDistance <= nameMatchThreshold(nameLen);
+  // If CPF matches, accept even minor name variation (typos); otherwise apply normal threshold
+  const nameMatched = cpfMatch || (!cpfConflict && nameDistance <= nameMatchThreshold(nameLen));
   filledFields++;
   if (nameMatched) {
     score++;
@@ -478,18 +520,8 @@ function scoreMatch(entry: any, report: any): MatchScore {
     divergentFields.push(`Nome: "${entry.patientName}" ≠ "${report.patientName}"`);
   }
 
-  const entryDate = new Date(entry.procedureDate);
-  const reportDate = new Date(report.procedureDate);
-  filledFields++;
-  if (datesWithinDays(entryDate, reportDate, 3)) {
-    score++;
-    matchedFields.push("data");
-  } else {
-    const ed = entryDate.toLocaleDateString("pt-BR");
-    const rd = reportDate.toLocaleDateString("pt-BR");
-    divergentFields.push(`Data: ${ed} ≠ ${rd}`);
-  }
-
+  // ── Birth date: secondary identifier / disambiguator ──
+  // Only used when multiple entries exist for the same patient name
   const entryBirth = normalizeStr(entry.patientBirthDate);
   const reportBirth = normalizeStr(report.patientBirthDate);
   if (entryBirth && reportBirth) {
@@ -502,32 +534,15 @@ function scoreMatch(entry: any, report: any): MatchScore {
     }
   }
 
-  const entryProc = normalizeStr(entry.procedureName || entry.description);
-  const reportProc = normalizeStr(report.procedureName || report.description);
-  if (entryProc && reportProc) {
-    filledFields++;
-    const procDistance = levenshteinDistance(entryProc, reportProc);
-    const maxLen = Math.max(entryProc.length, reportProc.length);
-    if (procDistance <= Math.ceil(maxLen * 0.3) || entryProc.includes(reportProc) || reportProc.includes(entryProc)) {
-      score++;
-      matchedFields.push("procedimento");
-    } else {
-      divergentFields.push(`Procedimento: "${entry.procedureName || entry.description}" ≠ "${report.procedureName || report.description}"`);
-    }
-  }
+  // NOTE: Date is intentionally NOT compared.
+  // Entry date = procedure date (when the doctor performed it).
+  // Report date = payment/repasse date (when the clinic paid, weeks/months later).
+  // These are fundamentally different concepts and will almost never match.
 
-  const entryIns = normalizeStr(entry.insuranceProvider);
-  const reportIns = normalizeStr(report.insuranceProvider);
-  if (entryIns && reportIns) {
-    filledFields++;
-    const insDistance = levenshteinDistance(entryIns, reportIns);
-    if (insDistance <= 3 || entryIns.includes(reportIns) || reportIns.includes(entryIns)) {
-      score++;
-      matchedFields.push("convênio");
-    } else {
-      divergentFields.push(`Convênio: "${entry.insuranceProvider}" ≠ "${report.insuranceProvider}"`);
-    }
-  }
+  // NOTE: Insurance/convenio is intentionally NOT compared.
+  // Doctor records the plan name (e.g. "Particular", "SUS", "Unimed").
+  // Clinic records the payment method (e.g. "REDECARD", "PIX", "PACOTE").
+  // These are different dimensions of the same event and should not be cross-compared.
 
   const totalFields = filledFields;
   const confidence = totalFields > 0 ? Math.round((score / totalFields) * 100) : 0;
@@ -541,36 +556,42 @@ function computeAiMatchConfidence(entry: any, report: any): number {
 
 const AI_RECONCILIATION_PROMPT = `Você é um assistente de conferência financeira médica.
 
-REGRA PRINCIPAL: O matching é feito pelo NOME DO PACIENTE. Procure na lista da clínica um paciente com nome igual ou similar ao do médico. NÃO use a posição/índice na lista — o paciente pode estar em qualquer posição.
+CONTEXTO IMPORTANTE:
+- O médico lança procedimentos na DATA EM QUE ATENDEU o paciente (data do procedimento).
+- A clínica gera relatórios na DATA EM QUE PAGOU o médico (data de repasse), que pode ser semanas ou meses depois.
+- O médico lança o PLANO/CONVÊNIO do paciente (ex: Particular, SUS, Unimed).
+- A clínica registra a FORMA DE PAGAMENTO (ex: PIX, REDECARD, PACOTE).
+- PORTANTO: datas e convênios SEMPRE vão ser diferentes entre médico e clínica — isso é NORMAL e esperado.
+
+REGRA PRINCIPAL: O matching é feito pelo NOME DO PACIENTE (e CPF quando disponível).
+Procure na lista da clínica um paciente com nome igual ou similar. NÃO use posição na lista.
 
 PROCESSO:
-1. Para cada lançamento do médico, PROCURE pelo nome do paciente na lista da clínica
-2. Se encontrar um nome similar (variações de grafia são aceitas), valide os dados complementares:
-   - Data de atendimento (pequenas diferenças de 1-3 dias são aceitas)
-   - Data de nascimento (se disponível)
-   - Procedimento realizado
-   - Convênio/plano de saúde
-3. Determine o status:
-   - "received": Nome encontrado e dados complementares batem
-   - "divergent": Nome encontrado mas algum dado complementar diverge (informe qual)
-   - "pending": Nome NÃO encontrado na lista da clínica (nenhum paciente similar)
+1. Para cada lançamento do médico, PROCURE pelo CPF (se disponível) ou NOME na lista da clínica
+2. Se encontrar match por CPF → status "received" (match certo, independente do nome)
+3. Se encontrar nome similar (variações de grafia são aceitas):
+   - Valide APENAS a data de nascimento (se disponível nos dois lados)
+   - NÃO compare datas de procedimento (são datas de conceitos diferentes)
+   - NÃO compare convênio com forma de pagamento (são conceitos diferentes)
+4. Determine o status:
+   - "received": Nome encontrado (ou CPF matched) e dados de nascimento batem (ou não disponíveis)
+   - "divergent": Nome encontrado MAS data de nascimento disponível nos dois lados e DIFERENTE
+   - "pending": Nome NÃO encontrado na lista da clínica
 
-REGRAS DE DIVERGÊNCIA:
-- O NOME DO PACIENTE é o campo mais importante para matching
-- Se um campo está preenchido em um lado e VAZIO no outro, NÃO é divergência — ignore esse campo
-- Divergência SÓ ocorre quando AMBOS os lados têm o campo preenchido e os valores são DIFERENTES
-- Exemplo: médico tem convênio "Unimed" e clínica tem vazio → NÃO é divergente
-- Exemplo: médico tem convênio "Unimed" e clínica tem "Amil" → É divergente
+REGRAS DE DIVERGÊNCIA (revisadas):
+- CPF match → sempre "received" (é um identificador único)
+- Divergência de DATA DE NASCIMENTO → "divergent" (pode indicar homônimo)
+- Diferença de DATA DO PROCEDIMENTO → NÃO é divergência (datas são de conceitos diferentes)
+- Diferença de CONVÊNIO/FORMA DE PAGAMENTO → NÃO é divergência (são conceitos diferentes)
 - NÃO compare valores financeiros
-- Se o paciente aparece mais de uma vez, use a combinação nome+data para identificar o registro correto
-- NUNCA faça match por posição na lista — sempre por nome
-- Se dois pacientes têm nomes muito diferentes, NUNCA são match mesmo que estejam na mesma posição
+- Se o paciente aparece mais de uma vez na clínica, prefira aquele com data de nascimento igual
+- NUNCA faça match por posição na lista — sempre por nome ou CPF
 
 Responda com um array JSON:
 [{"entryIndex": 0, "reportIndex": 3, "status": "received", "divergenceReason": null}, ...]
 
 entryIndex = índice do lançamento do médico (0-based)
-reportIndex = índice do registro da clínica que corresponde pelo NOME (0-based), ou null se não encontrado
+reportIndex = índice do registro da clínica que corresponde (0-based), ou null se não encontrado
 Responda APENAS com JSON válido, sem markdown.`;
 
 const AI_BATCH_SIZE = 30;
@@ -585,19 +606,17 @@ async function aiReconciliationBatch(
   const entrySummary = entries.map((e, i) => ({
     idx: i,
     nome: e.patientName,
+    cpf: e.patientCpf || e.cpf || null,
     nascimento: e.patientBirthDate || "N/D",
-    data: new Date(e.procedureDate).toLocaleDateString("pt-BR"),
-    procedimento: e.procedureName || e.description || "N/D",
-    convenio: e.insuranceProvider || "N/D",
   }));
 
   const reportSummary = reports.map((r, i) => ({
     idx: i,
     nome: r.patientName,
+    cpf: r.patientCpf || null,
     nascimento: r.patientBirthDate || "N/D",
-    data: new Date(r.procedureDate).toLocaleDateString("pt-BR"),
-    procedimento: r.procedureName || r.description || "N/D",
-    convenio: r.insuranceProvider || "N/D",
+    valor: r.reportedValue,
+    formaPagamento: r.paymentMethod || r.insuranceProvider || "N/D",
   }));
 
   try {
@@ -618,6 +637,57 @@ async function aiReconciliationBatch(
     console.error("AI reconciliation batch error:", err);
     return [];
   }
+}
+
+/**
+ * Groups clinic report entries for the same patient on the same date.
+ * This handles installment payments: a patient pays in multiple ways on the same day
+ * (e.g. R$300 cash + R$400 credit + R$300 debit = R$1000 total).
+ *
+ * Returns the first report of each group as the "representative" (used for matching),
+ * plus a map of reportId → all sibling report IDs in the same installment group.
+ */
+function groupInstallmentReports(reports: any[]): {
+  grouped: any[];
+  installmentMap: Map<string, string[]>;
+} {
+  const installmentMap = new Map<string, string[]>();
+  const seenGroups = new Map<string, string>(); // groupKey → representativeId
+  const grouped: any[] = [];
+
+  for (const report of reports) {
+    if (report.matched) continue;
+    const namePart = normalizeStr(report.patientName);
+    const cpfPart = ((report.patientCpf || "").replace(/\D/g, "") || namePart);
+    const datePart = new Date(report.procedureDate).toISOString().split("T")[0];
+    const groupKey = `${cpfPart}|${datePart}`;
+
+    if (seenGroups.has(groupKey)) {
+      const representativeId = seenGroups.get(groupKey)!;
+      const siblings = installmentMap.get(representativeId) || [];
+      siblings.push(report.id);
+      installmentMap.set(representativeId, siblings);
+      // Add installment value to the representative
+      const rep = grouped.find(r => r.id === representativeId);
+      if (rep) {
+        const repVal = parseFloat(rep.reportedValue || "0") || 0;
+        const addVal = parseFloat(report.reportedValue || "0") || 0;
+        rep.reportedValue = (repVal + addVal).toFixed(2);
+        rep._installmentCount = (rep._installmentCount || 1) + 1;
+        rep._paymentMethods = [
+          ...(rep._paymentMethods || [rep.paymentMethod || rep.insuranceProvider]),
+          report.paymentMethod || report.insuranceProvider,
+        ].filter(Boolean);
+      }
+    } else {
+      seenGroups.set(groupKey, report.id);
+      installmentMap.set(report.id, []);
+      const repReport = { ...report, _installmentCount: 1, _paymentMethods: [report.paymentMethod || report.insuranceProvider].filter(Boolean) };
+      grouped.push(repReport);
+    }
+  }
+
+  return { grouped, installmentMap };
 }
 
 export async function runReconciliation(doctorId: string): Promise<ReconciliationResult> {
@@ -659,13 +729,27 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     return result;
   }
 
+  // Group installment payments: same patient, same day → sum their values into one representative
+  const { grouped: groupedReports, installmentMap } = groupInstallmentReports(unmatchedReports);
+
   const usedReports = new Set<string>();
-  const statusUpdates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null }> = [];
+  const statusUpdates: Array<{ id: string; status: string; matchedReportId?: string | null; divergenceReason?: string | null; matchConfidence?: number | null }> = [];
   const reportMatchUpdates: Array<{ reportId: string; entryId: string }> = [];
+
+  const markReportGroupUsed = (representativeId: string, entryId: string) => {
+    usedReports.add(representativeId);
+    reportMatchUpdates.push({ reportId: representativeId, entryId });
+    // Also mark all sibling installment reports as matched to the same entry
+    const siblings = installmentMap.get(representativeId) || [];
+    for (const sibId of siblings) {
+      usedReports.add(sibId);
+      reportMatchUpdates.push({ reportId: sibId, entryId });
+    }
+  };
 
   for (let batchStart = 0; batchStart < pendingEntries.length; batchStart += AI_BATCH_SIZE) {
     const entryBatch = pendingEntries.slice(batchStart, batchStart + AI_BATCH_SIZE);
-    const availableReports = unmatchedReports.filter(r => !usedReports.has(r.id));
+    const availableReports = groupedReports.filter(r => !usedReports.has(r.id));
     if (availableReports.length === 0) break;
 
     const aiResults = await aiReconciliationBatch(entryBatch, availableReports, batchStart);
@@ -678,19 +762,27 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         const report = availableReports[aiMatch.reportIndex];
         if (!report || usedReports.has(report.id)) continue;
 
-        const entryNameNorm = normalizeStr(entry.patientName);
-        const reportNameNorm = normalizeStr(report.patientName);
-        const nameCheck = levenshteinDistance(entryNameNorm, reportNameNorm);
-        const safetyLen = Math.max(entryNameNorm.length, reportNameNorm.length);
-        const safetyLimit = nameMatchThreshold(safetyLen) + 2;
-        if (nameCheck > safetyLimit) {
-          console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck}, threshold=${safetyLimit})`);
-          continue;
+        // Safety check: reject if AI matched by position rather than name/CPF
+        const entryCpf = ((entry.patientCpf || (entry as any).cpf) || "").replace(/\D/g, "");
+        const reportCpf = ((report.patientCpf) || "").replace(/\D/g, "");
+        const isCpfMatch = entryCpf.length === 11 && reportCpf.length === 11 && entryCpf === reportCpf;
+
+        if (!isCpfMatch) {
+          const entryNameNorm = normalizeStr(entry.patientName);
+          const reportNameNorm = normalizeStr(report.patientName);
+          const nameCheck = levenshteinDistance(entryNameNorm, reportNameNorm);
+          const safetyLen = Math.max(entryNameNorm.length, reportNameNorm.length);
+          const safetyLimit = nameMatchThreshold(safetyLen) + 2;
+          if (nameCheck > safetyLimit) {
+            console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck}, threshold=${safetyLimit})`);
+            continue;
+          }
         }
 
-        usedReports.add(report.id);
-
         const aiConfidence = computeAiMatchConfidence(entry, report);
+        const installmentNote = (report._installmentCount || 1) > 1
+          ? ` (${report._installmentCount} parcelas: ${(report._paymentMethods || []).join(", ")})`
+          : "";
 
         if (aiMatch.status === "received") {
           result.reconciled.push({
@@ -700,9 +792,10 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             procedureDate: entry.procedureDate.toISOString(),
             entryValue: entry.procedureValue,
             reportValue: report.reportedValue,
+            matchDetails: installmentNote || undefined,
           });
           statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null, matchConfidence: aiConfidence });
-          reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
+          markReportGroupUsed(report.id, entry.id);
         } else if (aiMatch.status === "divergent") {
           const reason = aiMatch.divergenceReason || "Dados parcialmente diferentes";
           result.divergent.push({
@@ -715,7 +808,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
             divergenceReason: reason,
           });
           statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: reason, matchConfidence: aiConfidence });
-          reportMatchUpdates.push({ reportId: report.id, entryId: entry.id });
+          markReportGroupUsed(report.id, entry.id);
         }
       }
     }
@@ -730,7 +823,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     if (processedEntryIds.has(entry.id)) continue;
 
     let bestMatch: MatchScore | null = null;
-    for (const report of unmatchedReports) {
+    for (const report of groupedReports) {
       if (usedReports.has(report.id)) continue;
       const ms = scoreMatch(entry, report);
       if (!ms.nameMatched) continue;
@@ -739,33 +832,40 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
       }
     }
 
-    if (bestMatch && bestMatch.nameMatched && bestMatch.score >= Math.ceil(bestMatch.totalFields * 0.7)) {
-      usedReports.add(bestMatch.report.id);
-      result.reconciled.push({
-        entryId: entry.id,
-        reportId: bestMatch.report.id,
-        patientName: entry.patientName,
-        procedureDate: entry.procedureDate.toISOString(),
-        entryValue: entry.procedureValue,
-        reportValue: bestMatch.report.reportedValue,
-        matchDetails: bestMatch.matchedFields.join(", "),
-      });
-      statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null, matchConfidence: bestMatch.confidence });
-      reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
-    } else if (bestMatch && bestMatch.nameMatched && bestMatch.divergentFields.length > 0) {
-      usedReports.add(bestMatch.report.id);
-      const reason = bestMatch.divergentFields.join("; ");
-      result.divergent.push({
-        entryId: entry.id,
-        reportId: bestMatch.report.id,
-        patientName: entry.patientName,
-        procedureDate: entry.procedureDate.toISOString(),
-        entryValue: entry.procedureValue,
-        reportValue: bestMatch.report.reportedValue,
-        divergenceReason: reason,
-      });
-      statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason, matchConfidence: bestMatch.confidence });
-      reportMatchUpdates.push({ reportId: bestMatch.report.id, entryId: entry.id });
+    // With new scoring: nameMatched = true is enough to reconcile (no date/insurance needed)
+    // Divergent only if name matches but birth date conflicts
+    if (bestMatch && bestMatch.nameMatched) {
+      const hasBirthConflict = bestMatch.divergentFields.some(f => f.startsWith("Nascimento"));
+      const installmentNote = (bestMatch.report._installmentCount || 1) > 1
+        ? ` (${bestMatch.report._installmentCount} parcelas: ${(bestMatch.report._paymentMethods || []).join(", ")})`
+        : "";
+
+      if (!hasBirthConflict) {
+        result.reconciled.push({
+          entryId: entry.id,
+          reportId: bestMatch.report.id,
+          patientName: entry.patientName,
+          procedureDate: entry.procedureDate.toISOString(),
+          entryValue: entry.procedureValue,
+          reportValue: bestMatch.report.reportedValue,
+          matchDetails: bestMatch.matchedFields.join(", ") + installmentNote,
+        });
+        statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null, matchConfidence: bestMatch.confidence });
+        markReportGroupUsed(bestMatch.report.id, entry.id);
+      } else {
+        const reason = bestMatch.divergentFields.join("; ");
+        result.divergent.push({
+          entryId: entry.id,
+          reportId: bestMatch.report.id,
+          patientName: entry.patientName,
+          procedureDate: entry.procedureDate.toISOString(),
+          entryValue: entry.procedureValue,
+          reportValue: bestMatch.report.reportedValue,
+          divergenceReason: reason,
+        });
+        statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason, matchConfidence: bestMatch.confidence });
+        markReportGroupUsed(bestMatch.report.id, entry.id);
+      }
     } else {
       result.pending.push({
         entryId: entry.id,
@@ -776,7 +876,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
     }
   }
 
-  for (const report of unmatchedReports) {
+  for (const report of groupedReports) {
     if (usedReports.has(report.id)) continue;
     result.unmatchedClinic.push({
       reportId: report.id,

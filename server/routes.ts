@@ -729,7 +729,7 @@ export async function registerRoutes(
   app.post("/api/entries", authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const { patientName, patientBirthDate, procedureDate, procedureName, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck } = req.body;
+      const { patientName, patientBirthDate, patientCpf, procedureDate, procedureName, insuranceProvider, description, entryMethod, procedureValue, _originalData, _imageHash, skipDuplicateCheck, doctorName, prontuario } = req.body;
 
       if (!patientName || !procedureDate || !insuranceProvider) {
         return res.status(400).json({ message: "Nome, data e convênio são obrigatórios" });
@@ -741,7 +741,7 @@ export async function registerRoutes(
       }
 
       if (!skipDuplicateCheck) {
-        const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description, insuranceProvider);
+        const dataDups = await storage.findDuplicatesByData(userId, patientName, parseLocalDate(procedureDate), description, procedureName || undefined);
         if (dataDups.length > 0) {
           return res.status(409).json({
             message: "duplicate_data",
@@ -794,6 +794,7 @@ export async function registerRoutes(
         doctorId: userId,
         patientName,
         patientBirthDate: patientBirthDate || null,
+        patientCpf: patientCpf || null,
         procedureDate: parseLocalDate(procedureDate),
         procedureName: procedureName || null,
         insuranceProvider,
@@ -802,6 +803,8 @@ export async function registerRoutes(
         entryMethod: entryMethod || "manual",
         sourceUrl: req.body.sourceUrl || null,
         imageHash: _imageHash || null,
+        doctorName: doctorName || null,
+        prontuario: prontuario || null,
         status: "pending",
       });
 
@@ -854,7 +857,8 @@ export async function registerRoutes(
       const normalizeForDedup = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
       const seenInBatch = new Set<string>();
       const deduped = validEntries.filter((item: any) => {
-        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.description || "").toLowerCase().trim()}|${(item.insuranceProvider || "").toLowerCase().trim()}`;
+        // Key uses procedureName (not insuranceProvider) — same patient, same day, different procedure = not a duplicate
+        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.procedureName || "").toLowerCase().trim()}|${(item.description || "").toLowerCase().trim()}`;
         if (seenInBatch.has(key)) {
           console.log(`[Batch] Duplicata intra-lote ignorada: ${item.patientName}`);
           skippedDuplicates.push(item.patientName);
@@ -868,7 +872,7 @@ export async function registerRoutes(
         try {
           const dups = await storage.findDuplicatesByData(
             userId, item.patientName, parseLocalDate(item.procedureDate),
-            item.description || null, item.insuranceProvider
+            item.description || null, item.procedureName || undefined
           );
           if (dups.length > 0) {
             console.log(`[Batch] Duplicata exata no banco ignorada: ${item.patientName} - ${item.description || "sem proc"} - ${item.procedureDate}`);
@@ -902,6 +906,7 @@ export async function registerRoutes(
             doctorId: userId,
             patientName: item.patientName,
             patientBirthDate: item.patientBirthDate || null,
+            patientCpf: item.patientCpf || null,
             procedureDate: parseLocalDate(item.procedureDate),
             procedureName: item.procedureName || null,
             insuranceProvider: item.insuranceProvider,
@@ -910,6 +915,8 @@ export async function registerRoutes(
             entryMethod: entryMethod || "manual",
             sourceUrl: item.sourceUrl || null,
             imageHash: item._imageHash || null,
+            doctorName: item.doctorName || null,
+            prontuario: item.prontuario || null,
             status: "pending",
           });
           if (item._originalData && entryMethod && entryMethod !== "manual") {
@@ -1215,8 +1222,13 @@ export async function registerRoutes(
       if (!existing || existing.doctorId !== userId) {
         return res.status(404).json({ message: "Relatório não encontrado" });
       }
+      // Revert any doctor entries that were matched to this clinic report
+      const reverted = await storage.revertEntriesLinkedToReport(id, userId);
+      if (reverted > 0) {
+        console.log(`[Delete ClinicReport] Revertidas ${reverted} entradas para pending (reportId=${id})`);
+      }
       await storage.deleteClinicReport(id, userId);
-      return res.json({ success: true });
+      return res.json({ success: true, revertedEntries: reverted });
     } catch (error) {
       console.error("Delete clinic report error:", error);
       return res.status(500).json({ message: "Erro ao excluir relatório" });
@@ -1518,9 +1530,10 @@ export async function registerRoutes(
       const seenInFile = new Set<string>();
       const dedupedData = extractedData.filter((item: any) => {
         if (!item.patientName || item.patientName.length < 2) return false;
-        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.description || "").toLowerCase().trim()}|${(item.insuranceProvider || "").toLowerCase().trim()}`;
+        // Key uses reportedValue so same patient with different payment amounts (installments) are NOT deduped
+        const key = `${normalizeForDedup(item.patientName)}|${item.procedureDate}|${(item.reportedValue || "0.00")}|${(item.description || "").toLowerCase().trim()}`;
         if (seenInFile.has(key)) {
-          console.log(`[Reconciliation] Duplicata intra-arquivo ignorada: ${item.patientName}`);
+          console.log(`[Reconciliation] Duplicata intra-arquivo ignorada: ${item.patientName} (${item.reportedValue})`);
           return false;
         }
         seenInFile.add(key);
@@ -1540,9 +1553,11 @@ export async function registerRoutes(
             doctorId: userId,
             patientName: item.patientName,
             patientBirthDate: item.patientBirthDate || null,
+            patientCpf: item.patientCpf || null,
             procedureDate: procDate,
             procedureName: item.procedureName || null,
             insuranceProvider: item.insuranceProvider || null,
+            paymentMethod: item.paymentMethod || null,
             reportedValue: item.reportedValue || "0.00",
             description: item.description || null,
             sourcePdfUrl: originalFileUrl || null,
@@ -1931,9 +1946,11 @@ export async function registerRoutes(
               doctorId: userId,
               patientName: item.patientName,
               patientBirthDate: item.patientBirthDate || null,
+              patientCpf: item.patientCpf || null,
               procedureDate: procDate,
               procedureName: item.procedureName || null,
               insuranceProvider: item.insuranceProvider || null,
+              paymentMethod: item.paymentMethod || null,
               reportedValue: item.reportedValue || "0.00",
               description: item.description || null,
               sourcePdfUrl: null,

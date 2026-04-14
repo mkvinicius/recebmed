@@ -31,11 +31,14 @@ export interface FieldConfidence {
 export interface ExtractedEntry {
   patientName: string;
   patientBirthDate?: string;
+  patientCpf?: string;
   procedureDate: string;
   procedureName?: string;
   insuranceProvider: string;
   description: string;
   procedureValue?: string;
+  doctorName?: string;
+  prontuario?: string;
   confidence?: FieldConfidence;
 }
 
@@ -71,23 +74,27 @@ Analise a imagem e extraia TODOS os registros de pacientes encontrados.
 Para cada paciente, extraia APENAS estes campos:
 1. patientName: nome completo do paciente. Se não visível, retorne null.
 2. patientBirthDate: data de nascimento no formato YYYY-MM-DD. Se não visível, retorne null.
-3. procedureDate: data do procedimento no formato YYYY-MM-DD. Se não visível, retorne null.
-4. procedureName: nome específico do procedimento (ex: "Endoscopia", "Sleeve"). Se não visível, retorne null.
-5. insuranceProvider: nome do convênio/plano de saúde. Se não visível, retorne null.
-6. description: descrição/observações do procedimento. Se não visível, retorne null.
-7. procedureValue: valor em reais (apenas números com ponto decimal, ex: "150.00"). Se não visível, retorne null.
-8. confidence: objeto com nível de confiança de CADA campo ("high", "medium", "low"). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
+3. patientCpf: CPF do paciente no formato "000.000.000-00". Pode estar em campo "CPF". Se não visível, retorne null.
+4. procedureDate: data do procedimento/atendimento no formato YYYY-MM-DD. Pode estar em campo "Data" ou "Atend.". Se não visível, retorne null.
+5. procedureName: nome específico do procedimento (ex: "Endoscopia", "Sleeve"). Se não visível, retorne null.
+6. insuranceProvider: nome do convênio/plano de saúde. Pode estar em campo "Convenio". Se não visível, retorne null.
+7. description: descrição/observações do procedimento. Se não visível, retorne null.
+8. procedureValue: valor em reais (apenas números com ponto decimal, ex: "150.00"). Se não visível, retorne null.
+9. doctorName: nome do médico responsável. Pode estar em campo "Medico" ou "Dr.". Se não visível, retorne null.
+10. prontuario: número do prontuário do paciente. Pode estar em campo "Prontuario" ou "Pront.". Se não visível, retorne null.
+11. confidence: objeto com nível de confiança de CADA campo ("high", "medium", "low"). Campos: patientName, procedureDate, insuranceProvider, description, procedureValue.
 
 **REGRAS IMPORTANTES:**
 - Se um campo NÃO estiver visível na imagem, retorne null para ele — NUNCA use "Não identificado".
 - Se insuranceProvider for "PACOTE", mapeie para "Particular".
-- A imagem pode conter UM ou VÁRIOS pacientes.
+- A imagem pode conter UM ou VÁRIOS pacientes (ex: caderno com várias etiquetas coladas).
+- Nas etiquetas hospitalares brasileiras, os campos comuns são: Paciente, Data Nasc., Atend., Data, Medico, Convenio, CPF, Prontuario.
 
 Responda APENAS com um array JSON válido, sem markdown, sem explicações.
 Se a imagem contiver APENAS etiquetas de materiais e NENHUM dado de paciente, retorne: []
 
 Exemplo:
-[{"patientName":"João Silva","procedureDate":"2026-01-29","insuranceProvider":"Particular","description":"Argônio","procedureValue":"250.00","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"medium","description":"high","procedureValue":"high"}}]`;
+[{"patientName":"João Silva","patientBirthDate":"1985-06-15","patientCpf":"083.866.709-08","procedureDate":"2026-02-10","insuranceProvider":"Particular","doctorName":"Dr. Rafael Cassarotti","prontuario":"241052","confidence":{"patientName":"high","procedureDate":"high","insuranceProvider":"high","description":"low","procedureValue":"low"}}]`;
 
 export async function extractDataFromImage(base64Image: string, corrections: CorrectionHint[] = []): Promise<ExtractedEntry[]> {
   const correctionContext = buildCorrectionContext(corrections);
