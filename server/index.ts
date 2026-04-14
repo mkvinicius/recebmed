@@ -102,8 +102,16 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  httpServer.listen(port, "0.0.0.0", () => {
+  httpServer.listen(port, "0.0.0.0", async () => {
     log(`serving on port ${port}`);
     startAuditScheduler();
+
+    try {
+      const { db } = await import("./db");
+      const { users } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      const [updated] = await db.update(users).set({ isAdmin: true }).where(eq(users.email, "feliperotoli_1@hotmail.com")).returning();
+      if (updated) log(`[ONE-TIME] Admin granted to ${updated.email}`);
+    } catch (e) { console.error("[ONE-TIME] Admin grant error:", e); }
   });
 })();
