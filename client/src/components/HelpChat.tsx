@@ -7,6 +7,37 @@ interface Message {
   content: string;
 }
 
+function renderText(text: string) {
+  // Split on double newlines or -- separators
+  const blocks = text.split(/\n{2,}|(?:^|\n)--+(?=\n|$)/m).filter(b => b.trim());
+  return (
+    <>
+      {blocks.map((block, bi) => {
+        const trimmed = block.trim();
+        // Parse **bold** inline
+        const parts = trimmed.split(/(\*\*[^*\n]+\*\*)/g);
+        const inline = parts.flatMap((part, pi) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return [<strong key={`${bi}-${pi}`}>{part.slice(2, -2)}</strong>];
+          }
+          // Single newlines become <br>
+          const lines = part.split("\n");
+          return lines.flatMap((line, li) =>
+            li < lines.length - 1
+              ? [line, <br key={`${bi}-${pi}-${li}`} />]
+              : [line]
+          );
+        });
+        return (
+          <p key={bi} className={bi > 0 ? "mt-2" : ""}>
+            {inline}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content: "Olá! Sou o assistente do RecebMed. Como posso ajudar você hoje? 😊",
@@ -124,7 +155,7 @@ export default function HelpChat() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-sm"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? renderText(msg.content) : msg.content}
                 </div>
               </div>
             ))}
