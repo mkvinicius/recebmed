@@ -212,6 +212,7 @@ export async function registerRoutes(
       },
     },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     crossOriginResourcePolicy: { policy: "same-origin" },
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -219,9 +220,47 @@ export async function registerRoutes(
     xssFilter: true,
   }));
 
+  // ── CORS ──
+  // CORS_ALLOWED_ORIGINS: comma-separated list of allowed origins (e.g. "https://myapp.replit.app").
+  // If empty, same-origin requests still work but cross-origin requests are blocked.
+  const _corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin as string | undefined;
+
+    // Requests without Origin are same-origin (browser) or server-to-server — always allowed.
+    if (!origin) return next();
+
+    const allowed =
+      _corsAllowedOrigins.length === 0 || _corsAllowedOrigins.includes(origin);
+
+    if (allowed) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+      res.setHeader("Access-Control-Max-Age", "86400");
+      res.setHeader("Vary", "Origin");
+    }
+
+    if (req.method === "OPTIONS") {
+      return res.status(allowed ? 204 : 403).end();
+    }
+
+    if (!allowed) {
+      return res.status(403).json({ message: "Origem não autorizada" });
+    }
+
+    next();
+  });
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=(), payment=()");
     next();
   });

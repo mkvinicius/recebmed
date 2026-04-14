@@ -266,7 +266,7 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
     }
   }
 
-  console.log(`PDF text extracted: ${text.length} chars, first 200: ${text.substring(0, 200)}`);
+  console.log(`[PDF] Texto extraído: ${text.length} chars`);
 
   const provider = getComplexParsingProvider();
   try {
@@ -283,7 +283,7 @@ export async function extractPdfData(pdfBuffer: Buffer): Promise<PdfExtractedEnt
     console.log(`[${provider.name}] PDF AI extraction: ${results.length} entries from ${text.length} chars`);
 
     if (results.length === 0 && text.length > 100) {
-      console.warn("AI returned 0 entries from non-empty PDF. Response:", content.substring(0, 500));
+      console.warn("AI returned 0 entries from non-empty PDF. Response length:", content.length);
     }
 
     return results;
@@ -781,7 +781,7 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
           const safetyLen = Math.max(entryNameNorm.length, reportNameNorm.length);
           const safetyLimit = nameMatchThreshold(safetyLen) + 2;
           if (nameCheck > safetyLimit) {
-            console.log(`[Reconciliation] AI matched by position? Rejecting: "${entry.patientName}" vs "${report.patientName}" (distance=${nameCheck}, threshold=${safetyLimit})`);
+            console.log(`[Reconciliation] AI positional match rejeitado (distância=${nameCheck}, limite=${safetyLimit})`);
             continue;
           }
         }
