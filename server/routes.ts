@@ -221,12 +221,20 @@ export async function registerRoutes(
   }));
 
   // ── CORS ──
-  // CORS_ALLOWED_ORIGINS: comma-separated list of allowed origins (e.g. "https://myapp.replit.app").
-  // If empty, same-origin requests still work but cross-origin requests are blocked.
-  const _corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  // Priority: CORS_ALLOWED_ORIGINS env var → REPLIT_DOMAINS (auto) → allow-all (dev only)
+  const _corsAllowedOrigins: string[] = (() => {
+    if (process.env.CORS_ALLOWED_ORIGINS) {
+      return process.env.CORS_ALLOWED_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    // Replit sets REPLIT_DOMAINS automatically in deployed environments
+    if (process.env.REPLIT_DOMAINS) {
+      return process.env.REPLIT_DOMAINS.split(",")
+        .map((d) => `https://${d.trim()}`)
+        .filter(Boolean);
+    }
+    // Development: allow all origins (empty = no restriction)
+    return [];
+  })();
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin as string | undefined;
