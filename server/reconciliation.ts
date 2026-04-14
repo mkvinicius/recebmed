@@ -462,8 +462,49 @@ function datesWithinDays(d1: Date, d2: Date, days: number): boolean {
   return diffMs / (1000 * 60 * 60 * 24) <= days;
 }
 
+// Portuguese particles that should be ignored when comparing names.
+// "Maria de Souza" and "Maria Souza" refer to the same person.
+const PT_PARTICLES = /\b(DE|DA|DO|DOS|DAS|E|D)\b/g;
+
 function normalizeStr(s: string | null | undefined): string {
-  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  return (s || "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove accents
+    .replace(PT_PARTICLES, "")        // remove particles
+    .replace(/[^A-Z0-9\s]/g, "")     // keep only letters/digits/spaces
+    .replace(/\s+/g, " ")             // collapse multiple spaces
+    .trim();
+}
+
+// ── Value divergence check ───────────────────────────────────────────────────
+// A match that has a significant value difference should be flagged as divergent.
+// We require BOTH a relative (%) and absolute (R$) threshold to avoid false
+// alerts on rounding differences.
+const VALUE_PCT_THRESHOLD = 0.05; // 5 %
+const VALUE_ABS_THRESHOLD = 10;   // R$ 10,00
+
+function fmtBRL(v: number): string {
+  return `R$\u00a0${v.toFixed(2).replace(".", ",")}`;
+}
+
+function checkValueDivergence(
+  entryValue: string | null | undefined,
+  reportedValue: string,
+): { diverges: boolean; reason: string } {
+  const ev = parseFloat(entryValue || "0");
+  const rv = parseFloat(reportedValue || "0");
+  // Only check when the doctor actually registered a value
+  if (!entryValue || ev <= 0 || rv <= 0) return { diverges: false, reason: "" };
+  const diff = Math.abs(ev - rv);
+  const pct = diff / Math.max(ev, rv);
+  if (pct > VALUE_PCT_THRESHOLD && diff > VALUE_ABS_THRESHOLD) {
+    return {
+      diverges: true,
+      reason: `Valor divergente: médico registrou ${fmtBRL(ev)}, clínica reportou ${fmtBRL(rv)} (diferença de ${fmtBRL(diff)})`,
+    };
+  }
+  return { diverges: false, reason: "" };
 }
 
 export interface ReconciliationResult {
@@ -549,6 +590,20 @@ function scoreMatch(entry: any, report: any): MatchScore {
   // Clinic records the payment method (e.g. "REDECARD", "PIX", "PACOTE").
   // These are different dimensions of the same event and should not be cross-compared.
 
+  // ── Value proximity: used as tiebreaker when multiple candidates match by name ──
+  // Not a disqualifier here — value divergence is applied separately after match.
+  const entryVal = parseFloat((entry.procedureValue || "0"));
+  const reportVal = parseFloat((report.reportedValue || "0"));
+  if (entryVal > 0 && reportVal > 0) {
+    filledFields++;
+    const diff = Math.abs(entryVal - reportVal) / Math.max(entryVal, reportVal);
+    if (diff <= VALUE_PCT_THRESHOLD) {
+      score++;
+      matchedFields.push("valor");
+    }
+    // No divergentFields here — value divergence is a post-match check, not a blocker
+  }
+
   const totalFields = filledFields;
   const confidence = totalFields > 0 ? Math.round((score / totalFields) * 100) : 0;
   return { report, score, totalFields, matchedFields, divergentFields, nameMatched, confidence };
@@ -588,8 +643,8 @@ REGRAS DE DIVERGÊNCIA (revisadas):
 - Divergência de DATA DE NASCIMENTO → "divergent" (pode indicar homônimo)
 - Diferença de DATA DO PROCEDIMENTO → NÃO é divergência (datas são de conceitos diferentes)
 - Diferença de CONVÊNIO/FORMA DE PAGAMENTO → NÃO é divergência (são conceitos diferentes)
-- NÃO compare valores financeiros
-- Se o paciente aparece mais de uma vez na clínica, prefira aquele com data de nascimento igual
+- VALOR: se o médico registrou um valor (valorRegistrado > 0) E a diferença para o valor da clínica for >5% E >R$10 → marque como "divergent" com reason "Valor divergente: médico R$X, clínica R$Y". Pequenas diferenças de centavos são normais.
+- Se o paciente aparece mais de uma vez na clínica, prefira aquele com data de nascimento igual e/ou valor mais próximo
 - NUNCA faça match por posição na lista — sempre por nome ou CPF
 
 Responda com um array JSON:
@@ -613,6 +668,7 @@ async function aiReconciliationBatch(
     nome: e.patientName,
     cpf: e.patientCpf || e.cpf || null,
     nascimento: e.patientBirthDate || "N/D",
+    valorRegistrado: e.procedureValue ? parseFloat(e.procedureValue) : null,
   }));
 
   const reportSummary = reports.map((r, i) => ({
@@ -667,7 +723,11 @@ function groupInstallmentReports(reports: any[]): {
     // Use UTC date parts to avoid timezone shifting (procedureDate may include time component)
     const d = new Date(report.procedureDate);
     const datePart = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-    const groupKey = `${cpfPart}|${datePart}`;
+    // Include the procedure name (truncated) so that two different procedures for
+    // the same patient/date are NOT merged into one installment group.
+    // When procedureName is absent on both sides (common), they are still grouped normally.
+    const procPart = normalizeStr(report.procedureName || "").slice(0, 20);
+    const groupKey = `${cpfPart}|${datePart}|${procPart}`;
 
     if (seenGroups.has(groupKey)) {
       const representativeId = seenGroups.get(groupKey)!;
@@ -792,19 +852,35 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
           : "";
 
         if (aiMatch.status === "received") {
-          result.reconciled.push({
-            entryId: entry.id,
-            reportId: report.id,
-            patientName: entry.patientName,
-            procedureDate: entry.procedureDate.toISOString(),
-            entryValue: entry.procedureValue,
-            reportValue: report.reportedValue,
-            matchDetails: installmentNote || undefined,
-          });
-          statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null, matchConfidence: aiConfidence });
+          // Even when AI says "received", check for value divergence
+          const valCheck = checkValueDivergence(entry.procedureValue, report.reportedValue);
+          if (valCheck.diverges) {
+            result.divergent.push({
+              entryId: entry.id,
+              reportId: report.id,
+              patientName: entry.patientName,
+              procedureDate: entry.procedureDate.toISOString(),
+              entryValue: entry.procedureValue,
+              reportValue: report.reportedValue,
+              divergenceReason: valCheck.reason + (installmentNote ? ` ${installmentNote}` : ""),
+            });
+            statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: report.id, divergenceReason: valCheck.reason, matchConfidence: aiConfidence });
+          } else {
+            result.reconciled.push({
+              entryId: entry.id,
+              reportId: report.id,
+              patientName: entry.patientName,
+              procedureDate: entry.procedureDate.toISOString(),
+              entryValue: entry.procedureValue,
+              reportValue: report.reportedValue,
+              matchDetails: installmentNote || undefined,
+            });
+            statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: report.id, divergenceReason: null, matchConfidence: aiConfidence });
+          }
           markReportGroupUsed(report.id, entry.id);
         } else if (aiMatch.status === "divergent") {
-          const reason = aiMatch.divergenceReason || "Dados parcialmente diferentes";
+          const valCheck = checkValueDivergence(entry.procedureValue, report.reportedValue);
+          const reason = [aiMatch.divergenceReason || "Dados parcialmente diferentes", valCheck.diverges ? valCheck.reason : ""].filter(Boolean).join("; ");
           result.divergent.push({
             entryId: entry.id,
             reportId: report.id,
@@ -847,7 +923,8 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         ? ` (${bestMatch.report._installmentCount} parcelas: ${(bestMatch.report._paymentMethods || []).join(", ")})`
         : "";
 
-      if (!hasBirthConflict) {
+      const valCheck = checkValueDivergence(entry.procedureValue, bestMatch.report.reportedValue);
+      if (!hasBirthConflict && !valCheck.diverges) {
         result.reconciled.push({
           entryId: entry.id,
           reportId: bestMatch.report.id,
@@ -860,7 +937,10 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
         statusUpdates.push({ id: entry.id, status: "reconciled", matchedReportId: bestMatch.report.id, divergenceReason: null, matchConfidence: bestMatch.confidence });
         markReportGroupUsed(bestMatch.report.id, entry.id);
       } else {
-        const reason = bestMatch.divergentFields.join("; ");
+        const reasons = [
+          hasBirthConflict ? bestMatch.divergentFields.join("; ") : "",
+          valCheck.diverges ? valCheck.reason : "",
+        ].filter(Boolean).join("; ");
         result.divergent.push({
           entryId: entry.id,
           reportId: bestMatch.report.id,
@@ -868,9 +948,9 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
           procedureDate: entry.procedureDate.toISOString(),
           entryValue: entry.procedureValue,
           reportValue: bestMatch.report.reportedValue,
-          divergenceReason: reason,
+          divergenceReason: reasons,
         });
-        statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reason, matchConfidence: bestMatch.confidence });
+        statusUpdates.push({ id: entry.id, status: "divergent", matchedReportId: bestMatch.report.id, divergenceReason: reasons, matchConfidence: bestMatch.confidence });
         markReportGroupUsed(bestMatch.report.id, entry.id);
       }
     } else {
