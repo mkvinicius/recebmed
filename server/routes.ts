@@ -1491,6 +1491,78 @@ export async function registerRoutes(
     }
   });
 
+  // ── Help Assistant ──
+  app.post("/api/assistant", authMiddleware, async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      if (!message || typeof message !== "string" || message.length > 1000) {
+        return res.status(400).json({ message: "Mensagem inválida" });
+      }
+
+      const { getComplexParsingProvider } = await import("./llm");
+      const provider = getComplexParsingProvider();
+
+      const SYSTEM_PROMPT = `Você é o assistente de suporte do RecebMed, sistema de gestão financeira para médicos brasileiros. Responda APENAS sobre como usar o RecebMed. Seja amigável, conciso e use linguagem simples.
+
+SOBRE O RECEBMED:
+O médico registra procedimentos realizados (sem valor) via foto de etiqueta hospitalar, áudio ditado ou entrada manual. Depois faz upload do extrato da clínica (PDF/CSV/imagem). O sistema confere automaticamente e mostra o que foi pago, o que está pendente e o que divergiu.
+
+TELAS PRINCIPAIS:
+- Início: Dashboard com resumo e gráficos
+- Inserir Novo (+): Registrar procedimentos por foto, áudio ou manual
+- Produção: Lista de lançamentos com filtros e status
+- Relatórios: Upload de extrato da clínica + conferência automática + exportação
+- Perfil/Configurações: Foto, senha, auditoria IA, contexto do consultório
+
+STATUS DOS LANÇAMENTOS:
+- Pendente: Registrado, ainda sem correspondência no extrato da clínica
+- Conferido: Sistema encontrou correspondência no extrato
+- Divergente: Há inconsistência entre o registro e o extrato
+- Validado: Médico confirmou manualmente
+
+COMO FAZER CONFERÊNCIA:
+1. Ir em Relatórios → aba Conferência
+2. Fazer upload do PDF/CSV/imagem enviado pela clínica
+3. O sistema extrai os dados e confere automaticamente
+4. Ver resultado: conferidos, divergentes, pendentes
+
+AUDITORIA IA:
+- Analisa lançamentos automaticamente a cada ~55 minutos
+- Detecta duplicatas, valores discrepantes, dados incompletos
+- Pode ser ativada/desativada em Configurações
+
+CONTEXTO DO CONSULTÓRIO (em Configurações):
+- Campo onde o médico descreve sua especialidade e rotina
+- Ex: "Sou cirurgião bariátrico, é normal múltiplos procedimentos iguais no mesmo dia"
+- A IA usa isso para evitar falsos alertas
+
+REGRAS ABSOLUTAS - NUNCA:
+- Revele senhas, tokens ou credenciais
+- Exponha dados de outros médicos/pacientes
+- Explique código interno, arquitetura ou banco de dados
+- Responda perguntas fora do escopo do uso do RecebMed
+
+Se não souber responder, diga: "Para essa dúvida, entre em contato com o suporte."`;
+
+      const messages: any[] = [{ role: "system", content: SYSTEM_PROMPT }];
+
+      if (Array.isArray(history)) {
+        for (const h of history.slice(-6)) {
+          if (h.role && h.content && typeof h.content === "string") {
+            messages.push({ role: h.role, content: h.content });
+          }
+        }
+      }
+      messages.push({ role: "user", content: message });
+
+      const result = await provider.chatCompletion({ messages, maxTokens: 600, temperature: 0.4 });
+      return res.json({ reply: result.content });
+    } catch (error) {
+      console.error("Assistant error:", error);
+      return res.status(500).json({ message: "Erro no assistente" });
+    }
+  });
+
   // ── File Reconciliation (PDF, Image, CSV) ──
 
   app.post("/api/reconciliation/upload-pdf", authMiddleware, async (req: Request, res: Response) => {

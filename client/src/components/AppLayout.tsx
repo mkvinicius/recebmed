@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { Home, FileText, Plus, BarChart3, User, ShieldAlert, ArrowRight, Stethoscope } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getUser, getRequiresPasswordUpdate } from "@/lib/auth";
+import HelpChat from "./HelpChat";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -120,6 +121,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </div>
+
+      <HelpChat />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-700 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)] md:hidden" data-testid="tab-bar">
         <div className="max-w-lg mx-auto flex items-center justify-around px-2 pt-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))]">

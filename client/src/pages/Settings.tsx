@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Stethoscope, User, Lock, Loader2, Eye, EyeOff, Save, ShieldAlert, CheckCircle2, ArrowLeft, Brain,
-  BookOpen, ChevronRight, RotateCcw, AlertTriangle,
+  BookOpen, ChevronRight, RotateCcw, AlertTriangle, HelpCircle,
 } from "lucide-react";
+import { resetTour } from "@/components/AppTour";
 import { getToken, getUser, saveAuth, updateUserData, clearAuth, getRequiresPasswordUpdate, setRequiresPasswordUpdate, type UserData } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ export default function Settings() {
   const [doctrine, setDoctrine] = useState("");
   const [doctrineOriginal, setDoctrineOriginal] = useState("");
   const [savingDoctrine, setSavingDoctrine] = useState(false);
+  const [tourReset, setTourReset] = useState(false);
   const [fullResetConfirm, setFullResetConfirm] = useState("");
   const [isFullResetting, setIsFullResetting] = useState(false);
   const [fullResetResult, setFullResetResult] = useState<{ entriesReset: number; reportsReset: number; reconciled: number; divergent: number; pending: number } | null>(null);
@@ -370,6 +372,32 @@ export default function Settings() {
               </Button>
             </div>
           </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-10 rounded-full bg-[#8855f6]/10 flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-[#8855f6]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Tutorial da plataforma</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Rever o guia de uso do RecebMed</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              resetTour();
+              setTourReset(true);
+              toast({ title: "Tutorial reiniciado", description: "Tutorial reiniciado — aparecerá na próxima vez que acessar o Início" });
+              setTimeout(() => setLocation("/dashboard"), 1000);
+            }}
+            disabled={tourReset}
+            className="flex items-center gap-2 bg-[#8855f6] hover:bg-[#7744e0] disabled:opacity-60 text-white rounded-full px-6 font-bold shadow-lg shadow-[#8855f6]/20"
+            data-testid="button-reset-tour"
+          >
+            <RotateCcw className="w-4 h-4" />
+            {tourReset ? "Tutorial reiniciado!" : "Rever tutorial"}
+          </Button>
+        </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-red-200/60 dark:border-red-800/40 p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
