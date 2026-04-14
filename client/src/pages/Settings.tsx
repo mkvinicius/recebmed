@@ -326,28 +326,37 @@ export default function Settings() {
           </button>
         </div>
 
-        {isAdmin && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="size-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-doctrine-section">{t("settings.doctrineSection")}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.doctrineSectionDesc")}</p>
-              </div>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-slate-100/60 dark:border-slate-700/40 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100" data-testid="text-doctrine-section">
+                {isAdmin ? t("settings.doctrineSection") : "Contexto do meu consultório"}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {isAdmin ? t("settings.doctrineSectionDesc") : "Ensine a IA sobre sua especialidade e rotina"}
+              </p>
+            </div>
+          </div>
 
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 leading-relaxed">{t("settings.doctrineHelp")}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 leading-relaxed">
+            {isAdmin
+              ? t("settings.doctrineHelp")
+              : "Descreva sua especialidade, procedimentos comuns e o que é normal na sua prática. A IA usa isso para evitar falsos alertas nas varreduras de auditoria."}
+          </p>
 
-            <textarea
-              value={doctrine}
-              onChange={(e) => setDoctrine(e.target.value)}
-              rows={8}
-              placeholder={t("settings.doctrinePlaceholder")}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/50 resize-y"
-              data-testid="textarea-doctrine"
-            />
+          <textarea
+            value={doctrine}
+            onChange={(e) => setDoctrine(e.target.value)}
+            rows={8}
+            placeholder={isAdmin
+              ? t("settings.doctrinePlaceholder")
+              : "Ex: Sou cirurgião bariátrico. É normal múltiplos pacientes com Bariátrica, Sleeve ou Bypass no mesmo dia. Não sinalize isso como suspeito..."}
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#8855f6]/50 resize-y"
+            data-testid="textarea-doctrine"
+          />
 
             <div className="flex justify-end mt-3">
               <Button
@@ -361,7 +370,6 @@ export default function Settings() {
               </Button>
             </div>
           </div>
-        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-red-200/60 dark:border-red-800/40 p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">

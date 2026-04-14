@@ -223,7 +223,7 @@ export async function runAIAnomalyScan(doctorId: string): Promise<{ scanned: boo
 
   console.log(`[AI-Scan] Iniciando varredura inteligente para ${doctorId}`);
 
-  const doctrine = await storage.getAdminDoctrine();
+  const doctrine = await storage.getCombinedDoctrine(doctorId);
 
   const formatted = allEntries.map(e => ({
     id: e.id,

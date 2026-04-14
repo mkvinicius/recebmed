@@ -107,6 +107,7 @@ export interface IStorage {
   getUserPlatformDoctrine(id: string): Promise<string | null>;
   updatePlatformDoctrine(id: string, doctrine: string): Promise<User | undefined>;
   getAdminDoctrine(): Promise<string | null>;
+  getCombinedDoctrine(doctorId: string): Promise<string | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -708,6 +709,13 @@ export class DatabaseStorage implements IStorage {
   async getAdminDoctrine(): Promise<string | null> {
     const [admin] = await db.select({ platformDoctrine: users.platformDoctrine }).from(users).where(eq(users.isAdmin, true));
     return admin?.platformDoctrine ?? null;
+  }
+
+  async getCombinedDoctrine(doctorId: string): Promise<string | null> {
+    const [adminRow] = await db.select({ platformDoctrine: users.platformDoctrine }).from(users).where(eq(users.isAdmin, true));
+    const [doctorRow] = await db.select({ platformDoctrine: users.platformDoctrine }).from(users).where(eq(users.id, doctorId));
+    const parts = [adminRow?.platformDoctrine, doctorRow?.platformDoctrine].filter(Boolean);
+    return parts.length > 0 ? parts.join("\n\n---\n\n") : null;
   }
 }
 
