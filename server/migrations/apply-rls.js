@@ -6,7 +6,9 @@
  *   node server/migrations/apply-rls.js
  */
 
-const { Pool } = require("pg");
+import pg from "pg";
+
+const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL não definida. Execute no shell do Replit.");
@@ -23,15 +25,15 @@ async function applyRLS() {
     console.log(`✅ Role detectado: ${appRole}`);
 
     const tables = [
-      { table: "doctor_entries",    col: "doctor_id" },
-      { table: "clinic_reports",    col: "doctor_id" },
-      { table: "notifications",     col: "doctor_id" },
-      { table: "ai_corrections",    col: "doctor_id" },
-      { table: "audit_logs",        col: "doctor_id" },
-      { table: "uploaded_reports",  col: "user_id"   },
-      { table: "document_templates",col: "user_id"   },
-      { table: "ai_audit_findings", col: "doctor_id" },
-      { table: "users",             col: "id"        },
+      { table: "doctor_entries",     col: "doctor_id" },
+      { table: "clinic_reports",     col: "doctor_id" },
+      { table: "notifications",      col: "doctor_id" },
+      { table: "ai_corrections",     col: "doctor_id" },
+      { table: "audit_logs",         col: "doctor_id" },
+      { table: "uploaded_reports",   col: "user_id"   },
+      { table: "document_templates", col: "user_id"   },
+      { table: "ai_audit_findings",  col: "doctor_id" },
+      { table: "users",              col: "id"        },
     ];
 
     for (const { table, col } of tables) {
@@ -39,13 +41,7 @@ async function applyRLS() {
 
       await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
       await client.query(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY`);
-
-      // Remove política anterior se existir
-      await client.query(
-        `DROP POLICY IF EXISTS ${policyName} ON ${table}`
-      );
-
-      // Cria nova política
+      await client.query(`DROP POLICY IF EXISTS ${policyName} ON ${table}`);
       await client.query(`
         CREATE POLICY ${policyName} ON ${table}
           AS PERMISSIVE FOR ALL
@@ -56,15 +52,10 @@ async function applyRLS() {
           )
       `);
 
-      console.log(`  ✅ ${table} — RLS habilitado (coluna: ${col})`);
+      console.log(`  ✅ ${table} (${col})`);
     }
 
     console.log("\n🎉 RLS aplicado com sucesso em todas as tabelas!");
-    console.log("\n⚠️  ATENÇÃO: As queries da aplicação precisam definir");
-    console.log("    SET LOCAL app.current_user_id = '<id>' antes de acessar dados.");
-    console.log("    Use withUserContext() em server/db.ts para isso.");
-    console.log("\n    Operações de sistema (audit scheduler) devem usar");
-    console.log("    withUserContext(null, fn) para ativar o bypass.");
   } finally {
     client.release();
     await pool.end();
@@ -72,6 +63,6 @@ async function applyRLS() {
 }
 
 applyRLS().catch((err) => {
-  console.error("❌ Erro ao aplicar RLS:", err.message);
+  console.error("❌ Erro:", err.message);
   process.exit(1);
 });
