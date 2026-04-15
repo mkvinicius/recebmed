@@ -1654,6 +1654,9 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
   });
 
   app.post("/api/reconciliation/upload", authMiddleware, async (req: Request, res: Response) => {
+    // Allow up to 5 minutes for AI extraction of large PDFs/images
+    req.setTimeout(300_000);
+    res.setTimeout(300_000);
     try {
       const userId = (req as any).userId;
       const { file, fileType, fileName, templateId } = req.body;

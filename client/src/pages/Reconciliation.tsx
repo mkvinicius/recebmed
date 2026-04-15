@@ -57,11 +57,20 @@ interface ReconciliationResults {
   unmatchedClinic?: UnmatchedClinicReport[];
 }
 
+const PROCESSING_STAGES = [
+  { key: "stageUploading",  minMs: 0 },
+  { key: "stageExtracting", minMs: 4_000 },
+  { key: "stageReconciling",minMs: 15_000 },
+  { key: "stageFinalizing", minMs: 40_000 },
+];
+
 export default function Reconciliation() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStageIdx, setProcessingStageIdx] = useState(0);
+  const [processingSlowWarning, setProcessingSlowWarning] = useState(false);
   const [results, setResults] = useState<ReconciliationResults | null>(null);
   const [activeTab, setActiveTab] = useState<"total" | "verified" | "received" | "divergent" | "pending" | "unmatched">("verified");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
@@ -79,9 +88,39 @@ export default function Reconciliation() {
   const [exportDateFrom, setExportDateFrom] = useState<string>("");
   const [exportDateTo, setExportDateTo] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const processingTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { toast } = useToast();
 
   const locale = getLocale();
+
+  // Clear all processing timers
+  const clearProcessingTimers = useCallback(() => {
+    processingTimersRef.current.forEach(clearTimeout);
+    processingTimersRef.current = [];
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, []);
+
+  // Start stage cycling timers when processing begins
+  const startProcessingTimers = useCallback((fileType: string) => {
+    clearProcessingTimers();
+    setProcessingStageIdx(0);
+    setProcessingSlowWarning(false);
+    const stages = fileType === "csv" ? PROCESSING_STAGES.slice(0, 3) : PROCESSING_STAGES;
+    stages.forEach((stage, idx) => {
+      if (idx === 0) return; // start at 0 already
+      const t = setTimeout(() => setProcessingStageIdx(idx), stage.minMs);
+      processingTimersRef.current.push(t);
+    });
+    // Show slow-processing warning after 45s for PDF/image
+    if (fileType !== "csv") {
+      const warnTimer = setTimeout(() => setProcessingSlowWarning(true), 45_000);
+      processingTimersRef.current.push(warnTimer);
+    }
+  }, [clearProcessingTimers]);
 
 
   const getDaysAgo = (dateStr: string) => {
@@ -125,41 +164,91 @@ export default function Reconciliation() {
     setFileName(file.name);
     setIsProcessing(true);
     setResults(null);
+    startProcessingTimers(fileType);
 
     const token = getToken();
     if (!token) { clearAuth(); setLocation("/login"); return; }
+
+    // Poll results after a timeout/connection-drop scenario
+    const startBackgroundPoll = (tk: string) => {
+      let attempts = 0;
+      const maxAttempts = 18; // 18 × 10s = 3 minutes
+      pollIntervalRef.current = setInterval(async () => {
+        attempts++;
+        try {
+          const r = await fetch("/api/reconciliation/results", { headers: { Authorization: `Bearer ${tk}` } });
+          if (r.ok) {
+            const d = await r.json();
+            if (d?.reconciled?.length || d?.divergent?.length || d?.pending?.length) {
+              clearProcessingTimers();
+              setResults(d);
+              setUploadCollapsed(true);
+              setIsProcessing(false);
+              toast({ title: t("reconciliation.completed"), description: t("reconciliation.processingCompleted") });
+              return;
+            }
+          }
+        } catch { /* ignore poll errors */ }
+        if (attempts >= maxAttempts) {
+          clearProcessingTimers();
+          setIsProcessing(false);
+          toast({ title: t("common.error"), description: t("reconciliation.processingError"), variant: "destructive" });
+        }
+      }, 10_000);
+    };
 
     try {
       const reader = new FileReader();
       reader.onload = async () => {
         const base64 = reader.result as string;
         try {
-          const res = await fetch("/api/reconciliation/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ file: base64, fileType, fileName: file.name, ...(selectedTemplateId ? { templateId: selectedTemplateId } : {}) }),
-          });
+          const controller = new AbortController();
+          const fetchTimeout = setTimeout(() => controller.abort(), 290_000); // 4m50s
+          let res: Response;
+          try {
+            res = await fetch("/api/reconciliation/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ file: base64, fileType, fileName: file.name, ...(selectedTemplateId ? { templateId: selectedTemplateId } : {}) }),
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(fetchTimeout);
+          }
           if (res.status === 401) { clearAuth(); setLocation("/login"); return; }
           const data = await res.json();
           if (data.success && data.reconciliation) {
+            clearProcessingTimers();
             setResults(data.reconciliation);
             setUploadCollapsed(true);
             toast({ title: t("reconciliation.completed"), description: t("reconciliation.extractedCount", { count: data.extractedCount }) });
           } else {
             toast({ title: t("common.error"), description: data.message || t("reconciliation.processingError"), variant: "destructive" });
           }
-        } catch {
-          toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
-        } finally {
+          clearProcessingTimers();
           setIsProcessing(false);
+        } catch (err: any) {
+          clearProcessingTimers();
+          // Connection dropped / proxy timeout — server may still be processing
+          if (err?.name === "AbortError" || err?.name === "TypeError") {
+            setProcessingStageIdx(PROCESSING_STAGES.length - 1);
+            setProcessingSlowWarning(true);
+            // Stay in "processing" state while polling for results
+            startBackgroundPoll(token);
+            toast({ title: t("reconciliation.processingBackground"), description: t("reconciliation.processingBackgroundDesc"), duration: 8_000 });
+          } else {
+            setIsProcessing(false);
+            toast({ title: t("common.error"), description: t("common.serverConnectionFailed"), variant: "destructive" });
+          }
         }
       };
       reader.readAsDataURL(file);
     } catch {
+      clearProcessingTimers();
       setIsProcessing(false);
       toast({ title: t("common.error"), description: t("reconciliation.readError"), variant: "destructive" });
     }
-  }, [toast, setLocation, t]);
+  }, [toast, setLocation, t, startProcessingTimers, clearProcessingTimers]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -495,14 +584,35 @@ export default function Reconciliation() {
               data-testid="input-file-upload"
             />
             {isProcessing ? (
-              <div className="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
+              <div className="flex flex-col items-center gap-4 w-full max-w-sm mx-auto py-2">
                 <Loader2 className="w-12 h-12 text-[#8855f6] animate-spin" />
-                <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">{t("reconciliation.processing")}</p>
+                <p className="text-lg font-bold text-slate-700 dark:text-slate-200" data-testid="text-processing">
+                  {t(`reconciliation.${PROCESSING_STAGES[processingStageIdx]?.key}`, { defaultValue: t("reconciliation.processing") })}
+                </p>
+                {/* Progress bar that advances with each stage */}
                 <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-                  <div className="h-full bg-[#8855f6] rounded-full animate-pulse" style={{ width: "75%", transition: "width 2s ease" }} />
+                  <div
+                    className="h-full bg-[#8855f6] rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.min(15 + processingStageIdx * 25, 90)}%` }}
+                  />
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t("reconciliation.processingDesc")}</p>
-                {fileName && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{fileName}</p>}
+                {/* Stage step indicators */}
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  {PROCESSING_STAGES.map((stage, idx) => (
+                    <span
+                      key={stage.key}
+                      className={`text-xs px-2 py-0.5 rounded-full transition-all ${idx <= processingStageIdx ? "bg-[#8855f6]/15 text-[#8855f6] font-semibold" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}
+                    >
+                      {t(`reconciliation.${stage.key}Short`, { defaultValue: `${idx + 1}` })}
+                    </span>
+                  ))}
+                </div>
+                {fileName && <p className="text-xs text-slate-500 dark:text-slate-400">{fileName}</p>}
+                {processingSlowWarning && (
+                  <div className="mt-1 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs text-center max-w-xs">
+                    {t("reconciliation.processingSlowNote")}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3">
