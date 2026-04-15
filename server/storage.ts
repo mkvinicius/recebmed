@@ -688,10 +688,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resolveAllAiAuditFindings(doctorId: string): Promise<number> {
-    // Mark all pending findings as resolved, then immediately delete them to give a clean slate
+    // Delete all pending findings
     const result = await db.delete(aiAuditFindings)
       .where(and(eq(aiAuditFindings.doctorId, doctorId), eq(aiAuditFindings.resolved, false)))
       .returning();
+    // Also mark anomaly notifications as read so the dashboard banner clears
+    await db.update(notifications)
+      .set({ read: true })
+      .where(and(
+        eq(notifications.doctorId, doctorId),
+        inArray(notifications.type, ["ai_anomaly_high", "ai_anomaly_info"]),
+      ));
     return result.length;
   }
 
