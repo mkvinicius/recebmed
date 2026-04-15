@@ -849,7 +849,18 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
 
   for (let batchStart = 0; batchStart < pendingEntries.length; batchStart += AI_BATCH_SIZE) {
     const entryBatch = pendingEntries.slice(batchStart, batchStart + AI_BATCH_SIZE);
-    const availableReports = groupedReports.filter(r => !usedReports.has(r.id));
+
+    // Narrow reports to a ±90-day window around this batch's date range.
+    // This prevents sending 200 stale reports to the AI when a user uploads a new month.
+    const batchDates = entryBatch.map(e => new Date(e.procedureDate).getTime()).filter(t => !isNaN(t));
+    const batchMin = batchDates.length ? Math.min(...batchDates) : 0;
+    const batchMax = batchDates.length ? Math.max(...batchDates) : Infinity;
+    const windowMs = 90 * 24 * 60 * 60 * 1000; // 90 days
+    const availableReports = groupedReports.filter(r => {
+      if (usedReports.has(r.id)) return false;
+      const rt = new Date(r.procedureDate).getTime();
+      return isNaN(rt) || (rt >= batchMin - windowMs && rt <= batchMax + windowMs);
+    });
     if (availableReports.length === 0) break;
 
     const aiResults = await aiReconciliationBatch(entryBatch, availableReports, batchStart);
@@ -931,9 +942,15 @@ export async function runReconciliation(doctorId: string): Promise<Reconciliatio
   for (const entry of pendingEntries) {
     if (processedEntryIds.has(entry.id)) continue;
 
+    const entryTime = new Date(entry.procedureDate).getTime();
+    const windowMs90 = 90 * 24 * 60 * 60 * 1000;
+
     let bestMatch: MatchScore | null = null;
     for (const report of groupedReports) {
       if (usedReports.has(report.id)) continue;
+      // Skip reports outside ±90-day window (same optimisation as AI batch)
+      const rt = new Date(report.procedureDate).getTime();
+      if (!isNaN(entryTime) && !isNaN(rt) && Math.abs(rt - entryTime) > windowMs90) continue;
       const ms = scoreMatch(entry, report);
       if (!ms.nameMatched) continue;
       if (!bestMatch || ms.score > bestMatch.score) {

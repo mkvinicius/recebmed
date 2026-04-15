@@ -10,7 +10,7 @@ import {
   type AiAuditFinding, type InsertAiAuditFinding, aiAuditFindings,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, inArray, or, ilike, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, inArray, or, ilike, sql, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface PaginationOptions {
@@ -83,6 +83,7 @@ export interface IStorage {
   getUploadedReports(userId: string): Promise<UploadedReport[]>;
 
   getUnmatchedClinicReports(doctorId: string): Promise<ClinicReport[]>;
+  backfillClinicReportSourceUrl(doctorId: string, url: string, limit: number): Promise<void>;
   markClinicReportMatched(reportId: string, entryId: string): Promise<boolean>;
   batchMarkClinicReportsMatched(updates: Array<{ reportId: string; entryId: string }>): Promise<void>;
   getValidatedDoctorEntries(doctorId: string): Promise<DoctorEntry[]>;
@@ -558,6 +559,20 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(clinicReports)
       .where(and(eq(clinicReports.doctorId, doctorId), eq(clinicReports.matched, false)))
       .orderBy(desc(clinicReports.createdAt));
+  }
+
+  /** Back-fills sourcePdfUrl on the most recent N unmatched reports that still have no URL. */
+  async backfillClinicReportSourceUrl(doctorId: string, url: string, limit: number): Promise<void> {
+    if (!url || limit <= 0) return;
+    const rows = await db.select({ id: clinicReports.id })
+      .from(clinicReports)
+      .where(and(eq(clinicReports.doctorId, doctorId), isNull(clinicReports.sourcePdfUrl)))
+      .orderBy(desc(clinicReports.createdAt))
+      .limit(limit);
+    if (rows.length === 0) return;
+    await db.update(clinicReports)
+      .set({ sourcePdfUrl: url })
+      .where(inArray(clinicReports.id, rows.map(r => r.id)));
   }
 
   async markClinicReportMatched(reportId: string, entryId: string): Promise<boolean> {

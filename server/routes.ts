@@ -1710,15 +1710,14 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
       });
 
       const mimeMap: Record<string, string> = { pdf: "application/pdf", image: "image/jpeg", csv: "text/csv" };
-      const originalFileUrl = await mediaStorage.uploadBuffer(Buffer.from(base64Data, "base64"), mimeMap[fileType] || "application/octet-stream").catch(err => { console.error("Report upload error:", err); return null; });
-
-      let savedCount = 0;
-      let skipCount = 0;
-      for (const item of dedupedData) {
-        try {
+      // Upload file to media storage and save all clinic reports in parallel
+      const [originalFileUrl, ...insertResults] = await Promise.allSettled([
+        mediaStorage.uploadBuffer(Buffer.from(base64Data, "base64"), mimeMap[fileType] || "application/octet-stream")
+          .catch(err => { console.error("Report upload error:", err); return null; }),
+        ...dedupedData.map(async (item) => {
           const procDate = parseLocalDate(item.procedureDate);
-          if (isNaN(procDate.getTime())) { skipCount++; continue; }
-          await storage.createClinicReport({
+          if (isNaN(procDate.getTime())) throw new Error("invalid-date");
+          return storage.createClinicReport({
             doctorId: userId,
             patientName: item.patientName,
             patientBirthDate: item.patientBirthDate || null,
@@ -1729,17 +1728,19 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
             paymentMethod: item.paymentMethod || null,
             reportedValue: item.reportedValue || "0.00",
             description: item.description || null,
-            sourcePdfUrl: originalFileUrl || null,
+            sourcePdfUrl: null, // filled after we know the URL
           });
-          savedCount++;
-        } catch (itemErr) {
-          console.error("Error saving clinic report item:", itemErr);
-          skipCount++;
-        }
-      }
+        }),
+      ]);
 
-      if (originalFileUrl) {
-        await storage.createUploadedReport({ userId, fileName: fileName || `relatorio.${fileType}`, originalFileUrl, extractedRecordCount: savedCount });
+      const fileUrl = originalFileUrl.status === "fulfilled" ? (originalFileUrl.value as string | null) : null;
+      const savedCount = insertResults.filter(r => r.status === "fulfilled").length;
+      const skipCount = insertResults.filter(r => r.status === "rejected").length;
+
+      // Back-fill sourcePdfUrl on inserted reports (single UPDATE, non-blocking)
+      if (fileUrl) {
+        storage.backfillClinicReportSourceUrl(userId, fileUrl, savedCount).catch(() => {});
+        await storage.createUploadedReport({ userId, fileName: fileName || `relatorio.${fileType}`, originalFileUrl: fileUrl, extractedRecordCount: savedCount });
       }
 
       console.log(`Reconciliation upload: ${savedCount} saved, ${skipCount} skipped from ${extractedData.length} extracted`);
