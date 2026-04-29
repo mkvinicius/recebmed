@@ -104,6 +104,6 @@ app.use((req, res, next) => {
   const port = 5000;
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
-    startAuditScheduler();
+    log(`[Audit] Scheduler automático DESATIVADO — auditoria roda apenas via acionamento manual`);
   });
 })();

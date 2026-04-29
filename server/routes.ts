@@ -1643,7 +1643,8 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
         await storage.createUploadedReport({ userId, fileName: "relatorio.pdf", originalFileUrl, extractedRecordCount: extractedData.length });
       }
       await runReconciliation(userId);
-      schedulePostUploadAudit(userId);
+      // AUDITORIA AUTOMÁTICA DESATIVADA — usuário deve acionar manualmente para economizar IA
+      // schedulePostUploadAudit(userId);
       const allEntries = await storage.getDoctorEntries(userId);
       const unmatchedReports = await storage.getUnmatchedClinicReports(userId);
       return res.json({ success: true, extractedCount: extractedData.length, reconciliation: { reconciled: allEntries.filter(e => e.status === "reconciled" || e.status === "validated"), divergent: allEntries.filter(e => e.status === "divergent"), pending: allEntries.filter(e => e.status === "pending"), unmatchedClinic: unmatchedReports } });
@@ -1743,7 +1744,8 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
 
       try {
         await runReconciliation(userId);
-        schedulePostUploadAudit(userId);
+        // AUDITORIA AUTOMÁTICA DESATIVADA — usuário deve acionar manualmente para economizar IA
+        // schedulePostUploadAudit(userId);
       } catch (reconcErr) {
         console.error("Reconciliation error (continuing):", reconcErr);
       }
@@ -2072,7 +2074,8 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
           message: `${imported} lançamentos de ${targetYear} importados via ${ext === "pdf" ? "PDF" : "planilha"}`,
           read: false,
         });
-        schedulePostUploadAudit(userId);
+        // AUDITORIA AUTOMÁTICA DESATIVADA — usuário deve acionar manualmente para economizar IA
+        // schedulePostUploadAudit(userId);
       }
 
       return res.json({ success: true, imported, skipped, year: targetYear, totalRows });
@@ -2135,7 +2138,8 @@ Se não souber responder, diga: "Para essa dúvida, entre em contato com o supor
       }
 
       const reconciliationResult = await runReconciliation(userId);
-      schedulePostUploadAudit(userId);
+      // AUDITORIA AUTOMÁTICA DESATIVADA — usuário deve acionar manualmente para economizar IA
+      // schedulePostUploadAudit(userId);
 
       await storage.createNotification({
         doctorId: userId,
