@@ -163,6 +163,13 @@ export function getComplexParsingProvider(): LLMProvider {
   return providers.openai;
 }
 
+export function getCheapAnalysisProvider(): LLMProvider {
+  if (providers.openai.isAvailable()) {
+    return providers.openai;
+  }
+  return providers.anthropic;
+}
+
 export async function llmChatCompletion(
   options: LLMCompletionOptions,
   providerName?: string
@@ -188,14 +195,14 @@ export async function aiAnomalyScan(
     return { anomalies: [] };
   }
 
-  const provider = getComplexParsingProvider();
+  const provider = getCheapAnalysisProvider();
 
   const entriesList = entries.map((e, i) =>
     `[${i + 1}] ID:${e.id} | ${e.patientName} | ${e.procedureDate} | ${e.description || "(vazio)"} | ${e.insuranceProvider} | R$${e.procedureValue || "0"} | ${e.status}`
   ).join("\n");
 
   const result = await provider.chatCompletion({
-    model: "complex",
+    model: "gpt-5-mini",
     maxTokens: 2000,
     temperature: 0,
     messages: [
@@ -256,14 +263,14 @@ export async function aiDuplicateCheck(
     return { isDuplicate: false, confidence: "high", reason: "Nenhum lançamento similar encontrado" };
   }
 
-  const provider = getComplexParsingProvider();
+  const provider = getCheapAnalysisProvider();
 
   const existingList = existingEntries.map((e, i) =>
     `[${i + 1}] ID: ${e.id}\n    Paciente: ${e.patientName}\n    Data: ${e.procedureDate}\n    Procedimento: ${e.description || "(vazio)"}\n    Convênio: ${e.insuranceProvider}\n    Valor: ${e.procedureValue || "(vazio)"}`
   ).join("\n\n");
 
   const result = await provider.chatCompletion({
-    model: "complex",
+    model: "gpt-5-mini",
     maxTokens: 500,
     temperature: 0,
     messages: [
